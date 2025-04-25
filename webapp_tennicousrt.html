@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SNV Lifetime Courts Schedule</title>
+  <style>
+    body {
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #f0f4f8, #e8f0fe);
+      color: #333;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: #004aad;
+      font-size: 2.8rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      border-bottom: 3px solid #4f46e5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+    p {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 2rem;
+    }
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .tab-buttons button {
+      padding: 12px 22px;
+      background: #e0e7ff;
+      color: #333;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .tab-buttons button:hover {
+      background: #c7d2fe;
+      transform: translateY(-2px);
+    }
+    .tab-buttons button.active {
+      background-color: #4f46e5;
+      color: white;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+    }
+    .day-section {
+      display: none;
+      animation: fadein 0.5s;
+    }
+    .day-section.active {
+      display: block;
+    }
+    @keyframes fadein {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .date-title {
+      margin-top: 2.5rem;
+      font-size: 1.6rem;
+      color: #1e3a8a;
+      text-align: left;
+      border-left: 5px solid #4f46e5;
+      padding-left: 0.8rem;
+      margin-bottom: 1.2rem;
+      text-transform: lowercase;
+      font-variant: small-caps;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+    th, td {
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 1rem;
+    }
+    th {
+      background: #4f46e5;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      background-color: #ffffff;
+    }
+    tr:nth-child(even) td {
+      background-color: #f0f4ff;
+    }
+    tr:hover td {
+      background-color: #e0e7ff;
+      transition: background 0.3s ease;
+    }
+    #table-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
+    #copy-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+    #copy-button:hover {
+      background-color: #4338ca;
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="tab-buttons" class="tab-buttons"></div>
+  
+  <div id="table-container">Loading table...</div>
+  <div id="original-table" style="display:none;"></div>
+<div style="text-align:center; margin: 2rem 0 0 0;">
+  <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" style="background:#4f46e5; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Show Original Data</a>
+</div>
+  <button id="copy-button" title="Copy Current Tab">📋</button>
+
+<script>
+const csvUrl = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/export?format=csv";
+
+async function fetchAndRenderTable() {
+  const expectedDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const weekdayOrder = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5,"Saturday":6,"Sunday":7};
+
+  const tabs = document.getElementById("tab-buttons");
+  const container = document.getElementById("table-container");
+  const originalTable = document.getElementById("original-table");
+  // removed toggleBtn because link now directly opens external
+
+  try {
+    const response = await fetch(csvUrl);
+    const csvText = await response.text();
+
+    let rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
+    let cleaned = [];
+
+    let lastDay = "";
+    let lastDate = "";
+    let currentCourt = "";
+
+    for (let row of rows) {
+      if (row.length < 5) continue;
+      let [V1, V2, V3, V4, V5, V6] = row.map(cell => cell.trim());
+      if (V1 === "Day of the Week") continue;
+
+      if (V1 && !V2 && !V3 && !V5 && !expectedDays.includes(V1)) {
+        currentCourt = V1.replace(/ Park| School|Sunnyvale Middle School \(|\)/g, "").trim();
+        continue;
+      }
+
+      if (!V1) V1 = lastDay; else lastDay = V1;
+      if (!V2) V2 = lastDate; else lastDate = V2;
+
+      if (!expectedDays.includes(V1)) continue;
+      if (!V5) continue;
+
+      let d = V2;
+      let parts = d.split("/");
+      if (parts.length === 2) {
+        d = `${parts[0]}/${parts[1]}/2025`;
+      } else if (parts.length === 3 && parts[2].length === 2) {
+        d = `${parts[0]}/${parts[1]}/20${parts[2]}`;
+      }
+      let dateObj = new Date(d);
+
+      cleaned.push({
+        Day: V1,
+        Date: d,
+        DateObj: dateObj,
+        Time: V3,
+        Court: `Ct${V5}`,
+        Location: currentCourt
+      });
+    }
+
+    cleaned.sort((a, b) => {
+      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day]) return weekdayOrder[a.Day] - weekdayOrder[b.Day];
+      if (b.DateObj - a.DateObj !== 0) return b.DateObj - a.DateObj;
+      if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
+      return a.Court.localeCompare(b.Court);
+    });
+
+    const grouped = {};
+    cleaned.forEach(row => {
+      if (!grouped[row.Day]) grouped[row.Day] = {};
+      if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
+      grouped[row.Day][row.Date].push(row);
+    });
+
+    container.innerHTML = "";
+    tabs.innerHTML = "";
+
+    for (const day of expectedDays) {
+      if (grouped[day]) {
+        const btn = document.createElement("button");
+        btn.textContent = day;
+        btn.onclick = () => switchTab(day);
+        tabs.appendChild(btn);
+
+        const section = document.createElement("div");
+        section.id = `section-${day}`;
+        section.className = "day-section";
+
+        for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
+          const dateTitle = document.createElement("div");
+          dateTitle.className = "date-title";
+          dateTitle.textContent = date;
+          section.appendChild(dateTitle);
+
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+
+          ["Location", "Court", "Time"].forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = header;
+            headRow.appendChild(th);
+          });
+
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+          grouped[day][date].forEach(row => {
+            const tr = document.createElement("tr");
+            [row.Location, row.Court, row.Time].forEach(cell => {
+              const td = document.createElement("td");
+              td.textContent = cell;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          section.appendChild(table);
+        }
+
+        container.appendChild(section);
+      }
+    }
+
+    // build original data table
+    const tableOrig = document.createElement("table");
+    const theadOrig = document.createElement("thead");
+    const headRowOrig = document.createElement("tr");
+    ["Day", "Date", "Time", "Court", "Location"].forEach(header => {
+      const th = document.createElement("th");
+      th.textContent = header;
+      headRowOrig.appendChild(th);
+    });
+    theadOrig.appendChild(headRowOrig);
+    tableOrig.appendChild(theadOrig);
+    const tbodyOrig = document.createElement("tbody");
+    cleaned.forEach(row => {
+      const tr = document.createElement("tr");
+      [row.Day, row.Date, row.Time, row.Court, row.Location].forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cell;
+        tr.appendChild(td);
+      });
+      tbodyOrig.appendChild(tr);
+    });
+    tableOrig.appendChild(tbodyOrig);
+    originalTable.appendChild(tableOrig);
+
+    let currentTab = "";
+
+    function switchTab(day) {
+      document.querySelectorAll('.day-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`section-${day}`).classList.add('active');
+      Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
+      currentTab = day;
+      container.style.display = "block";
+originalTable.style.display = "none";
+    }
+
+    document.getElementById("copy-button").addEventListener("click", () => {
+      if (!currentTab) return;
+      const activeSection = document.getElementById(`section-${currentTab}`);
+      if (!activeSection) return;
+      const dateBlocks = activeSection.querySelectorAll(".date-title");
+      let text = "";
+      dateBlocks.forEach(dateTitle => {
+        const dateText = dateTitle.textContent.trim();
+        text += `Day: ${currentTab}\nDate: ${dateText}\n\n`;
+        const table = dateTitle.nextElementSibling;
+        if (table) {
+          const rows = table.querySelectorAll("tr");
+          rows.forEach(row => {
+            let rowText = Array.from(row.querySelectorAll("th, td")).map(cell => cell.textContent.trim()).join("\t");
+            text += rowText + "\n";
+          });
+          text += "\n";
+        }
+      });
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById("copy-toast");
+        toast.style.opacity = 1;
+        setTimeout(() => { toast.style.opacity = 0; }, 1500);
+      });
+    });
+
+    
+
+    const today = new Date();
+    const todayDay = expectedDays[today.getDay()];
+    const defaultDay = grouped[todayDay] ? todayDay : expectedDays.find(day => grouped[day]);
+    if (defaultDay) switchTab(defaultDay);
+
+  } catch (error) {
+    console.error("Failed to fetch or render CSV:", error);
+    document.getElementById("table-container").innerHTML = "Could not load schedule. Please check network or CSV URL.";
+  }
+}
+
+fetchAndRenderTable();
+</script>
+<div id="copy-toast" style="position:fixed;bottom:90px;right:20px;background:#4f46e5;color:white;padding:10px 20px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.3s ease;font-weight:600;pointer-events:none;z-index:999;">Copied ✅</div>
+</body>
+</html>
