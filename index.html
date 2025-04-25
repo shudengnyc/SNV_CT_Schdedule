@@ -116,27 +116,60 @@
       overflow-x: auto;
     }
     #copy-button {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #4f46e5;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.3s ease;
-    }
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  font-size: 2.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
     #copy-button:hover {
       background-color: #4338ca;
     }
-  </style>
+  @media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  .tab-buttons button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  .date-title {
+    font-size: 1.2rem;
+    margin-top: 2rem;
+  }
+  table {
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 10px 12px;
+  }
+  #copy-button {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+  #copy-toast {
+    bottom: 80px;
+    right: 15px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+  #table-container, #original-table {
+    overflow-x: auto;
+  }
+}
+</style>
 </head>
 <body>
   
