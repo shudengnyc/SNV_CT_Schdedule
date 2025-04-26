@@ -16,12 +16,35 @@
       background: linear-gradient(135deg, #f0f4ff, #e0ecff);
       color: #333;
     }
+    /* Mobile-friendly styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+        text-align: center;
+        margin: 0.5rem 0;
+      }
+    }
     .tab-buttons {
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 2rem;
+    }
+    /* Mobile tab buttons */
+    @media (max-width: 768px) {
+      .tab-buttons {
+        gap: 6px;
+        margin-bottom: 1rem;
+      }
+      .tab-buttons button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-width: 60px;
+      }
     }
     .tab-buttons button {
       padding: 14px 24px;
@@ -59,6 +82,13 @@
       padding-left: 8px;
       border-left: 4px solid #6366f1;
     }
+    /* Mobile date title */
+    @media (max-width: 768px) {
+      .date-title {
+        font-size: 1.2rem;
+        margin: 1rem 0 0.5rem;
+      }
+    }
     table {
       width: 100%;
       background: white;
@@ -69,9 +99,21 @@
       border-collapse: collapse;
       font-size: 1.2rem;
     }
+    /* Responsive tables for mobile */
+    @media (max-width: 768px) {
+      table {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+    }
     th, td {
       padding: 14px;
       text-align: center;
+    }
+    @media (max-width: 768px) {
+      th, td {
+        padding: 8px 4px;
+      }
     }
     th {
       background: #4f46e5;
@@ -89,6 +131,14 @@
       flex-direction: column;
       gap: 16px;
     }
+    /* Adjust buttons for mobile */
+    @media (max-width: 768px) {
+      .buttons-container {
+        bottom: 16px;
+        right: 16px;
+        gap: 12px;
+      }
+    }
     .action-button {
       width: 80px;
       height: 80px;
@@ -104,6 +154,13 @@
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
+    }
+    @media (max-width: 768px) {
+      .action-button {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
     }
     .action-button:hover {
       transform: scale(1.05);
@@ -139,6 +196,14 @@
       opacity: 0;
       transition: opacity 0.4s;
     }
+    @media (max-width: 768px) {
+      .copy-toast {
+        bottom: 85px;
+        right: 16px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+    }
     .plot-container {
       background: white;
       padding: 15px;
@@ -150,6 +215,14 @@
       overflow-y: visible;
       overflow-x: auto;
     }
+    /* Mobile-specific plot container adjustments */
+    @media (max-width: 768px) {
+      .plot-container {
+        padding: 8px;
+        min-height: 500px;
+        margin-bottom: 1.5rem;
+      }
+    }
     .view-toggle {
       display: flex;
       justify-content: center;
@@ -160,6 +233,12 @@
       background: #eef2ff;
       border: 1px solid #c7d2fe;
       cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .view-toggle button {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+      }
     }
     .view-toggle button.active {
       background: #c7d2fe;
@@ -183,6 +262,13 @@
       max-width: 90%;
       border: 1px solid #e2e8f0;
     }
+    @media (max-width: 768px) {
+      .location-legend {
+        padding: 8px;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+    }
     .legend-item {
       display: flex;
       align-items: center;
@@ -193,11 +279,24 @@
       background: #fff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+    @media (max-width: 768px) {
+      .legend-item {
+        font-size: 0.8rem;
+        padding: 3px 6px;
+      }
+    }
     .legend-color {
       width: 12px;
       height: 12px;
       border-radius: 3px;
       margin-right: 6px;
+    }
+    @media (max-width: 768px) {
+      .legend-color {
+        width: 10px;
+        height: 10px;
+        margin-right: 4px;
+      }
     }
     .axis-title {
       font-weight: 600;
@@ -206,14 +305,41 @@
       color: #4f46e5;
       margin: 5px 0;
     }
+    @media (max-width: 768px) {
+      .axis-title {
+        font-size: 0.9rem;
+        margin: 3px 0;
+      }
+    }
     .week-indicator {
       font-weight: bold;
       margin-left: 4px;
       color: #ff5722;
     }
+    /* Adjust plot size for mobile */
+    @media (max-width: 768px) {
+      #schedule-plot {
+        max-width: 100%;
+      }
+    }
+    /* Add this at the bottom to ensure it's applied */
+    @media (max-width: 768px) {
+      /* Fix horizontal scrolling issues on mobile */
+      .plot-container::-webkit-scrollbar {
+        height: 6px;
+      }
+      .plot-container::-webkit-scrollbar-thumb {
+        background-color: rgba(99, 102, 241, 0.5);
+        border-radius: 3px;
+      }
+      .plot-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
   </style>
 </head>
 <body>
+  <h1>SNV Lifetime Courts Schedule</h1>
   
   <div id="tab-buttons" class="tab-buttons"></div>
   
@@ -1018,6 +1144,18 @@ async function fetchAndRenderTable() {
       const padding = { top: 40, right: 20, bottom: 20, left: 200 }; // Further reduced bottom padding
       const canvasWidth = Math.max(plotContainer.clientWidth - 30, 1200); // Minimum width for higher resolution
       const rowHeight = 40; // Increased row height
+
+      // Check if we're on a mobile device
+      const isMobile = window.innerWidth <= 768;
+
+      // Adjust settings for mobile
+      if (isMobile) {
+        padding.left = 100; // Less space for labels on mobile
+        padding.right = 10;
+        padding.top = 30;
+        padding.bottom = 15;
+      }
+
       // Calculate the actual height needed based on the number of courts
       const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
       // Use a smaller minimum height to reduce empty space
@@ -1043,7 +1181,8 @@ async function fetchAndRenderTable() {
       
       // Draw time labels on bottom
       ctx.fillStyle = '#333';
-      ctx.font = 'bold 14px Arial'; // Larger font for better readability
+      // Smaller font on mobile
+      ctx.font = isMobile ? 'bold 10px Arial' : 'bold 14px Arial';
       ctx.textAlign = 'center';
       
       // Draw both top and bottom time axes
@@ -1053,8 +1192,10 @@ async function fetchAndRenderTable() {
           const displayHour = hour <= 12 ? hour : hour - 12;
           const ampm = hour < 12 ? 'AM' : 'PM';
           
-          // Draw time label
-          ctx.fillText(`${displayHour} ${ampm}`, x, yPosition);
+          // Draw time label - for mobile, only show every other hour to avoid crowding
+          if (!isMobile || hour % 2 === 0 || hour === startHour || hour === endHour) {
+            ctx.fillText(`${displayHour} ${ampm}`, x, yPosition);
+          }
           
           // Draw vertical grid line, dotted at 4 PM and 8 PM
           ctx.beginPath();
@@ -1096,9 +1237,19 @@ async function fetchAndRenderTable() {
         
         // Draw court label
         ctx.fillStyle = '#333';
-        ctx.font = '14px Arial'; // Larger font for better readability
+        ctx.font = isMobile ? '10px Arial' : '14px Arial'; // Smaller font on mobile
         ctx.textAlign = 'right';
-        ctx.fillText(court.label, padding.left - 10, y + 4);
+        
+        // For mobile, abbreviate the court label to save space
+        let displayLabel = court.label;
+        if (isMobile) {
+          // Abbreviate location names to save space
+          displayLabel = displayLabel.replace('Fremont High', 'FremontH');
+          displayLabel = displayLabel.replace('Washington', 'Wash');
+          displayLabel = displayLabel.replace('Ponderosa', 'Pond');
+        }
+        
+        ctx.fillText(displayLabel, padding.left - 5, y + 4);
         
         // Draw horizontal line for this court
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
@@ -1245,21 +1396,46 @@ async function fetchAndRenderTable() {
       plotToast.textContent = "Copying plot...";
       plotToast.style.opacity = 1;
       
+      // Detect if mobile
+      const isMobile = window.innerWidth <= 768;
+      
       // Use html2canvas to capture the canvas
       try {
         // Convert to blob and copy directly from the canvas (no need for html2canvas)
         canvas.toBlob(blob => {
           if (blob) {
-            // Create a ClipboardItem
-            const item = new ClipboardItem({ "image/png": blob });
-            navigator.clipboard.write([item]).then(() => {
-              plotToast.textContent = "Copied plot ✅";
-              setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-            }).catch(err => {
-              console.error("Could not copy image: ", err);
-              plotToast.textContent = "Copy failed ❌";
-              setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-            });
+            if (isMobile) {
+              // For mobile devices, offer the image for download or sharing
+              try {
+                // Create a temporary link to download the image
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tennis-courts-${currentTab.toLowerCase()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Show success message
+                plotToast.textContent = "Image saved ✅";
+                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+              } catch (err) {
+                console.error("Error creating downloadable image:", err);
+                // Fall back to clipboard copy
+                fallbackToCopy();
+              }
+            } else {
+              // Create a ClipboardItem
+              const item = new ClipboardItem({ "image/png": blob });
+              navigator.clipboard.write([item]).then(() => {
+                plotToast.textContent = "Copied plot ✅";
+                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+              }).catch(err => {
+                console.error("Could not copy image: ", err);
+                plotToast.textContent = "Copy failed ❌";
+                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+              });
+            }
           } else {
             console.error("Failed to create blob from canvas");
             plotToast.textContent = "Copy failed ❌";
@@ -1270,6 +1446,25 @@ async function fetchAndRenderTable() {
         console.error("Error copying canvas:", err);
         plotToast.textContent = "Copy failed ❌";
         setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+      }
+      
+      // Fallback function for mobile clipboard issues
+      function fallbackToCopy() {
+        try {
+          const item = new ClipboardItem({ "image/png": blob });
+          navigator.clipboard.write([item]).then(() => {
+            plotToast.textContent = "Copied plot ✅";
+            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+          }).catch(err => {
+            console.error("Fallback copy failed:", err);
+            plotToast.textContent = "Copy failed ❌";
+            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+          });
+        } catch(err) {
+          console.error("Fallback error:", err);
+          plotToast.textContent = "Copy failed ❌";
+          setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+        }
       }
     });
     
