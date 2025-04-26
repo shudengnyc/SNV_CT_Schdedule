@@ -79,11 +79,14 @@
     }
     table {
       width: 100%;
-      font-size: 1.8rem;}
+      font-size: 1.4rem;
+      border-radius: 16px;
+      overflow: hidden;
+    }
     th, td {
-      padding: 18px 24px;
+      padding: 14px 20px;
       text-align: center;
-      font-size: 1.8rem;}
+      font-size: 1.4rem;}
     th {
       background: #4f46e5;
       color: white;
@@ -114,16 +117,16 @@
   color: white;
   border: none;
   border-radius: 50%;
-  width: 140px;
-  height: 140px;
-  font-size: 4rem;
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease;
-}
+}}
     #copy-button:hover {
       background-color: #4338ca;
     }
@@ -133,21 +136,34 @@
   }
   .tab-buttons button {
     padding: 14px 22px;
-    font-size: 1.2rem;}
+    font-size: 1.4rem;
+  }
   .date-title {
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     margin-top: 2rem;
   }
   table {
-    font-size: 1.6rem;}
+    font-size: 1.8rem;
+  }
   th, td {
-    padding: 14px 18px;
-    font-size: 1.6rem;}
+    padding: 18px 24px;
+    font-size: 1.8rem;
+  }
   #copy-button {
     width: 140px;
     height: 140px;
     font-size: 4rem;
   }
+  #copy-toast {
+    bottom: 80px;
+    right: 15px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+  #table-container, #original-table {
+    overflow-x: auto;
+  }
+}}
   #copy-toast {
     bottom: 80px;
     right: 15px;
