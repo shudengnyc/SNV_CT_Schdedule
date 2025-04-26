@@ -2,31 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SNV Lifetime Courts Schedule</title>
-  <style>
+  <!-- Add Chart.js for plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Add html2canvas for capturing plot as image -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
     body {
-      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 2rem;
-      background: linear-gradient(135deg, #f0f4f8, #e8f0fe);
+      background: linear-gradient(135deg, #f0f4ff, #e0ecff);
       color: #333;
-      min-height: 100vh;
-    }
-    h1 {
-      text-align: center;
-      color: #004aad;
-      font-size: 2.8rem;
-      margin-bottom: 0.5rem;
-      font-weight: 700;
-      border-bottom: 3px solid #4f46e5;
-      display: inline-block;
-      padding-bottom: 0.2rem;
-    }
-    p {
-      text-align: center;
-      font-size: 1.2rem;
-      color: #555;
-      margin-bottom: 2rem;
     }
     .tab-buttons {
       display: flex;
@@ -36,159 +24,514 @@
       margin-bottom: 2rem;
     }
     .tab-buttons button {
-      padding: 16px 28px;
-      background: #e0e7ff;
-      color: #333;
+      padding: 14px 24px;
+      background: #c7d2fe;
       border: none;
       border-radius: 30px;
-      cursor: pointer;
       font-weight: 600;
-      font-size: 1.4rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
-    .tab-buttons button:hover {
-      background: #c7d2fe;
-      transform: translateY(-2px);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.4s ease;
     }
     .tab-buttons button.active {
-      background-color: #4f46e5;
+      background: #6366f1;
       color: white;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+    }
+    .tab-buttons button:hover {
+      background: #a5b4fc;
+      transform: scale(1.05);
     }
     .day-section {
       display: none;
-      animation: fadein 0.5s;
+      animation: fadeSlide 0.5s ease;
     }
     .day-section.active {
       display: block;
     }
-    @keyframes fadein {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .date-title {
-      margin-top: 2.5rem;
       font-size: 1.6rem;
-      color: #1e3a8a;
-      text-align: left;
-      border-left: 5px solid #4f46e5;
-      padding-left: 0.8rem;
-      margin-bottom: 1.2rem;
-      text-transform: lowercase;
-      font-variant: small-caps;
+      color: #4f46e5;
+      margin: 2rem 0 1rem;
+      padding-left: 8px;
+      border-left: 4px solid #6366f1;
     }
     table {
       width: 100%;
-      font-size: 1.4rem;
-      border-radius: 16px;
+      background: white;
+      border-radius: 12px;
       overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 3rem;
+      border-collapse: collapse;
+      font-size: 1.2rem;
     }
     th, td {
-      padding: 14px 20px;
+      padding: 14px;
       text-align: center;
-      font-size: 1.4rem;}
+    }
     th {
       background: #4f46e5;
       color: white;
-      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    td {
-      background-color: #ffffff;
     }
     tr:nth-child(even) td {
-      background-color: #f0f4ff;
+      background-color: #eef2ff;
     }
-    tr:hover td {
-      background-color: #e0e7ff;
-      transition: background 0.3s ease;
+    .buttons-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    #table-container {
-      max-width: 1200px;
-      margin: 0 auto;
+    .action-button {
+      width: 80px;
+      height: 80px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .action-button:hover {
+      transform: scale(1.05);
+      background: #4f46e5;
+    }
+    .action-button::after {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform 0.4s, opacity 0.4s;
+    }
+    .action-button:active::after {
+      transform: scale(2);
+      opacity: 1;
+      transition: 0s;
+    }
+    .copy-toast {
+      position: fixed;
+      bottom: 110px;
+      right: 24px;
+      background: rgba(79,70,229,0.9);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .plot-container {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      margin-bottom: 3rem;
+      height: auto;
+      min-height: 700px;
+      overflow-y: visible;
       overflow-x: auto;
     }
-    #copy-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  font-size: 2rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
-}}
-    #copy-button:hover {
-      background-color: #4338ca;
+    .view-toggle {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
     }
-  @media (max-width: 768px) {
-  body {
-    padding: 1rem;
-  }
-  .tab-buttons button {
-    padding: 14px 22px;
-    font-size: 1.4rem;
-  }
-  .date-title {
-    font-size: 1.6rem;
-    margin-top: 2rem;
-  }
-  table {
-    font-size: 1.8rem;
-  }
-  th, td {
-    padding: 18px 24px;
-    font-size: 1.8rem;
-  }
-  #copy-button {
-    width: 140px;
-    height: 140px;
-    font-size: 4rem;
-  }
-  #copy-toast {
-    bottom: 80px;
-    right: 15px;
-    font-size: 0.9rem;
-    padding: 8px 16px;
-  }
-  #table-container, #original-table {
-    overflow-x: auto;
-  }
-}}
-  #copy-toast {
-    bottom: 80px;
-    right: 15px;
-    font-size: 0.9rem;
-    padding: 8px 16px;
-  }
-  #table-container, #original-table {
-    overflow-x: auto;
-  }
-}
-</style>
+    .view-toggle button {
+      padding: 8px 16px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      cursor: pointer;
+    }
+    .view-toggle button.active {
+      background: #c7d2fe;
+      font-weight: bold;
+    }
+    .view-toggle button:first-child {
+      border-radius: 20px 0 0 20px;
+    }
+    .view-toggle button:last-child {
+      border-radius: 0 20px 20px 0;
+    }
+    .location-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 0 auto 15px;
+      justify-content: center;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      max-width: 90%;
+      border: 1px solid #e2e8f0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 6px;
+    }
+    .axis-title {
+      font-weight: 600;
+      font-size: 1rem;
+      text-align: center;
+      color: #4f46e5;
+      margin: 5px 0;
+    }
+    .week-indicator {
+      font-weight: bold;
+      margin-left: 4px;
+      color: #ff5722;
+    }
+  </style>
 </head>
 <body>
   
   <div id="tab-buttons" class="tab-buttons"></div>
   
+  <div class="view-toggle">
+    <button id="table-view-btn" class="active">Table View</button>
+    <button id="plot-view-btn">Schedule Plot</button>
+  </div>
+  
   <div id="table-container">Loading table...</div>
+  <div id="plot-container" class="plot-container" style="display:none;">
+    <div id="location-legend" class="location-legend"></div>
+    <canvas id="schedule-plot"></canvas>
+  </div>
   <div id="original-table" style="display:none;"></div>
 <div style="text-align:center; margin: 2rem 0 0 0;">
-  <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" style="background:#4f46e5; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Show Original Data</a>
+  <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener" style="background:#4f46e5; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Show Original Data</a>
 </div>
-  <button id="copy-button" title="Copy Current Tab">📋</button>
+  <div class="buttons-container">
+    <button id="copy-button" class="action-button" title="Copy Current Tab">📋</button>
+    <button id="copy-plot-button" class="action-button" title="Copy Plot as Image" style="display:none;">📊</button>
+  </div>
 
 <script>
 const csvUrl = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/export?format=csv";
+
+// Helper function to process court numbers
+function processCourt(courtStr) {
+  if (!courtStr) return '';
+  
+  // Remove any non-essential characters, preserving numbers, commas, and hyphens
+  const cleaned = courtStr.replace(/[^0-9,\-]/g, '').trim();
+  if (!cleaned) return 'Ct1'; // Default to court 1 if no valid data
+  
+  // Process the cleaned string to extract all court numbers
+  const courts = [];
+  
+  // Split by commas first
+  const segments = cleaned.split(',').map(s => s.trim()).filter(s => s);
+  
+  segments.forEach(segment => {
+    // Check if segment contains a range (e.g., "1-5")
+    if (segment.includes('-')) {
+      const [start, end] = segment.split('-').map(n => parseInt(n.trim()));
+      // Validate that we have valid start/end numbers
+      if (!isNaN(start) && !isNaN(end) && start <= end) {
+        // Generate all numbers in the range
+        for (let i = start; i <= end; i++) {
+          courts.push(i.toString());
+        }
+      } else {
+        // Invalid range, just add as is
+        courts.push(segment);
+      }
+    } 
+    // Check if segment is a multi-digit number that should be split (like "123")
+    else if (segment.length > 1 && /^[1-9]+$/.test(segment)) {
+      // Split into individual digits
+      segment.split('').forEach(digit => courts.push(digit));
+    }
+    else {
+      // Regular number, add as is
+      courts.push(segment);
+    }
+  });
+  
+  // Return unique courts with "Ct" prefix
+  return courts.map(c => `Ct${c}`);
+}
+
+// Helper function to format courts compactly for display
+function compactCourtsDisplay(courts) {
+  if (courts.length <= 1) return courts.join(', ');
+  
+  // Extract court numbers for processing
+  const numbers = courts.map(court => {
+    const match = court.match(/(\d+)/);
+    return match ? parseInt(match[1]) : null;
+  }).filter(num => num !== null);
+  
+  if (numbers.length !== courts.length) {
+    // Not all courts have numbers, just join them as is
+    return courts.join(', ');
+  }
+  
+  // Sort numbers
+  numbers.sort((a, b) => a - b);
+  
+  // Find ranges
+  const ranges = [];
+  let rangeStart = numbers[0];
+  let rangeEnd = numbers[0];
+  
+  for (let i = 1; i < numbers.length; i++) {
+    if (numbers[i] === rangeEnd + 1) {
+      // Continue the range
+      rangeEnd = numbers[i];
+    } else {
+      // End the current range and start a new one
+      if (rangeStart === rangeEnd) {
+        ranges.push(`Ct${rangeStart}`);
+      } else {
+        ranges.push(`Ct${rangeStart}-${rangeEnd}`);
+      }
+      rangeStart = rangeEnd = numbers[i];
+    }
+  }
+  
+  // Add the last range
+  if (rangeStart === rangeEnd) {
+    ranges.push(`Ct${rangeStart}`);
+  } else {
+    ranges.push(`Ct${rangeStart}-${rangeEnd}`);
+  }
+  
+  return ranges.join(', ');
+}
+
+// Helper function to clean and standardize a single time
+function cleanSingleTime(timeStr) {
+  if (!timeStr) return '';
+  
+  // Remove all non-time characters except numbers, colon, and AM/PM
+  timeStr = timeStr.replace(/[^0-9:APMapm]/g, '');
+  
+  // Extract time components
+  let [time, period] = timeStr.split(/([AP]M)/i);
+  if (!time) return '';
+  
+  // Ensure minutes exist
+  if (!time.includes(':')) {
+    time = time + ':00';
+  }
+  
+  // Parse hours and minutes
+  let [hours, minutes] = time.split(':').map(num => parseInt(num));
+  
+  // Validate hours and minutes are reasonable numbers
+  if (isNaN(hours) || isNaN(minutes)) return '';
+  if (hours < 0 || hours > 23) return '';
+  if (minutes < 0 || minutes > 59) return '';
+  
+  // Clean up period
+  period = period ? period.toUpperCase() : '';
+  
+  // Convert to 24-hour for validation
+  let hour24 = hours;
+  if (period === 'PM' && hours !== 12) hour24 += 12;
+  if (period === 'AM' && hours === 12) hour24 = 0;
+  
+  // If no period specified, assume AM for times before noon
+  if (!period) {
+    period = hour24 < 12 ? 'AM' : 'PM';
+  }
+  
+  // Apply tennis court hours (7 AM - 11 PM)
+  if (hour24 < 7) {
+    // If before 7 AM, assume it should be PM
+    hour24 += 12;
+    period = 'PM';
+  } else if (hour24 >= 23) {
+    // If after 11 PM, assume it should be AM
+    hour24 -= 12;
+    period = 'AM';
+  }
+  
+  // Convert back to 12-hour format
+  hours = hour24 > 12 ? hour24 - 12 : hour24;
+  if (hours === 0) hours = 12;
+  
+  // Format minutes
+  minutes = minutes.toString().padStart(2, '0');
+  
+  return `${hours}:${minutes}${period}`;
+}
+
+// Helper function to convert 24-hour time to 12-hour format with period
+function format24to12Hour(hour24) {
+  let period = 'AM';
+  let hour12 = hour24;
+  
+  if (hour24 >= 12) {
+    period = 'PM';
+    if (hour24 > 12) hour12 = hour24 - 12;
+  }
+  if (hour12 === 0) hour12 = 12;
+  
+  return { hour: hour12, period };
+}
+
+// Process a single time range (e.g. "1:30pm-3:30pm")
+function processTimeRange(timeRange) {
+  if (!timeRange) return '';
+  
+  // Clean input and convert semicolons to colons first
+  timeRange = timeRange.trim().replace(/;/g, ':');
+  
+  // Check if it's a time range with hyphen
+  const parts = timeRange.split('-');
+  
+  // Process single time
+  if (parts.length === 1) {
+    return cleanSingleTime(parts[0]);
+  }
+  
+  // Process time range
+  if (parts.length === 2) {
+    const startTime = cleanSingleTime(parts[0]);
+    const endTime = cleanSingleTime(parts[1]);
+    
+    if (!startTime || !endTime) return '';
+    
+    // Parse times for range validation
+    const startMatch = startTime.match(/(\d+):(\d+)([AP]M)/);
+    const endMatch = endTime.match(/(\d+):(\d+)([AP]M)/);
+    
+    if (!startMatch || !endMatch) return '';
+    
+    const [, startHour, startMinutes, startPeriod] = startMatch;
+    const [, endHour, endMinutes, endPeriod] = endMatch;
+    
+    // Convert to 24-hour for range calculation
+    let startHour24 = parseInt(startHour);
+    let endHour24 = parseInt(endHour);
+    
+    if (startPeriod === 'PM' && startHour24 !== 12) startHour24 += 12;
+    if (endPeriod === 'PM' && endHour24 !== 12) endHour24 += 12;
+    if (startPeriod === 'AM' && startHour24 === 12) startHour24 = 0;
+    if (endPeriod === 'AM' && endHour24 === 12) endHour24 = 0;
+    
+    // Calculate range length
+    let rangeLength = endHour24 - startHour24;
+    if (rangeLength < 0) rangeLength += 24;
+    
+    // If range is invalid (> 8 hours or end before start), adjust end time
+    if (rangeLength > 8 || (startPeriod === endPeriod && endHour24 < startHour24)) {
+      // Calculate new end time (4 hours after start)
+      let newEndHour24 = startHour24 + 4;  // Changed from 8 to 4 hours
+      if (newEndHour24 >= 24) newEndHour24 -= 24;
+      
+      // Convert back to 12-hour format
+      const { hour: newEndHour, period: newEndPeriod } = format24to12Hour(newEndHour24);
+      
+      // Keep original minutes
+      return `${startTime}-${newEndHour}:${endMinutes}${newEndPeriod}`;
+    }
+    
+    return `${startTime}-${endTime}`;
+  }
+  
+  return '';
+}
+
+// Main time processing function for multiple time ranges
+function processTime(timeStr) {
+  if (!timeStr) return '';
+  
+  // Split by commas for multiple time ranges
+  // We'll use a regex to properly split by commas that aren't part of time values
+  const timeRanges = timeStr.split(/,\s*/).filter(range => range.trim());
+  
+  // Process each time range and filter out empty results
+  const processedRanges = timeRanges
+    .map(range => processTimeRange(range.trim()))
+    .filter(range => range);
+  
+  // Join back with commas
+  return processedRanges.join(', ');
+}
+
+// Helper function to parse time string into hours (for plotting)
+function parseTimeToHours(timeStr) {
+  if (!timeStr) return null;
+  
+  const match = timeStr.match(/(\d+):(\d+)([AP]M)/);
+  if (!match) return null;
+  
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours);
+  minutes = parseInt(minutes);
+  
+  // Convert to 24-hour format
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  
+  // Return as decimal hours
+  return hours + (minutes / 60);
+}
+
+// Extract time ranges for plotting
+function extractTimeRanges(timeStr) {
+  if (!timeStr) return [];
+  
+  const ranges = [];
+  const timeRanges = timeStr.split(/,\s*/).filter(range => range.trim());
+  
+  for (const range of timeRanges) {
+    const parts = range.split('-');
+    if (parts.length === 2) {
+      const start = parseTimeToHours(parts[0]);
+      const end = parseTimeToHours(parts[1]);
+      
+      if (start !== null && end !== null) {
+        ranges.push({ start, end });
+      }
+    }
+  }
+  
+  return ranges;
+}
+
+// Helper function to get week number
+function getWeekNumber(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
 
 async function fetchAndRenderTable() {
   const expectedDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -203,29 +546,67 @@ async function fetchAndRenderTable() {
     const response = await fetch(csvUrl);
     const csvText = await response.text();
 
-    let rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
-    let cleaned = [];
+    // Parse CSV properly using a more robust approach
+    const parseCSV = (csv) => {
+      const lines = csv.trim().split(/\r?\n/);
+      return lines.map(line => {
+        // Split by comma but respect quotes
+        const result = [];
+        let cell = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(cell.trim());
+            cell = '';
+          } else {
+            cell += char;
+          }
+        }
+        
+        // Add the last cell
+        result.push(cell.trim());
+        return result;
+      });
+    };
+    
+    const rows = parseCSV(csvText);
+    let rawData = [];
 
     let lastDay = "";
     let lastDate = "";
     let currentCourt = "";
 
+    // First pass: collect raw data
     for (let row of rows) {
+      // Ensure we have enough columns
       if (row.length < 5) continue;
-      let [V1, V2, V3, V4, V5, V6] = row.map(cell => cell.trim());
+      
+      // Extract values and trim
+      let [V1, V2, V3, V4, V5, V6] = row.map(cell => cell ? cell.trim() : '');
+      
+      // Skip header row
       if (V1 === "Day of the Week") continue;
 
+      // Identify location rows
       if (V1 && !V2 && !V3 && !V5 && !expectedDays.includes(V1)) {
         currentCourt = V1.replace(/ Park| School|Sunnyvale Middle School \(|\)/g, "").trim();
         continue;
       }
 
+      // Fill in missing values from previous rows
       if (!V1) V1 = lastDay; else lastDay = V1;
       if (!V2) V2 = lastDate; else lastDate = V2;
 
+      // Skip non-valid days and empty court numbers
       if (!expectedDays.includes(V1)) continue;
       if (!V5) continue;
 
+      // Process date format
       let d = V2;
       let parts = d.split("/");
       if (parts.length === 2) {
@@ -234,26 +615,110 @@ async function fetchAndRenderTable() {
         d = `${parts[0]}/${parts[1]}/20${parts[2]}`;
       }
       let dateObj = new Date(d);
-
-      cleaned.push({
+      
+      // Add to raw data
+      rawData.push({
         Day: V1,
         Date: d,
         DateObj: dateObj,
-        Time: V3,
-        Court: `Ct${V5}`,
+        RawTime: V3,
+        Time: processTime(V3),
+        RawCourt: V5,
+        CourtNumbers: processCourt(V5),
         Location: currentCourt
       });
     }
-
-    cleaned.sort((a, b) => {
-      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day]) return weekdayOrder[a.Day] - weekdayOrder[b.Day];
-      if (b.DateObj - a.DateObj !== 0) return b.DateObj - a.DateObj;
-      if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
-      return a.Court.localeCompare(b.Court);
+    
+    // Second pass: expand multi-court entries and process time ranges
+    let cleaned = [];
+    
+    // Process each raw data entry
+    rawData.forEach(entry => {
+      // Get the processed court numbers (already an array)
+      const courtNumbers = entry.CourtNumbers;
+      
+      // If it's an array with multiple courts
+      if (Array.isArray(courtNumbers)) {
+        // Create a separate record for each court
+        courtNumbers.forEach(court => {
+          if (court) {
+            cleaned.push({
+              Day: entry.Day,
+              Date: entry.Date,
+              DateObj: entry.DateObj,
+              Time: entry.Time,
+              Court: court,
+              Location: entry.Location
+            });
+          }
+        });
+      } else {
+        // Single court, add as is
+        cleaned.push({
+          Day: entry.Day,
+          Date: entry.Date,
+          DateObj: entry.DateObj,
+          Time: entry.Time,
+          Court: courtNumbers,
+          Location: entry.Location
+        });
+      }
     });
 
+    console.log('Processed data sample:', cleaned.slice(0, 10));
+
+    // Sort by day, date, location, court
+    cleaned.sort((a, b) => {
+      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day]) 
+        return weekdayOrder[a.Day] - weekdayOrder[b.Day];
+      if (b.DateObj - a.DateObj !== 0) 
+        return b.DateObj - a.DateObj;
+      if (a.Location !== b.Location) 
+        return a.Location.localeCompare(b.Location);
+        
+      // Extract court numbers for numeric comparison
+      const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
+      const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
+      return aNum - bNum;
+    });
+
+    // Third pass: Combine times for the same court on the same date
+    const combinedData = {};
+    
+    cleaned.forEach(item => {
+      const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}`;
+      
+      if (!combinedData[key]) {
+        combinedData[key] = {
+          ...item,
+          Times: [item.Time]
+        };
+      } else {
+        // Add time to existing entry if not already included
+        if (!combinedData[key].Times.includes(item.Time)) {
+          combinedData[key].Times.push(item.Time);
+        }
+      }
+    });
+    
+    // Convert back to array and set combined time string
+    const finalData = Object.values(combinedData).map(item => ({
+      ...item,
+      Time: item.Times.join(', ')
+    }));
+    
+    // Debug the final dataset
+    console.log('Final court data:', finalData.slice(0, 10).map(item => ({
+      Day: item.Day,
+      Date: item.Date,
+      Location: item.Location,
+      Court: item.Court,
+      Time: item.Time
+    })));
+
+    // Group for display
     const grouped = {};
-    cleaned.forEach(row => {
+    finalData.forEach(row => {
       if (!grouped[row.Day]) grouped[row.Day] = {};
       if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
       grouped[row.Day][row.Date].push(row);
@@ -262,6 +727,9 @@ async function fetchAndRenderTable() {
     container.innerHTML = "";
     tabs.innerHTML = "";
 
+    // Generate plot data for current data
+    let allPlotData = {};
+    
     for (const day of expectedDays) {
       if (grouped[day]) {
         const btn = document.createElement("button");
@@ -273,6 +741,9 @@ async function fetchAndRenderTable() {
         section.id = `section-${day}`;
         section.className = "day-section";
 
+        // Initialize plot data for this day
+        allPlotData[day] = [];
+
         for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
           const dateTitle = document.createElement("div");
           dateTitle.className = "date-title";
@@ -283,7 +754,7 @@ async function fetchAndRenderTable() {
           const thead = document.createElement("thead");
           const headRow = document.createElement("tr");
 
-          ["Location", "Court", "Time"].forEach(header => {
+          ["Location", "Courts", "Time"].forEach(header => {
             const th = document.createElement("th");
             th.textContent = header;
             headRow.appendChild(th);
@@ -293,15 +764,75 @@ async function fetchAndRenderTable() {
           table.appendChild(thead);
 
           const tbody = document.createElement("tbody");
-          grouped[day][date].forEach(row => {
-            const tr = document.createElement("tr");
-            [row.Location, row.Court, row.Time].forEach(cell => {
-              const td = document.createElement("td");
-              td.textContent = cell;
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
+          
+          // Group by location and time
+          const locationTimeGroups = {};
+          
+          // Sort entries by location and court number
+          grouped[day][date].sort((a, b) => {
+            if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
+            const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
+            const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
+            return aNum - bNum;
+          }).forEach(row => {
+            const key = `${row.Location}|${row.Time}`;
+            
+            if (!locationTimeGroups[key]) {
+              locationTimeGroups[key] = {
+                location: row.Location,
+                time: row.Time,
+                courts: [row.Court]
+              };
+            } else {
+              // Add court if not already included
+              if (!locationTimeGroups[key].courts.includes(row.Court)) {
+                locationTimeGroups[key].courts.push(row.Court);
+              }
+            }
           });
+          
+          // Sort by location
+          Object.values(locationTimeGroups)
+            .sort((a, b) => a.location.localeCompare(b.location))
+            .forEach(group => {
+              const tr = document.createElement("tr");
+              
+              // Sort and format the courts for display
+              const sortedCourts = group.courts.sort((a, b) => {
+                const aNum = parseInt(a.replace(/\D/g, '')) || 0;
+                const bNum = parseInt(b.replace(/\D/g, '')) || 0;
+                return aNum - bNum;
+              });
+              
+              // Format courts compactly when possible
+              const formattedCourts = compactCourtsDisplay(sortedCourts);
+              
+              [group.location, formattedCourts, group.time].forEach(cell => {
+                const td = document.createElement("td");
+                td.textContent = cell;
+                tr.appendChild(td);
+              });
+              
+              tbody.appendChild(tr);
+              
+              // Separate each court to own entry for plot visualization
+              const timeRanges = extractTimeRanges(group.time);
+              group.courts.forEach(court => {
+                timeRanges.forEach(range => {
+                  if (!allPlotData[day]) allPlotData[day] = [];
+                  
+                  // Add one data point per court per time range
+                  allPlotData[day].push({
+                    location: group.location,
+                    court: court,
+                    date: date,
+                    startTime: range.start,
+                    endTime: range.end
+                  });
+                });
+              });
+            });
+          
           table.appendChild(tbody);
           section.appendChild(table);
         }
@@ -322,7 +853,7 @@ async function fetchAndRenderTable() {
     theadOrig.appendChild(headRowOrig);
     tableOrig.appendChild(theadOrig);
     const tbodyOrig = document.createElement("tbody");
-    cleaned.forEach(row => {
+    finalData.forEach(row => {
       const tr = document.createElement("tr");
       [row.Day, row.Date, row.Time, row.Court, row.Location].forEach(cell => {
         const td = document.createElement("td");
@@ -335,6 +866,294 @@ async function fetchAndRenderTable() {
     originalTable.appendChild(tableOrig);
 
     let currentTab = "";
+    
+    // Create plot for schedule visualization
+    function createPlot(day) {
+      if (!day) return;
+      
+      const plotContainer = document.getElementById('plot-container');
+      const legendContainer = document.getElementById('location-legend');
+      const canvas = document.getElementById('schedule-plot');
+      const ctx = canvas.getContext('2d');
+      
+      // Clear any existing content
+      legendContainer.innerHTML = '';
+      
+      // Extract all visible schedule entries from the table
+      const activeSection = document.getElementById(`section-${day}`);
+      if (!activeSection) {
+        console.error("Could not find section for day:", day);
+        return;
+      }
+      
+      // Get all court schedule data from the visible table
+      const courtData = [];
+      const courts = new Map();
+      
+      // Extract all dates and their tables
+      const dateTitles = activeSection.querySelectorAll(".date-title");
+      
+      dateTitles.forEach(dateTitle => {
+        const date = dateTitle.textContent.trim();
+        
+        // Get the table following this date title
+        const table = dateTitle.nextElementSibling;
+        if (!table || table.tagName !== "TABLE") return;
+        
+        // Get all rows in the table
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+          const cells = row.querySelectorAll("td");
+          if (cells.length !== 3) return;
+          
+          const location = cells[0].textContent.trim();
+          const courtsText = cells[1].textContent.trim();
+          const timeText = cells[2].textContent.trim();
+          
+          // Parse individual courts
+          const individualCourts = [];
+          
+          // Handle court ranges like "Ct1-3"
+          if (courtsText.includes("-")) {
+            const match = courtsText.match(/Ct(\d+)-(\d+)/);
+            if (match) {
+              const start = parseInt(match[1]);
+              const end = parseInt(match[2]);
+              for (let i = start; i <= end; i++) {
+                individualCourts.push(`Ct${i}`);
+              }
+            } else {
+              individualCourts.push(courtsText);
+            }
+          } else if (courtsText.includes(",")) {
+            // Handle comma-separated courts
+            courtsText.split(",").forEach(c => {
+              individualCourts.push(c.trim());
+            });
+          } else {
+            // Single court
+            individualCourts.push(courtsText);
+          }
+          
+          // Parse time ranges
+          const timeRanges = extractTimeRanges(timeText);
+          
+          // Add data for each court and time range
+          individualCourts.forEach(court => {
+            const courtId = `${location}-${court}`;
+            
+            // Store the court if it's not already in our map
+            if (!courts.has(courtId)) {
+              courts.set(courtId, {
+                id: courtId,
+                location: location,
+                court: court,
+                label: `${location} - ${court}`,
+                timeRanges: []
+              });
+            }
+            
+            // Add all time ranges for this court
+            timeRanges.forEach(range => {
+              courts.get(courtId).timeRanges.push({
+                date: date,
+                startTime: range.start,
+                endTime: range.end
+              });
+            });
+          });
+        });
+      });
+      
+      // Convert to array and sort by location and court number
+      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
+        if (a.location !== b.location) {
+          return a.location.localeCompare(b.location);
+        }
+        
+        // Extract and compare court numbers
+        const aMatch = a.court.match(/(\d+)/);
+        const bMatch = b.court.match(/(\d+)/);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+        return aNum - bNum;
+      });
+      
+      // Generate color map for locations
+      const locations = [...new Set(sortedCourts.map(c => c.location))];
+      const colorPalette = [
+        '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', 
+        '#0284c7', '#9333ea', '#0891b2', '#ca8a04', '#be185d',
+        '#4338ca', '#15803d', '#b91c1c', '#4f46e5', '#0f766e'
+      ];
+      
+      const colorMap = {};
+      locations.forEach((loc, i) => {
+        colorMap[loc] = colorPalette[i % colorPalette.length];
+      });
+      
+      // Create legend
+      const legendTitle = document.createElement('div');
+      legendTitle.className = 'axis-title';
+      legendTitle.textContent = 'Court Locations';
+      legendContainer.appendChild(legendTitle);
+      
+      locations.forEach(location => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = colorMap[location];
+        
+        const label = document.createElement('span');
+        label.textContent = location;
+        
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendContainer.appendChild(legendItem);
+      });
+      
+      // Set canvas size
+      const padding = { top: 40, right: 20, bottom: 20, left: 200 }; // Further reduced bottom padding
+      const canvasWidth = Math.max(plotContainer.clientWidth - 30, 1200); // Minimum width for higher resolution
+      const rowHeight = 40; // Increased row height
+      // Calculate the actual height needed based on the number of courts
+      const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
+      // Use a smaller minimum height to reduce empty space
+      const canvasHeight = Math.max(calculatedHeight, 650);
+      
+      // Set canvas to higher resolution for better image quality
+      const pixelRatio = window.devicePixelRatio || 2; // Use at least 2x resolution
+      canvas.width = canvasWidth * pixelRatio;
+      canvas.height = canvasHeight * pixelRatio;
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+      ctx.scale(pixelRatio, pixelRatio);
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+      
+      // Draw time axis
+      const startHour = 6; // 6 AM
+      const endHour = 23; // 11 PM
+      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
+      
+      // Draw time labels on bottom
+      ctx.fillStyle = '#333';
+      ctx.font = 'bold 14px Arial'; // Larger font for better readability
+      ctx.textAlign = 'center';
+      
+      // Draw both top and bottom time axes
+      const drawTimeAxis = (yPosition, isTop) => {
+        for (let hour = startHour; hour <= endHour; hour++) {
+          const x = padding.left + (hour - startHour) * hourWidth;
+          const displayHour = hour <= 12 ? hour : hour - 12;
+          const ampm = hour < 12 ? 'AM' : 'PM';
+          
+          // Draw time label
+          ctx.fillText(`${displayHour} ${ampm}`, x, yPosition);
+          
+          // Draw vertical grid line, dotted at 4 PM and 8 PM
+          ctx.beginPath();
+          if (hour === 16 || hour === 20) {
+            ctx.setLineDash([4, 4]);           // Dotted style
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+          } else {
+            ctx.setLineDash([]);               // Solid style
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+          }
+          
+          // Draw grid lines full height for all hours
+          ctx.moveTo(x, padding.top);
+          ctx.lineTo(x, canvasHeight - padding.bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);                 // Reset dash style
+        }
+        
+        // Draw horizontal axis line
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 1;
+        // Position the axis line closer to the labels
+        const lineOffset = isTop ? 15 : -15;
+        ctx.moveTo(padding.left, yPosition + lineOffset);
+        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      };
+      
+      // Draw time axes at top and bottom
+      // Move bottom axis closer to the last row
+      drawTimeAxis(canvasHeight - 10, false); // Position closer to bottom
+      drawTimeAxis(padding.top / 2, true);
+      
+      // Draw court names and time bars
+      sortedCourts.forEach((court, index) => {
+        const y = padding.top + index * rowHeight + rowHeight / 2;
+        
+        // Draw court label
+        ctx.fillStyle = '#333';
+        ctx.font = '14px Arial'; // Larger font for better readability
+        ctx.textAlign = 'right';
+        ctx.fillText(court.label, padding.left - 10, y + 4);
+        
+        // Draw horizontal line for this court
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y + rowHeight / 2);
+        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2);
+        ctx.stroke();
+        
+        // Draw time ranges for this court
+        court.timeRanges.forEach(range => {
+          const startX = padding.left + (range.startTime - startHour) * hourWidth;
+          const endX = padding.left + (range.endTime - startHour) * hourWidth;
+          const width = endX - startX;
+          
+          // Draw time bar
+          ctx.fillStyle = colorMap[court.location];
+          const barHeight = rowHeight - 14; // Adjusted for larger row height
+          
+          // Draw rounded rectangle
+          const radius = barHeight / 2; // Corner radius
+          
+          // Make sure the radius isn't too large for the width
+          const effectiveRadius = Math.min(radius, width / 2);
+          
+          ctx.beginPath();
+          // Top-left corner
+          ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
+          // Top-right corner (with arc)
+          ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
+          ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
+          // Bottom-right corner (with arc)
+          ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
+          ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
+          // Bottom-left corner (with arc)
+          ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
+          ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
+          // Top-left corner (with arc)
+          ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
+          ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
+          
+          ctx.closePath();
+          ctx.fill();
+          
+          // Draw border with rounded corners
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // Darker border for better visibility
+          ctx.stroke();
+        });
+      });
+      
+      // Draw time axis title
+      const timeAxisTitle = document.createElement('div');
+      timeAxisTitle.className = 'axis-title';
+      timeAxisTitle.textContent = '';
+      legendContainer.appendChild(timeAxisTitle);
+    }
 
     function switchTab(day) {
       document.querySelectorAll('.day-section').forEach(sec => sec.classList.remove('active'));
@@ -343,36 +1162,137 @@ async function fetchAndRenderTable() {
       Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
       currentTab = day;
       container.style.display = "block";
-originalTable.style.display = "none";
+      originalTable.style.display = "none";
+      
+      // Update plot for current day if plot view is active
+      if (document.getElementById('plot-view-btn').classList.contains('active')) {
+        createPlot(day);
+      }
     }
 
+    // Improved copy function for better formatting
     document.getElementById("copy-button").addEventListener("click", () => {
       if (!currentTab) return;
       const activeSection = document.getElementById(`section-${currentTab}`);
       if (!activeSection) return;
       const dateBlocks = activeSection.querySelectorAll(".date-title");
       let text = "";
+      
       dateBlocks.forEach(dateTitle => {
         const dateText = dateTitle.textContent.trim();
-        text += `Day: ${currentTab}\nDate: ${dateText}\n\n`;
+        text += `${currentTab} ${dateText}\n`;
+        
         const table = dateTitle.nextElementSibling;
         if (table) {
-          const rows = table.querySelectorAll("tr");
+          // Get all court data grouped by location
+          const locationData = {};
+          const rows = table.querySelectorAll("tbody tr");
+          
           rows.forEach(row => {
-            let rowText = Array.from(row.querySelectorAll("th, td")).map(cell => cell.textContent.trim()).join("\t");
-            text += rowText + "\n";
+            const cells = row.querySelectorAll("td");
+            const location = cells[0].textContent.trim();
+            const court = cells[1].textContent.trim();
+            const time = cells[2].textContent.trim();
+            
+            if (!locationData[location]) {
+              locationData[location] = [];
+            }
+            
+            locationData[location].push({ court, time });
           });
-          text += "\n";
+          
+          // Output in a concise format
+          for (const location in locationData) {
+            text += `${location}:\n`;
+            
+            // Group by time when possible
+            const timeGroups = {};
+            locationData[location].forEach(item => {
+              if (!timeGroups[item.time]) {
+                timeGroups[item.time] = [];
+              }
+              timeGroups[item.time].push(item.court);
+            });
+            
+            for (const time in timeGroups) {
+              const courts = timeGroups[time];
+              // If multiple consecutive courts, format as a range
+              text += `  ${time} - ${courts.join(', ')}\n`;
+            }
+            
+            text += '\n';
+          }
         }
       });
+      
       navigator.clipboard.writeText(text).then(() => {
-        const toast = document.getElementById("copy-toast");
-        toast.style.opacity = 1;
-        setTimeout(() => { toast.style.opacity = 0; }, 1500);
+        document.getElementById("copy-toast").style.opacity = 1;
+        setTimeout(() => { document.getElementById("copy-toast").style.opacity = 0; }, 1500);
       });
     });
-
     
+    // Add handler for plot copying
+    document.getElementById("copy-plot-button").addEventListener("click", () => {
+      if (!currentTab) {
+        alert("Please select a day and switch to plot view first");
+        return;
+      }
+      
+      const canvas = document.getElementById('schedule-plot');
+      
+      // Show a brief loading message
+      const plotToast = document.getElementById("plot-toast");
+      plotToast.textContent = "Copying plot...";
+      plotToast.style.opacity = 1;
+      
+      // Use html2canvas to capture the canvas
+      try {
+        // Convert to blob and copy directly from the canvas (no need for html2canvas)
+        canvas.toBlob(blob => {
+          if (blob) {
+            // Create a ClipboardItem
+            const item = new ClipboardItem({ "image/png": blob });
+            navigator.clipboard.write([item]).then(() => {
+              plotToast.textContent = "Copied plot ✅";
+              setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+            }).catch(err => {
+              console.error("Could not copy image: ", err);
+              plotToast.textContent = "Copy failed ❌";
+              setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+            });
+          } else {
+            console.error("Failed to create blob from canvas");
+            plotToast.textContent = "Copy failed ❌";
+            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+          }
+        }, 'image/png', 1.0); // 1.0 is max quality
+      } catch (err) {
+        console.error("Error copying canvas:", err);
+        plotToast.textContent = "Copy failed ❌";
+        setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+      }
+    });
+    
+    // Toggle between table and plot views
+    document.getElementById('table-view-btn').addEventListener('click', () => {
+      document.getElementById('table-container').style.display = 'block';
+      document.getElementById('plot-container').style.display = 'none';
+      document.getElementById('table-view-btn').classList.add('active');
+      document.getElementById('plot-view-btn').classList.remove('active');
+      document.getElementById('copy-plot-button').style.display = 'none';
+    });
+    
+    document.getElementById('plot-view-btn').addEventListener('click', () => {
+      document.getElementById('table-container').style.display = 'none';
+      document.getElementById('plot-container').style.display = 'block';
+      document.getElementById('table-view-btn').classList.remove('active');
+      document.getElementById('plot-view-btn').classList.add('active');
+      document.getElementById('copy-plot-button').style.display = 'flex';
+      
+      if (currentTab) {
+        createPlot(currentTab);
+      }
+    });
 
     const today = new Date();
     const todayDay = expectedDays[today.getDay()];
@@ -387,6 +1307,7 @@ originalTable.style.display = "none";
 
 fetchAndRenderTable();
 </script>
-<div id="copy-toast" style="position:fixed;bottom:90px;right:20px;background:#4f46e5;color:white;padding:10px 20px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.3s ease;font-weight:600;pointer-events:none;z-index:999;">Copied ✅</div>
+<div id="copy-toast" class="copy-toast">Copied text ✅</div>
+<div id="plot-toast" class="copy-toast">Copied plot ✅</div>
 </body>
 </html>
