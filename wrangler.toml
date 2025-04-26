@@ -1,1 +1,2 @@
 name = 'snvtenniscourt'
+pages_build_output_dir = "."
