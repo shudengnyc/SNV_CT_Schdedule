@@ -61,15 +61,18 @@
     }
     
     .tab-buttons::before {
-      content: "📅";
+      content: attr(data-day);
       position: absolute;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      font-size: 2rem;
+      font-size: 1.2rem;
       color: white;
       cursor: pointer;
       z-index: 1001;
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
     }
     
     .tab-buttons.expanded::before {
@@ -78,6 +81,7 @@
       left: 10px;
       transform: translateY(-50%);
       color: #333;
+      width: auto;
     }
     
     /* Mobile tab buttons */
@@ -89,7 +93,7 @@
         height: 60px;
       }
       .tab-buttons::before {
-        font-size: 1.5rem;
+        font-size: 1rem;
       }
     }
     
@@ -1398,6 +1402,9 @@ async function fetchAndRenderTable() {
       Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
       currentTab = day;
       
+      // Update the button text with abbreviation
+      document.querySelector('.tab-buttons').setAttribute('data-day', day.substring(0, 3));
+      
       // Check if we're in plot view
       const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
       
@@ -1652,7 +1659,11 @@ async function fetchAndRenderTable() {
     const today = new Date();
     const todayDay = expectedDays[today.getDay()];
     const defaultDay = grouped[todayDay] ? todayDay : expectedDays.find(day => grouped[day]);
-    if (defaultDay) switchTab(defaultDay);
+    if (defaultDay) {
+      switchTab(defaultDay);
+      // Set the initial day text with abbreviation
+      document.querySelector('.tab-buttons').setAttribute('data-day', defaultDay.substring(0, 3));
+    }
 
   } catch (error) {
     console.error("Failed to fetch or render CSV:", error);
