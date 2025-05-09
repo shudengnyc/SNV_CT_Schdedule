@@ -28,49 +28,134 @@
       }
     }
     .tab-buttons {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #6366f1;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      max-height: 80vh;
+      overflow-y: auto;
+      width: 80px;
+      height: 80px;
+      padding: 0;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 2rem;
+      cursor: pointer;
     }
+    
+    .tab-buttons.expanded {
+      border-radius: 20px;
+      width: auto;
+      height: auto;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+    }
+    
+    .tab-buttons::before {
+      content: "📅";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: white;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    
+    .tab-buttons.expanded::before {
+      content: "✕";
+      font-size: 1.2rem;
+      left: 10px;
+      transform: translateY(-50%);
+      color: #333;
+    }
+    
     /* Mobile tab buttons */
     @media (max-width: 768px) {
       .tab-buttons {
-        gap: 6px;
-        margin-bottom: 1rem;
+        bottom: 16px;
+        left: 16px;
+        width: 60px;
+        height: 60px;
       }
-      .tab-buttons button {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        min-width: 60px;
+      .tab-buttons::before {
+        font-size: 1.5rem;
       }
     }
+    
     .tab-buttons button {
-      padding: 14px 24px;
+      padding: 8px 15px;
       background: #c7d2fe;
       border: none;
-      border-radius: 30px;
+      border-radius: 12px;
       font-weight: 600;
-      font-size: 1.2rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.4s ease;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+      pointer-events: none;
+      margin-left: 25px;
+      display: none;
     }
+    
+    .tab-buttons.expanded button {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+      display: block;
+    }
+    
     .tab-buttons button.active {
       background: #6366f1;
       color: white;
     }
+    
     .tab-buttons button:hover {
-      background: #a5b4fc;
       transform: scale(1.05);
+      background: #4f46e5;
     }
+    
+    .tab-buttons button::after {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform 0.4s, opacity 0.4s;
+    }
+    
+    .tab-buttons:active::after {
+      transform: scale(2);
+      opacity: 1;
+      transition: 0s;
+    }
+    
     .day-section {
       display: none;
       animation: fadeSlide 0.5s ease;
     }
+    
     .day-section.active {
       display: block;
     }
+    
     @keyframes fadeSlide {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1312,13 +1397,23 @@ async function fetchAndRenderTable() {
       document.getElementById(`section-${day}`).classList.add('active');
       Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
       currentTab = day;
-      container.style.display = "block";
-      originalTable.style.display = "none";
       
-      // Update plot for current day if plot view is active
-      if (document.getElementById('plot-view-btn').classList.contains('active')) {
+      // Check if we're in plot view
+      const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
+      
+      // Set display based on current view
+      if (isPlotView) {
+        container.style.display = "none";
+        document.getElementById('plot-container').style.display = "block";
+        document.getElementById('copy-plot-button').style.display = "flex";
         createPlot(day);
+      } else {
+        container.style.display = "block";
+        document.getElementById('plot-container').style.display = "none";
+        document.getElementById('copy-plot-button').style.display = "none";
       }
+      
+      originalTable.style.display = "none";
     }
 
     // Improved copy function for better formatting
@@ -1327,11 +1422,50 @@ async function fetchAndRenderTable() {
       const activeSection = document.getElementById(`section-${currentTab}`);
       if (!activeSection) return;
       const dateBlocks = activeSection.querySelectorAll(".date-title");
-      let text = "";
+      
+      // Get today's date for comparison
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Helper function to simplify location names
+      function simplifyLocation(location) {
+        return location
+          .replace('Fremont High School', 'Fremont')
+          .replace('Washington Park', 'Wash')
+          .replace('Ponderosa Park', 'Pond')
+          .replace('Sunnyvale Middle School', 'SMS')
+          .replace('Lakewood Park', 'Lakewood')
+          .replace('Serra Park', 'Serra')
+          .replace('Fairwood Park', 'Fairwood')
+          .replace('Ortega Park', 'Ortega')
+          .replace('Raynor Park', 'Raynor')
+          .replace('De Anza Park', 'DeAnza')
+          .replace('Sunnyvale Community Center', 'SCC')
+          .replace('Sunnyvale Tennis Center', 'STC');
+      }
+      
+      // First, find today's data
+      let todayData = '';
+      let otherData = '';
+      let todayDateDisplay = '';
       
       dateBlocks.forEach(dateTitle => {
         const dateText = dateTitle.textContent.trim();
-        text += `${currentTab} ${dateText}\n`;
+        const dateObj = new Date(dateText);
+        dateObj.setHours(0, 0, 0, 0);
+        
+        // Format date for display
+        const month = dateObj.getMonth() + 1;
+        const day = dateObj.getDate();
+        const dateDisplay = `${month}/${day}`;
+        
+        // Add date with parentheses if not today
+        const isToday = dateObj.getTime() === today.getTime();
+        const datePrefix = isToday ? '' : `(${dateDisplay})`;
+        
+        if (isToday) {
+          todayDateDisplay = dateDisplay;
+        }
         
         const table = dateTitle.nextElementSibling;
         if (table) {
@@ -1345,6 +1479,9 @@ async function fetchAndRenderTable() {
             const court = cells[1].textContent.trim();
             const time = cells[2].textContent.trim();
             
+            // Skip if no time
+            if (!time) return;
+            
             if (!locationData[location]) {
               locationData[location] = [];
             }
@@ -1353,9 +1490,10 @@ async function fetchAndRenderTable() {
           });
           
           // Output in a concise format
-          for (const location in locationData) {
-            text += `${location}:\n`;
-            
+          let sectionText = '';
+          const locations = Object.keys(locationData);
+          
+          locations.forEach((location, index) => {
             // Group by time when possible
             const timeGroups = {};
             locationData[location].forEach(item => {
@@ -1365,16 +1503,38 @@ async function fetchAndRenderTable() {
               timeGroups[item.time].push(item.court);
             });
             
-            for (const time in timeGroups) {
-              const courts = timeGroups[time];
-              // If multiple consecutive courts, format as a range
-              text += `  ${time} - ${courts.join(', ')}\n`;
+            const timeEntries = Object.entries(timeGroups);
+            const simpleLocation = simplifyLocation(location);
+            
+            // If only one time entry, put it on the same line as location
+            if (timeEntries.length === 1) {
+              const [time, courts] = timeEntries[0];
+              sectionText += `${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
+            } else {
+              // Multiple time entries, use indentation
+              sectionText += `${simpleLocation}${datePrefix}:\n`;
+              for (const [time, courts] of timeEntries) {
+                sectionText += `  ${courts.join(', ')}: ${time}\n`;
+              }
             }
             
-            text += '\n';
+            // Add empty line between locations (except after the last one)
+            if (index < locations.length - 1) {
+              sectionText += '\n';
+            }
+          });
+          
+          // Add to appropriate section
+          if (isToday) {
+            todayData = sectionText;
+          } else {
+            otherData += sectionText;
           }
         }
       });
+      
+      // Combine the data with today's data first
+      const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}`;
       
       navigator.clipboard.writeText(text).then(() => {
         document.getElementById("copy-toast").style.opacity = 1;
@@ -1501,6 +1661,25 @@ async function fetchAndRenderTable() {
 }
 
 fetchAndRenderTable();
+
+// Add this to your existing JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelector('.tab-buttons');
+    
+    // Add click handler for the expand/collapse button
+    tabButtons.addEventListener('click', function(e) {
+        if (e.target === this || e.target === this.firstElementChild) {
+            this.classList.toggle('expanded');
+        }
+    });
+    
+    // Close the menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!tabButtons.contains(e.target)) {
+            tabButtons.classList.remove('expanded');
+        }
+    });
+});
 </script>
 <div id="copy-toast" class="copy-toast">Copied text ✅</div>
 <div id="plot-toast" class="copy-toast">Copied plot ✅</div>
