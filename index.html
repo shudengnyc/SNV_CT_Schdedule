@@ -1426,9 +1426,6 @@ async function fetchAndRenderTable() {
     // Improved copy function for better formatting
     document.getElementById("copy-button").addEventListener("click", () => {
       if (!currentTab) return;
-      const activeSection = document.getElementById(`section-${currentTab}`);
-      if (!activeSection) return;
-      const dateBlocks = activeSection.querySelectorAll(".date-title");
       
       // Get today's date for comparison
       const today = new Date();
@@ -1451,19 +1448,59 @@ async function fetchAndRenderTable() {
           .replace('Sunnyvale Tennis Center', 'STC');
       }
       
-      // First, find today's data
+      // Helper function to normalize date format
+      function normalizeDate(dateStr) {
+        const parts = dateStr.split('/');
+        const month = parseInt(parts[0]);
+        const day = parseInt(parts[1]);
+        const year = parts[2] ? parseInt(parts[2]) : new Date().getFullYear();
+        return `${month}/${day}/${year}`;
+      }
+      
+      // Get the original data from the hidden table
+      const originalTable = document.getElementById('original-table');
+      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
+      
+      // Filter rows for current day
+      const dayData = rows.filter(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        return cells[0]?.textContent.trim() === currentTab;
+      });
+      
+      // Group by normalized date
+      const dateGroups = {};
+      dayData.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        const date = normalizeDate(cells[1].textContent.trim());
+        const location = cells[4].textContent.trim();
+        const court = cells[3].textContent.trim();
+        const time = cells[2].textContent.trim();
+        
+        if (!dateGroups[date]) {
+          dateGroups[date] = {};
+        }
+        if (!dateGroups[date][location]) {
+          dateGroups[date][location] = [];
+        }
+        dateGroups[date][location].push({ court, time });
+      });
+      
       let todayData = '';
       let otherData = '';
       let todayDateDisplay = '';
       
-      dateBlocks.forEach(dateTitle => {
-        const dateText = dateTitle.textContent.trim();
-        const dateObj = new Date(dateText);
+      // Process each date group
+      Object.entries(dateGroups).forEach(([date, locations]) => {
+        // Parse date
+        const dateParts = date.split('/');
+        const month = parseInt(dateParts[0]);
+        const day = parseInt(dateParts[1]);
+        const year = parseInt(dateParts[2]);
+        
+        const dateObj = new Date(year, month - 1, day);
         dateObj.setHours(0, 0, 0, 0);
         
         // Format date for display
-        const month = dateObj.getMonth() + 1;
-        const day = dateObj.getDate();
         const dateDisplay = `${month}/${day}`;
         
         // Add date with parentheses if not today
@@ -1474,73 +1511,47 @@ async function fetchAndRenderTable() {
           todayDateDisplay = dateDisplay;
         }
         
-        const table = dateTitle.nextElementSibling;
-        if (table) {
-          // Get all court data grouped by location
-          const locationData = {};
-          const rows = table.querySelectorAll("tbody tr");
+        // Process each location
+        const sortedLocations = Object.keys(locations).sort();
+        let sectionText = '';
+        
+        sortedLocations.forEach((location, index) => {
+          const locationData = locations[location];
           
-          rows.forEach(row => {
-            const cells = row.querySelectorAll("td");
-            const location = cells[0].textContent.trim();
-            const court = cells[1].textContent.trim();
-            const time = cells[2].textContent.trim();
-            
-            // Skip if no time
-            if (!time) return;
-            
-            if (!locationData[location]) {
-              locationData[location] = [];
+          // Group by time
+          const timeGroups = {};
+          locationData.forEach(item => {
+            if (!timeGroups[item.time]) {
+              timeGroups[item.time] = [];
             }
-            
-            locationData[location].push({ court, time });
+            timeGroups[item.time].push(item.court);
           });
           
-          // Output in a concise format
-          let sectionText = '';
-          const locations = Object.keys(locationData);
+          const timeEntries = Object.entries(timeGroups);
+          const simpleLocation = simplifyLocation(location);
           
-          locations.forEach((location, index) => {
-            // Group by time when possible
-            const timeGroups = {};
-            locationData[location].forEach(item => {
-              if (!timeGroups[item.time]) {
-                timeGroups[item.time] = [];
-              }
-              timeGroups[item.time].push(item.court);
-            });
-            
-            const timeEntries = Object.entries(timeGroups);
-            const simpleLocation = simplifyLocation(location);
-            
-            // If only one time entry, put it on the same line as location
-            if (timeEntries.length === 1) {
-              const [time, courts] = timeEntries[0];
-              sectionText += `${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
-            } else {
-              // Multiple time entries, use indentation
-              sectionText += `${simpleLocation}${datePrefix}:\n`;
-              for (const [time, courts] of timeEntries) {
-                sectionText += `  ${courts.join(', ')}: ${time}\n`;
-              }
-            }
-            
-            // Add empty line between locations (except after the last one)
-            if (index < locations.length - 1) {
-              sectionText += '\n';
-            }
-          });
-          
-          // Add to appropriate section
-          if (isToday) {
-            todayData = sectionText;
+          if (timeEntries.length === 1) {
+            const [time, courts] = timeEntries[0];
+            sectionText += `${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
           } else {
-            otherData += sectionText;
+            sectionText += `${simpleLocation}${datePrefix}:\n`;
+            timeEntries.forEach(([time, courts]) => {
+              sectionText += `  ${courts.join(', ')}: ${time}\n`;
+            });
           }
+          
+          if (index < sortedLocations.length - 1) {
+            sectionText += '\n';
+          }
+        });
+        
+        if (isToday) {
+          todayData = sectionText;
+        } else {
+          otherData += sectionText;
         }
       });
       
-      // Combine the data with today's data first
       const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}`;
       
       navigator.clipboard.writeText(text).then(() => {
