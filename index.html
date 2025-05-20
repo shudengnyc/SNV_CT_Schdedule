@@ -1445,7 +1445,8 @@ async function fetchAndRenderTable() {
           .replace('Raynor Park', 'Raynor')
           .replace('De Anza Park', 'DeAnza')
           .replace('Sunnyvale Community Center', 'SCC')
-          .replace('Sunnyvale Tennis Center', 'STC');
+          .replace('Sunnyvale Tennis Center', 'STC')
+          .replace('Mango Park', 'Mango');
       }
       
       // Helper function to normalize date format
@@ -1517,6 +1518,12 @@ async function fetchAndRenderTable() {
         
         sortedLocations.forEach((location, index) => {
           const locationData = locations[location];
+          
+          // Special handling for Mango Park
+          if (location.includes('Mango')) {
+            sectionText += `Mango: Unavailable until August 2025\n`;
+            return;
+          }
           
           // Group by time
           const timeGroups = {};
