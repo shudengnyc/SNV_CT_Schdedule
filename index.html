@@ -456,11 +456,11 @@ const csvUrl = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/1zp
 
 // Helper function to process court numbers
 function processCourt(courtStr) {
-  if (!courtStr) return '';
+  if (!courtStr) return ['Ct1']; // Default to court 1 if no valid data
   
   // Remove any non-essential characters, preserving numbers, commas, and hyphens
   const cleaned = courtStr.replace(/[^0-9,\-]/g, '').trim();
-  if (!cleaned) return 'Ct1'; // Default to court 1 if no valid data
+  if (!cleaned) return ['Ct1']; // Default to court 1 if no valid data
   
   // Process the cleaned string to extract all court numbers
   const courts = [];
@@ -495,7 +495,7 @@ function processCourt(courtStr) {
   });
   
   // Return unique courts with "Ct" prefix
-  return courts.map(c => `Ct${c}`);
+  return [...new Set(courts.map(c => `Ct${c}`))];
 }
 
 // Helper function to format courts compactly for display
@@ -546,62 +546,98 @@ function compactCourtsDisplay(courts) {
   return ranges.join(', ');
 }
 
-// Helper function to clean and standardize a single time
-function cleanSingleTime(timeStr) {
+// Helper function to clean and standardize a single time with context
+function cleanSingleTime(timeStr, contextPeriod = null) {
   if (!timeStr) return '';
   
-  // Remove all non-time characters except numbers, colon, and AM/PM
-  timeStr = timeStr.replace(/[^0-9:APMapm]/g, '');
+  console.log('cleanSingleTime input:', timeStr, 'context:', contextPeriod);
   
-  // Extract time components
-  let [time, period] = timeStr.split(/([AP]M)/i);
-  if (!time) return '';
+  // First, check if there's an explicit AM/PM in the input
+  const explicitPeriodMatch = timeStr.match(/([AP]M)/i);
+  let explicitPeriod = explicitPeriodMatch ? explicitPeriodMatch[1].toUpperCase() : null;
+  
+  console.log('Explicit period found:', explicitPeriod);
+  
+  // Remove all non-time characters except numbers and colon
+  const cleanedTime = timeStr.replace(/[^0-9:]/g, '');
+  
+  console.log('After cleaning time part:', cleanedTime);
+  
+  if (!cleanedTime) return '';
   
   // Ensure minutes exist
-  if (!time.includes(':')) {
-    time = time + ':00';
+  let timePart = cleanedTime;
+  if (!timePart.includes(':')) {
+    timePart = timePart + ':00';
   }
   
   // Parse hours and minutes
-  let [hours, minutes] = time.split(':').map(num => parseInt(num));
+  const timeParts = timePart.split(':');
+  if (timeParts.length < 2) return '';
+  
+  let hours = parseInt(timeParts[0]);
+  let minutes = parseInt(timeParts[1]);
+  
+  console.log('Parsed hours:', hours, 'minutes:', minutes);
   
   // Validate hours and minutes are reasonable numbers
   if (isNaN(hours) || isNaN(minutes)) return '';
   if (hours < 0 || hours > 23) return '';
   if (minutes < 0 || minutes > 59) return '';
   
-  // Clean up period
-  period = period ? period.toUpperCase() : '';
-  
-  // Convert to 24-hour for validation
-  let hour24 = hours;
-  if (period === 'PM' && hours !== 12) hour24 += 12;
-  if (period === 'AM' && hours === 12) hour24 = 0;
-  
-  // If no period specified, assume AM for times before noon
-  if (!period) {
-    period = hour24 < 12 ? 'AM' : 'PM';
+  // Determine the period to use (explicit takes priority over context)
+  let period;
+  if (explicitPeriod) {
+    console.log('Using explicit period:', explicitPeriod);
+    period = explicitPeriod;
+  } else if (contextPeriod) {
+    console.log('Using context period:', contextPeriod);
+    period = contextPeriod;
+  } else {
+    // Only guess period if none exists and no context
+    console.log('No period found, guessing based on hour...');
+    
+    // For times between 1-11, assume AM for morning times (7-11) and PM for afternoon times (1-6)
+    if (hours >= 7 && hours <= 11) {
+      period = 'AM';
+    }
+    else if (hours >= 1 && hours <= 6) {
+      period = 'PM';
+    }
+    // For times 12, assume PM
+    else if (hours === 12) {
+      period = 'PM';
+    }
+    // For times 0, assume AM (midnight)
+    else if (hours === 0) {
+      period = 'AM';
+    }
+    // For other cases, assume AM
+    else {
+      period = 'AM';
+    }
   }
   
-  // Apply tennis court hours (7 AM - 11 PM)
-  if (hour24 < 7) {
-    // If before 7 AM, assume it should be PM
-    hour24 += 12;
+  console.log('Final period:', period);
+  
+  // Ensure we're working with valid 12-hour format
+  if (hours > 12) {
+    // This shouldn't happen with proper input, but handle it
+    hours = hours - 12;
     period = 'PM';
-  } else if (hour24 >= 23) {
-    // If after 11 PM, assume it should be AM
-    hour24 -= 12;
+  }
+  if (hours === 0) {
+    hours = 12;
     period = 'AM';
   }
-  
-  // Convert back to 12-hour format
-  hours = hour24 > 12 ? hour24 - 12 : hour24;
-  if (hours === 0) hours = 12;
   
   // Format minutes
   minutes = minutes.toString().padStart(2, '0');
   
-  return `${hours}:${minutes}${period}`;
+  const result = `${hours}:${minutes}${period}`;
+  console.log('Final result:', result);
+  
+  return result;
 }
 
 // Helper function to convert 24-hour time to 12-hour format with period
@@ -618,8 +654,8 @@ function format24to12Hour(hour24) {
   return { hour: hour12, period };
 }
 
-// Process a single time range (e.g. "1:30pm-3:30pm")
-function processTimeRange(timeRange) {
+// Process a single time range (e.g. "1:30pm-3:30pm") with context
+function processTimeRange(timeRange, contextPeriod = null) {
   if (!timeRange) return '';
   
   // Clean input and convert semicolons to colons first
@@ -630,52 +666,92 @@ function processTimeRange(timeRange) {
   
   // Process single time
   if (parts.length === 1) {
-    return cleanSingleTime(parts[0]);
+    const result = cleanSingleTime(parts[0], contextPeriod);
+    if (result) {
+      const periodMatch = result.match(/([AP]M)$/);
+      const period = periodMatch ? periodMatch[1] : contextPeriod;
+      return { result, period };
+    }
+    return '';
   }
   
   // Process time range
   if (parts.length === 2) {
-    const startTime = cleanSingleTime(parts[0]);
-    const endTime = cleanSingleTime(parts[1]);
+    // Special handling: if the entire range ends with AM/PM (like "7-8:30pm"), 
+    // that period should apply to the whole range
+    const rangeEndPeriodMatch = timeRange.match(/([AP]M)\s*$/i);
+    const rangeEndPeriod = rangeEndPeriodMatch ? rangeEndPeriodMatch[1].toUpperCase() : null;
+    
+    console.log(`Range "${timeRange}" - detected range period: ${rangeEndPeriod}`);
+    
+    // For start time: use range period if no explicit period, otherwise use context
+    const hasStartExplicitPeriod = /[AP]M/i.test(parts[0]);
+    let startContextPeriod = contextPeriod;
+    if (!hasStartExplicitPeriod && rangeEndPeriod) {
+      startContextPeriod = rangeEndPeriod;
+    }
+    
+    const startTime = cleanSingleTime(parts[0], startContextPeriod);
+    
+    // Extract period from start time to use as context for end time
+    const startMatch = startTime.match(/([AP]M)$/);
+    const startPeriod = startMatch ? startMatch[1] : contextPeriod;
+    
+    // For end time, only use start period as context if the end time doesn't have explicit period
+    const hasEndExplicitPeriod = /[AP]M/i.test(parts[1]);
+    const endContextPeriod = hasEndExplicitPeriod ? null : startPeriod;
+    
+    const endTime = cleanSingleTime(parts[1], endContextPeriod);
     
     if (!startTime || !endTime) return '';
     
+    console.log('processTimeRange - start:', startTime, 'end:', endTime);
+    
     // Parse times for range validation
-    const startMatch = startTime.match(/(\d+):(\d+)([AP]M)/);
-    const endMatch = endTime.match(/(\d+):(\d+)([AP]M)/);
+    const startTimeMatch = startTime.match(/(\d+):(\d+)([AP]M)/);
+    const endTimeMatch = endTime.match(/(\d+):(\d+)([AP]M)/);
     
-    if (!startMatch || !endMatch) return '';
+    if (!startTimeMatch || !endTimeMatch) return '';
     
-    const [, startHour, startMinutes, startPeriod] = startMatch;
-    const [, endHour, endMinutes, endPeriod] = endMatch;
+    const [, startHour, startMinutes, startTimePeriod] = startTimeMatch;
+    const [, endHour, endMinutes, endTimePeriod] = endTimeMatch;
     
     // Convert to 24-hour for range calculation
     let startHour24 = parseInt(startHour);
     let endHour24 = parseInt(endHour);
     
-    if (startPeriod === 'PM' && startHour24 !== 12) startHour24 += 12;
-    if (endPeriod === 'PM' && endHour24 !== 12) endHour24 += 12;
-    if (startPeriod === 'AM' && startHour24 === 12) startHour24 = 0;
-    if (endPeriod === 'AM' && endHour24 === 12) endHour24 = 0;
+    if (startTimePeriod === 'PM' && startHour24 !== 12) startHour24 += 12;
+    if (endTimePeriod === 'PM' && endHour24 !== 12) endHour24 += 12;
+    if (startTimePeriod === 'AM' && startHour24 === 12) startHour24 = 0;
+    if (endTimePeriod === 'AM' && endHour24 === 12) endHour24 = 0;
+    
+    console.log('24-hour times - start:', startHour24, 'end:', endHour24);
     
     // Calculate range length
     let rangeLength = endHour24 - startHour24;
     if (rangeLength < 0) rangeLength += 24;
     
-    // If range is invalid (> 8 hours or end before start), adjust end time
-    if (rangeLength > 8 || (startPeriod === endPeriod && endHour24 < startHour24)) {
-      // Calculate new end time (4 hours after start)
-      let newEndHour24 = startHour24 + 4;  // Changed from 8 to 4 hours
+    console.log('Range length:', rangeLength, 'hours');
+    
+    // Only adjust if the range is clearly invalid (> 12 hours)
+    if (rangeLength > 12) {
+      console.log('Range too long, adjusting...');
+      // Calculate new end time (2 hours after start for reasonable default)
+      let newEndHour24 = startHour24 + 2;
       if (newEndHour24 >= 24) newEndHour24 -= 24;
       
       // Convert back to 12-hour format
       const { hour: newEndHour, period: newEndPeriod } = format24to12Hour(newEndHour24);
       
       // Keep original minutes
-      return `${startTime}-${newEndHour}:${endMinutes}${newEndPeriod}`;
+      const adjustedResult = `${startTime}-${newEndHour}:${endMinutes}${newEndPeriod}`;
+      console.log('Adjusted result:', adjustedResult);
+      return { result: adjustedResult, period: startTimePeriod };
     }
     
-    return `${startTime}-${endTime}`;
+    const result = `${startTime}-${endTime}`;
+    console.log('Normal result:', result);
+    return { result, period: startTimePeriod };
   }
   
   return '';
@@ -685,14 +761,44 @@ function processTimeRange(timeRange) {
 function processTime(timeStr) {
   if (!timeStr) return '';
   
-  // Split by commas for multiple time ranges
-  // We'll use a regex to properly split by commas that aren't part of time values
-  const timeRanges = timeStr.split(/,\s*/).filter(range => range.trim());
+  // Clean the input: remove trailing commas and extra whitespace
+  timeStr = timeStr.replace(/,\s*$/, '').trim();
   
-  // Process each time range and filter out empty results
-  const processedRanges = timeRanges
-    .map(range => processTimeRange(range.trim()))
-    .filter(range => range);
+  // Split by commas, semicolons, OR ampersands for multiple time ranges
+  // We'll use a regex to properly split by commas, semicolons, or ampersands that aren't part of time values
+  const timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
+  
+  // Process each time range independently first to check for explicit periods
+  const processedRanges = [];
+  let contextPeriod = null;
+  
+  for (const range of timeRanges) {
+    // Check if this range has explicit AM/PM - if so, don't use context
+    const hasExplicitPeriod = /[AP]M/i.test(range);
+    const useContext = !hasExplicitPeriod ? contextPeriod : null;
+    
+    console.log(`Processing range: "${range}", hasExplicit: ${hasExplicitPeriod}, useContext: ${useContext}`);
+    
+    const processed = processTimeRange(range.trim(), useContext);
+    
+    if (processed) {
+      // Handle both string and object returns
+      if (typeof processed === 'string') {
+        processedRanges.push(processed);
+        // Extract period for context - update only if we found a period
+        const periodMatch = processed.match(/([AP]M)/);
+        if (periodMatch) {
+          contextPeriod = periodMatch[1];
+        }
+      } else if (processed.result) {
+        processedRanges.push(processed.result);
+        // Use the period from the processed result
+        if (processed.period) {
+          contextPeriod = processed.period;
+        }
+      }
+    }
+  }
   
   // Join back with commas
   return processedRanges.join(', ');
@@ -721,8 +827,11 @@ function parseTimeToHours(timeStr) {
 function extractTimeRanges(timeStr) {
   if (!timeStr) return [];
   
+  // Clean the input: remove trailing commas and extra whitespace
+  timeStr = timeStr.replace(/,\s*$/, '').trim();
+  
   const ranges = [];
-  const timeRanges = timeStr.split(/,\s*/).filter(range => range.trim());
+  const timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
   
   for (const range of timeRanges) {
     const parts = range.split('-');
@@ -788,7 +897,7 @@ async function fetchAndRenderTable() {
         return result;
       });
     };
-    
+
     const rows = parseCSV(csvText);
     let rawData = [];
 
@@ -808,7 +917,7 @@ async function fetchAndRenderTable() {
       if (V1 === "Day of the Week") continue;
 
       // Identify location rows
-      if (V1 && !V2 && !V3 && !V5 && !expectedDays.includes(V1)) {
+      if (V1 && !V2 && !V3 && !V4 && !expectedDays.includes(V1)) {
         currentCourt = V1.replace(/ Park| School|Sunnyvale Middle School \(|\)/g, "").trim();
         continue;
       }
@@ -819,7 +928,10 @@ async function fetchAndRenderTable() {
 
       // Skip non-valid days and empty court numbers
       if (!expectedDays.includes(V1)) continue;
-      if (!V5) continue;
+      if (!V4) continue;
+
+      // Debug: Log the court column value
+      console.log('Court column V4:', V4, 'from row:', [V1, V2, V3, V4, V5, V6]);
 
       // Process date format
       let d = V2;
@@ -831,54 +943,46 @@ async function fetchAndRenderTable() {
       }
       let dateObj = new Date(d);
       
-      // Add to raw data
-      rawData.push({
-        Day: V1,
-        Date: d,
-        DateObj: dateObj,
-        RawTime: V3,
-        Time: processTime(V3),
-        RawCourt: V5,
-        CourtNumbers: processCourt(V5),
-        Location: currentCourt
+      // For each court in this row, create a separate entry with the time(s) from this row only
+      let courtNumbers = processCourt(V4);
+      console.log('Processed court numbers:', courtNumbers, 'from V4:', V4);
+      
+      courtNumbers.forEach(court => {
+        rawData.push({
+          Day: V1,
+          Date: d,
+          DateObj: dateObj,
+          RawTime: V3,
+          Time: processTime(V3),
+          RawCourt: V4,
+          Court: court,
+          Location: currentCourt
+        });
       });
     }
     
-    // Second pass: expand multi-court entries and process time ranges
+    // Second pass: combine times for the same court on the same date/location only if they are from the same row
+    // (in this case, there should be only one time per court per row, but we keep the logic for safety)
     let cleaned = [];
-    
-    // Process each raw data entry
-    rawData.forEach(entry => {
-      // Get the processed court numbers (already an array)
-      const courtNumbers = entry.CourtNumbers;
-      
-      // If it's an array with multiple courts
-      if (Array.isArray(courtNumbers)) {
-        // Create a separate record for each court
-        courtNumbers.forEach(court => {
-          if (court) {
-            cleaned.push({
-              Day: entry.Day,
-              Date: entry.Date,
-              DateObj: entry.DateObj,
-              Time: entry.Time,
-              Court: court,
-              Location: entry.Location
-            });
-          }
-        });
+    const combinedData = {};
+    rawData.forEach(item => {
+      const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;
+      if (!combinedData[key]) {
+        combinedData[key] = {
+          ...item,
+          Times: [item.Time]
+        };
       } else {
-        // Single court, add as is
-        cleaned.push({
-          Day: entry.Day,
-          Date: entry.Date,
-          DateObj: entry.DateObj,
-          Time: entry.Time,
-          Court: courtNumbers,
-          Location: entry.Location
-        });
+        if (!combinedData[key].Times.includes(item.Time)) {
+          combinedData[key].Times.push(item.Time);
+        }
       }
     });
+    // Convert back to array and set combined time string
+    cleaned = Object.values(combinedData).map(item => ({
+      ...item,
+      Time: item.Times.join(', ')
+    }));
 
     console.log('Processed data sample:', cleaned.slice(0, 10));
 
@@ -897,33 +1001,8 @@ async function fetchAndRenderTable() {
       return aNum - bNum;
     });
 
-    // Third pass: Combine times for the same court on the same date
-    const combinedData = {};
-    
-    cleaned.forEach(item => {
-      const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}`;
-      
-      if (!combinedData[key]) {
-        combinedData[key] = {
-          ...item,
-          Times: [item.Time]
-        };
-      } else {
-        // Add time to existing entry if not already included
-        if (!combinedData[key].Times.includes(item.Time)) {
-          combinedData[key].Times.push(item.Time);
-        }
-      }
-    });
-    
-    // Convert back to array and set combined time string
-    const finalData = Object.values(combinedData).map(item => ({
-      ...item,
-      Time: item.Times.join(', ')
-    }));
-    
-    // Debug the final dataset
-    console.log('Final court data:', finalData.slice(0, 10).map(item => ({
+    // Debug: Log some sample data to see what we have
+    console.log('Sample cleaned data after sorting:', cleaned.slice(0, 5).map(item => ({
       Day: item.Day,
       Date: item.Date,
       Location: item.Location,
@@ -933,7 +1012,7 @@ async function fetchAndRenderTable() {
 
     // Group for display
     const grouped = {};
-    finalData.forEach(row => {
+    cleaned.forEach(row => {
       if (!grouped[row.Day]) grouped[row.Day] = {};
       if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
       grouped[row.Day][row.Date].push(row);
@@ -990,13 +1069,18 @@ async function fetchAndRenderTable() {
             const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
             return aNum - bNum;
           }).forEach(row => {
-            const key = `${row.Location}|${row.Time}`;
+            // Use the original row data to preserve court groupings from the same row
+            const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
+            
+            // Debug: Log what we're processing
+            console.log('Processing row:', { location: row.Location, court: row.Court, time: row.Time, rawCourt: row.RawCourt, key: key });
             
             if (!locationTimeGroups[key]) {
               locationTimeGroups[key] = {
                 location: row.Location,
                 time: row.Time,
-                courts: [row.Court]
+                courts: [row.Court],
+                rawCourt: row.RawCourt
               };
             } else {
               // Add court if not already included
@@ -1005,6 +1089,9 @@ async function fetchAndRenderTable() {
               }
             }
           });
+          
+          // Debug: Log the grouped data
+          console.log('Location time groups for', date, ':', locationTimeGroups);
           
           // Sort by location
           Object.values(locationTimeGroups)
@@ -1068,7 +1155,7 @@ async function fetchAndRenderTable() {
     theadOrig.appendChild(headRowOrig);
     tableOrig.appendChild(theadOrig);
     const tbodyOrig = document.createElement("tbody");
-    finalData.forEach(row => {
+    cleaned.forEach(row => {
       const tr = document.createElement("tr");
       [row.Day, row.Date, row.Time, row.Court, row.Location].forEach(cell => {
         const td = document.createElement("td");
@@ -1083,7 +1170,7 @@ async function fetchAndRenderTable() {
     let currentTab = "";
     
     // Create plot for schedule visualization
-    function createPlot(day) {
+    function createPlot(day, forCopy = false) {
       if (!day) return;
       
       const plotContainer = document.getElementById('plot-container');
@@ -1094,91 +1181,74 @@ async function fetchAndRenderTable() {
       // Clear any existing content
       legendContainer.innerHTML = '';
       
-      // Extract all visible schedule entries from the table
-      const activeSection = document.getElementById(`section-${day}`);
-      if (!activeSection) {
-        console.error("Could not find section for day:", day);
-        return;
-      }
+      // Use the original cleaned data instead of parsing the table
+      // Get the original data from the hidden table
+      const originalTable = document.getElementById('original-table');
+      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
       
-      // Get all court schedule data from the visible table
-      const courtData = [];
+      // Filter rows for current day
+      const dayData = rows.filter(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        return cells[0]?.textContent.trim() === day;
+      });
+      
+      console.log(`Found ${dayData.length} rows for ${day}`);
+      
+      // Group by location and court
       const courts = new Map();
       
-      // Extract all dates and their tables
-      const dateTitles = activeSection.querySelectorAll(".date-title");
-      
-      dateTitles.forEach(dateTitle => {
-        const date = dateTitle.textContent.trim();
+      dayData.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length < 5) return;
         
-        // Get the table following this date title
-        const table = dateTitle.nextElementSibling;
-        if (!table || table.tagName !== "TABLE") return;
+        const location = cells[4].textContent.trim();
+        const court = cells[3].textContent.trim();
+        const time = cells[2].textContent.trim();
         
-        // Get all rows in the table
-        const rows = table.querySelectorAll("tbody tr");
-        rows.forEach(row => {
-          const cells = row.querySelectorAll("td");
-          if (cells.length !== 3) return;
-          
-          const location = cells[0].textContent.trim();
-          const courtsText = cells[1].textContent.trim();
-          const timeText = cells[2].textContent.trim();
-          
-          // Parse individual courts
-          const individualCourts = [];
-          
-          // Handle court ranges like "Ct1-3"
-          if (courtsText.includes("-")) {
-            const match = courtsText.match(/Ct(\d+)-(\d+)/);
-            if (match) {
-              const start = parseInt(match[1]);
-              const end = parseInt(match[2]);
-              for (let i = start; i <= end; i++) {
-                individualCourts.push(`Ct${i}`);
-              }
-            } else {
-              individualCourts.push(courtsText);
-            }
-          } else if (courtsText.includes(",")) {
-            // Handle comma-separated courts
-            courtsText.split(",").forEach(c => {
-              individualCourts.push(c.trim());
-            });
-          } else {
-            // Single court
-            individualCourts.push(courtsText);
-          }
-          
-          // Parse time ranges
-          const timeRanges = extractTimeRanges(timeText);
-          
-          // Add data for each court and time range
-          individualCourts.forEach(court => {
-            const courtId = `${location}-${court}`;
-            
-            // Store the court if it's not already in our map
-            if (!courts.has(courtId)) {
-              courts.set(courtId, {
-                id: courtId,
-                location: location,
-                court: court,
-                label: `${location} - ${court}`,
-                timeRanges: []
-              });
-            }
-            
-            // Add all time ranges for this court
-            timeRanges.forEach(range => {
-              courts.get(courtId).timeRanges.push({
-                date: date,
-                startTime: range.start,
-                endTime: range.end
-              });
-            });
+        // Skip entries with no time data
+        if (!time || time.trim() === '') {
+          return;
+        }
+        
+        const courtId = `${location}-${court}`;
+        
+        // Store the court if it's not already in our map
+        if (!courts.has(courtId)) {
+          courts.set(courtId, {
+            id: courtId,
+            location: location,
+            court: court,
+            label: `${location} - ${court}`,
+            timeRanges: []
+          });
+        }
+        
+        // Parse time ranges from the original time data
+        const timeRanges = extractTimeRanges(time);
+        console.log(`Court ${court} at ${location}: time="${time}" -> ${timeRanges.length} ranges:`, timeRanges);
+        
+        // Debug: Show individual time parsing
+        if (timeRanges.length === 0 && time) {
+          console.log(`Failed to parse time ranges for "${time}"`);
+          // Try to parse individual times to see what's wrong
+          const individualTimes = time.split(/[,;&]\s*/).filter(t => t.trim());
+          individualTimes.forEach(t => {
+            const parsed = parseTimeToHours(t.trim());
+            console.log(`  Individual time "${t.trim()}" -> ${parsed}`);
+          });
+        }
+        
+        // Add all time ranges for this court
+        timeRanges.forEach(range => {
+          courts.get(courtId).timeRanges.push({
+            startTime: range.start,
+            endTime: range.end
           });
         });
       });
+      
+      console.log(`Total courts found: ${courts.size}`);
+      console.log('Courts data:', Array.from(courts.values()));
       
       // Convert to array and sort by location and court number
       const sortedCourts = Array.from(courts.values()).sort((a, b) => {
@@ -1207,51 +1277,71 @@ async function fetchAndRenderTable() {
         colorMap[loc] = colorPalette[i % colorPalette.length];
       });
       
-      // Create legend
-      const legendTitle = document.createElement('div');
-      legendTitle.className = 'axis-title';
-      legendTitle.textContent = 'Court Locations';
-      legendContainer.appendChild(legendTitle);
-      
-      locations.forEach(location => {
-        const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
+      // Create legend only for copy version
+      if (forCopy) {
+        const legendTitle = document.createElement('div');
+        legendTitle.className = 'axis-title';
+        legendTitle.textContent = 'Court Locations';
+        legendContainer.appendChild(legendTitle);
         
-        const colorBox = document.createElement('div');
-        colorBox.className = 'legend-color';
-        colorBox.style.backgroundColor = colorMap[location];
-        
-        const label = document.createElement('span');
-        label.textContent = location;
-        
-        legendItem.appendChild(colorBox);
-        legendItem.appendChild(label);
-        legendContainer.appendChild(legendItem);
-      });
-      
-      // Set canvas size
-      const padding = { top: 40, right: 20, bottom: 20, left: 200 }; // Further reduced bottom padding
-      const canvasWidth = Math.max(plotContainer.clientWidth - 30, 1200); // Minimum width for higher resolution
-      const rowHeight = 40; // Increased row height
-
-      // Check if we're on a mobile device
-      const isMobile = window.innerWidth <= 768;
-
-      // Adjust settings for mobile
-      if (isMobile) {
-        padding.left = 100; // Less space for labels on mobile
-        padding.right = 10;
-        padding.top = 30;
-        padding.bottom = 15;
+        locations.forEach(location => {
+          const legendItem = document.createElement('div');
+          legendItem.className = 'legend-item';
+          
+          const colorBox = document.createElement('div');
+          colorBox.className = 'legend-color';
+          colorBox.style.backgroundColor = colorMap[location];
+          
+          const label = document.createElement('span');
+          label.textContent = location;
+          
+          legendItem.appendChild(colorBox);
+          legendItem.appendChild(label);
+          legendContainer.appendChild(legendItem);
+        });
       }
-
-      // Calculate the actual height needed based on the number of courts
-      const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
-      // Use a smaller minimum height to reduce empty space
-      const canvasHeight = Math.max(calculatedHeight, 650);
       
-      // Set canvas to higher resolution for better image quality
-      const pixelRatio = window.devicePixelRatio || 2; // Use at least 2x resolution
+      // Set canvas size based on whether it's for copy or display
+      let padding, canvasWidth, canvasHeight, rowHeight, pixelRatio;
+      const isMobile = window.innerWidth <= 768;
+      
+      if (forCopy) {
+        // High resolution version for copying with legend
+        padding = { top: 40, right: 20, bottom: 20, left: 200 };
+        canvasWidth = Math.max(plotContainer.clientWidth - 30, 1200);
+        rowHeight = 40;
+        
+        if (isMobile) {
+          padding.left = 100;
+          padding.right = 10;
+          padding.top = 30;
+          padding.bottom = 15;
+        }
+        
+        const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
+        canvasHeight = Math.max(calculatedHeight, 650);
+        pixelRatio = window.devicePixelRatio || 2;
+      } else {
+        // Interactive display version - fit to screen
+        const containerWidth = plotContainer.clientWidth;
+        const containerHeight = window.innerHeight - 200; // Leave space for header and controls
+        
+        padding = { top: 30, right: 15, bottom: 15, left: 150 };
+        canvasWidth = containerWidth - 30;
+        rowHeight = Math.max(25, Math.min(40, (containerHeight - padding.top - padding.bottom) / sortedCourts.length));
+        
+        if (isMobile) {
+          padding.left = 80;
+          padding.right = 10;
+          padding.top = 20;
+          padding.bottom = 10;
+          rowHeight = Math.max(20, rowHeight);
+        }
+        
+        canvasHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
+        pixelRatio = 1; // Lower resolution for display performance
+      }
+      
       canvas.width = canvasWidth * pixelRatio;
       canvas.height = canvasHeight * pixelRatio;
       canvas.style.width = `${canvasWidth}px`;
@@ -1268,10 +1358,9 @@ async function fetchAndRenderTable() {
       const endHour = 23; // 11 PM
       const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
       
-      // Draw time labels on bottom
+      // Draw time labels
       ctx.fillStyle = '#333';
-      // Smaller font on mobile
-      ctx.font = isMobile ? 'bold 10px Arial' : 'bold 14px Arial';
+      ctx.font = isMobile ? 'bold 10px Arial' : (forCopy ? 'bold 14px Arial' : 'bold 12px Arial');
       ctx.textAlign = 'center';
       
       // Draw both top and bottom time axes
@@ -1281,33 +1370,32 @@ async function fetchAndRenderTable() {
           const displayHour = hour <= 12 ? hour : hour - 12;
           const ampm = hour < 12 ? 'AM' : 'PM';
           
-          // Draw time label - for mobile, only show every other hour to avoid crowding
-          if (!isMobile || hour % 2 === 0 || hour === startHour || hour === endHour) {
+          // Show time labels based on screen space
+          const showLabel = isMobile ? (hour % 2 === 0 || hour === startHour || hour === endHour) : true;
+          if (showLabel) {
             ctx.fillText(`${displayHour} ${ampm}`, x, yPosition);
           }
           
           // Draw vertical grid line, dotted at 4 PM and 8 PM
           ctx.beginPath();
           if (hour === 16 || hour === 20) {
-            ctx.setLineDash([4, 4]);           // Dotted style
+            ctx.setLineDash([4, 4]);
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
           } else {
-            ctx.setLineDash([]);               // Solid style
+            ctx.setLineDash([]);
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
           }
           
-          // Draw grid lines full height for all hours
           ctx.moveTo(x, padding.top);
           ctx.lineTo(x, canvasHeight - padding.bottom);
           ctx.stroke();
-          ctx.setLineDash([]);                 // Reset dash style
+          ctx.setLineDash([]);
         }
         
         // Draw horizontal axis line
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.lineWidth = 1;
-        // Position the axis line closer to the labels
         const lineOffset = isTop ? 15 : -15;
         ctx.moveTo(padding.left, yPosition + lineOffset);
         ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
@@ -1315,9 +1403,7 @@ async function fetchAndRenderTable() {
         ctx.lineWidth = 1;
       };
       
-      // Draw time axes at top and bottom
-      // Move bottom axis closer to the last row
-      drawTimeAxis(canvasHeight - 10, false); // Position closer to bottom
+      drawTimeAxis(canvasHeight - 10, false);
       drawTimeAxis(padding.top / 2, true);
       
       // Draw court names and time bars
@@ -1326,16 +1412,25 @@ async function fetchAndRenderTable() {
         
         // Draw court label
         ctx.fillStyle = '#333';
-        ctx.font = isMobile ? '10px Arial' : '14px Arial'; // Smaller font on mobile
+        ctx.font = isMobile ? '9px Arial' : (forCopy ? '14px Arial' : '11px Arial');
         ctx.textAlign = 'right';
         
-        // For mobile, abbreviate the court label to save space
+        // Abbreviate court label for mobile or non-copy version
         let displayLabel = court.label;
-        if (isMobile) {
-          // Abbreviate location names to save space
-          displayLabel = displayLabel.replace('Fremont High', 'FremontH');
-          displayLabel = displayLabel.replace('Washington', 'Wash');
-          displayLabel = displayLabel.replace('Ponderosa', 'Pond');
+        if (isMobile || !forCopy) {
+          displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
+          displayLabel = displayLabel.replace('Washington Park', 'Wash');
+          displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
+          displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
+          displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
+          displayLabel = displayLabel.replace('Serra Park', 'Serra');
+          displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
+          displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
+          displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
+          displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
+          displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
+          displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
+          displayLabel = displayLabel.replace('Mango Park', 'Mango');
         }
         
         ctx.fillText(displayLabel, padding.left - 5, y + 4);
@@ -1355,44 +1450,39 @@ async function fetchAndRenderTable() {
           
           // Draw time bar
           ctx.fillStyle = colorMap[court.location];
-          const barHeight = rowHeight - 14; // Adjusted for larger row height
+          const barHeight = rowHeight - (forCopy ? 14 : 8);
           
           // Draw rounded rectangle
-          const radius = barHeight / 2; // Corner radius
-          
-          // Make sure the radius isn't too large for the width
+          const radius = barHeight / 2;
           const effectiveRadius = Math.min(radius, width / 2);
           
           ctx.beginPath();
-          // Top-left corner
           ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
-          // Top-right corner (with arc)
           ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
           ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
-          // Bottom-right corner (with arc)
           ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
           ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
-          // Bottom-left corner (with arc)
           ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
           ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
-          // Top-left corner (with arc)
           ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
           ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
           
           ctx.closePath();
           ctx.fill();
           
-          // Draw border with rounded corners
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // Darker border for better visibility
+          // Draw border
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
           ctx.stroke();
         });
       });
       
-      // Draw time axis title
-      const timeAxisTitle = document.createElement('div');
-      timeAxisTitle.className = 'axis-title';
-      timeAxisTitle.textContent = '';
-      legendContainer.appendChild(timeAxisTitle);
+      // Only add time axis title for copy version
+      if (forCopy) {
+        const timeAxisTitle = document.createElement('div');
+        timeAxisTitle.className = 'axis-title';
+        timeAxisTitle.textContent = '';
+        legendContainer.appendChild(timeAxisTitle);
+      }
     }
 
     function switchTab(day) {
@@ -1413,7 +1503,7 @@ async function fetchAndRenderTable() {
         container.style.display = "none";
         document.getElementById('plot-container').style.display = "block";
         document.getElementById('copy-plot-button').style.display = "flex";
-        createPlot(day);
+        createPlot(day, false); // Display version without legend
       } else {
         container.style.display = "block";
         document.getElementById('plot-container').style.display = "none";
@@ -1477,6 +1567,11 @@ async function fetchAndRenderTable() {
         const court = cells[3].textContent.trim();
         const time = cells[2].textContent.trim();
         
+        // Skip entries with no time data
+        if (!time || time.trim() === '') {
+          return;
+        }
+        
         if (!dateGroups[date]) {
           dateGroups[date] = {};
         }
@@ -1525,9 +1620,13 @@ async function fetchAndRenderTable() {
             return;
           }
           
-          // Group by time
+          // Group by time and filter out empty times
           const timeGroups = {};
           locationData.forEach(item => {
+            // Skip items with no valid time
+            if (!item.time || item.time.trim() === '') {
+              return;
+            }
             if (!timeGroups[item.time]) {
               timeGroups[item.time] = [];
             }
@@ -1535,6 +1634,12 @@ async function fetchAndRenderTable() {
           });
           
           const timeEntries = Object.entries(timeGroups);
+          
+          // Skip locations with no valid time entries
+          if (timeEntries.length === 0) {
+            return;
+          }
+          
           const simpleLocation = simplifyLocation(location);
           
           if (timeEntries.length === 1) {
@@ -1574,79 +1679,121 @@ async function fetchAndRenderTable() {
         return;
       }
       
-      const canvas = document.getElementById('schedule-plot');
-      
       // Show a brief loading message
       const plotToast = document.getElementById("plot-toast");
-      plotToast.textContent = "Copying plot...";
+      plotToast.textContent = "Creating high-res plot...";
       plotToast.style.opacity = 1;
       
-      // Detect if mobile
-      const isMobile = window.innerWidth <= 768;
+      // Create a complete temporary plot environment
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.width = '1200px';
+      tempContainer.style.height = '800px';
+      tempContainer.id = 'temp-plot-container';
       
-      // Use html2canvas to capture the canvas
+      const tempLegend = document.createElement('div');
+      tempLegend.id = 'temp-location-legend';
+      tempLegend.className = 'location-legend';
+      
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.id = 'temp-schedule-plot';
+      
+      tempContainer.appendChild(tempLegend);
+      tempContainer.appendChild(tempCanvas);
+      document.body.appendChild(tempContainer);
+      
+      // Store original element references
+      const originalCanvas = document.getElementById('schedule-plot');
+      const originalContainer = document.getElementById('plot-container');
+      const originalLegend = document.getElementById('location-legend');
+      
       try {
-        // Convert to blob and copy directly from the canvas (no need for html2canvas)
-        canvas.toBlob(blob => {
+        // Temporarily replace the IDs so createPlot uses our temp elements
+        originalCanvas.id = 'schedule-plot-backup';
+        originalContainer.id = 'plot-container-backup';
+        originalLegend.id = 'location-legend-backup';
+        
+        tempCanvas.id = 'schedule-plot';
+        tempContainer.id = 'plot-container';
+        tempLegend.id = 'location-legend';
+        
+        // Generate high-resolution plot for copying
+        createPlot(currentTab, true);
+        
+        plotToast.textContent = "Copying plot...";
+        
+        // Detect if mobile
+        const isMobile = window.innerWidth <= 768;
+        
+        // Convert to blob and copy
+        tempCanvas.toBlob(blob => {
           if (blob) {
-            if (isMobile) {
-              // For mobile devices, offer the image for download or sharing
-              try {
-                // Create a temporary link to download the image
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `tennis-courts-${currentTab.toLowerCase()}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Show success message
-                plotToast.textContent = "Image saved ✅";
-                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-              } catch (err) {
-                console.error("Error creating downloadable image:", err);
-                // Fall back to clipboard copy
-                fallbackToCopy();
-              }
-            } else {
-              // Create a ClipboardItem
+            // Always try clipboard first
+            try {
               const item = new ClipboardItem({ "image/png": blob });
               navigator.clipboard.write([item]).then(() => {
                 plotToast.textContent = "Copied plot ✅";
                 setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
               }).catch(err => {
-                console.error("Could not copy image: ", err);
-                plotToast.textContent = "Copy failed ❌";
-                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                console.error("Could not copy image to clipboard: ", err);
+                // Fallback to download if clipboard fails
+                fallbackToDownload(blob);
               });
+            } catch (err) {
+              console.error("Clipboard API not supported: ", err);
+              // Fallback to download if clipboard API not supported
+              fallbackToDownload(blob);
             }
           } else {
             console.error("Failed to create blob from canvas");
             plotToast.textContent = "Copy failed ❌";
             setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
           }
-        }, 'image/png', 1.0); // 1.0 is max quality
+          
+          // Restore original IDs
+          originalCanvas.id = 'schedule-plot';
+          originalContainer.id = 'plot-container';
+          originalLegend.id = 'location-legend';
+          
+          // Clean up temporary elements
+          document.body.removeChild(tempContainer);
+          
+          // Restore the interactive display plot
+          createPlot(currentTab, false);
+        }, 'image/png', 1.0);
+        
       } catch (err) {
-        console.error("Error copying canvas:", err);
+        console.error("Error generating copy plot:", err);
         plotToast.textContent = "Copy failed ❌";
         setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+        
+        // Restore original IDs on error
+        originalCanvas.id = 'schedule-plot';
+        originalContainer.id = 'plot-container';
+        originalLegend.id = 'location-legend';
+        
+        // Clean up on error
+        document.body.removeChild(tempContainer);
       }
       
-      // Fallback function for mobile clipboard issues
-      function fallbackToCopy() {
+      // Fallback function to download if clipboard fails
+      function fallbackToDownload(blob) {
         try {
-          const item = new ClipboardItem({ "image/png": blob });
-          navigator.clipboard.write([item]).then(() => {
-            plotToast.textContent = "Copied plot ✅";
-            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-          }).catch(err => {
-            console.error("Fallback copy failed:", err);
-            plotToast.textContent = "Copy failed ❌";
-            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `tennis-courts-${currentTab.toLowerCase()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          plotToast.textContent = "Image downloaded ✅";
+          setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
         } catch(err) {
-          console.error("Fallback error:", err);
+          console.error("Download fallback failed:", err);
           plotToast.textContent = "Copy failed ❌";
           setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
         }
@@ -1670,8 +1817,22 @@ async function fetchAndRenderTable() {
       document.getElementById('copy-plot-button').style.display = 'flex';
       
       if (currentTab) {
-        createPlot(currentTab);
+        createPlot(currentTab, false); // Display version without legend
       }
+    });
+    
+    // Add window resize handler for responsive plot
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      // Debounce resize events
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        // Only recreate plot if we're currently viewing it
+        const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
+        if (isPlotView && currentTab) {
+          createPlot(currentTab, false);
+        }
+      }, 250);
     });
 
     const today = new Date();
@@ -1688,6 +1849,18 @@ async function fetchAndRenderTable() {
     document.getElementById("table-container").innerHTML = "Could not load schedule. Please check network or CSV URL.";
   }
 }
+
+// Test the time processing logic
+console.log('=== Time Processing Tests ===');
+console.log('Context test - Input: "4:15-7:15, 8:15-9:15"');
+console.log('Context test - Output:', processTime("4:15-7:15, 8:15-9:15"));
+console.log('Mixed periods test - Input: "8-10am, 5-6pm, 7-8:30pm"');
+console.log('Mixed periods test - Output:', processTime("8-10am, 5-6pm, 7-8:30pm"));
+console.log('Single range test - Input: "7-8:30pm"');
+console.log('Single range test - Output:', processTime("7-8:30pm"));
+console.log('Debug start time: "7" with PM context ->', cleanSingleTime("7", "PM"));
+console.log('Debug end time: "8:30pm" ->', cleanSingleTime("8:30pm", null));
+console.log('=== End Tests ===');
 
 fetchAndRenderTable();
 
