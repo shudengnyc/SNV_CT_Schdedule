@@ -1431,6 +1431,7 @@ async function fetchAndRenderTable() {
           displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
           displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
           displayLabel = displayLabel.replace('Mango Park', 'Mango');
+          displayLabel = displayLabel.replace('Location Mange', 'Mango');
         }
         
         ctx.fillText(displayLabel, padding.left - 5, y + 4);
@@ -1536,7 +1537,8 @@ async function fetchAndRenderTable() {
           .replace('De Anza Park', 'DeAnza')
           .replace('Sunnyvale Community Center', 'SCC')
           .replace('Sunnyvale Tennis Center', 'STC')
-          .replace('Mango Park', 'Mango');
+          .replace('Mango Park', 'Mango')
+          .replace('Location Mange', 'Mango');
       }
       
       // Helper function to normalize date format
@@ -1614,11 +1616,8 @@ async function fetchAndRenderTable() {
         sortedLocations.forEach((location, index) => {
           const locationData = locations[location];
           
-          // Special handling for Mango Park
-          if (location.includes('Mango')) {
-            sectionText += `Mango: Unavailable until August 2025\n`;
-            return;
-          }
+          // Mango Park is now available - process normally
+          // (removed special unavailable handling)
           
           // Group by time and filter out empty times
           const timeGroups = {};
