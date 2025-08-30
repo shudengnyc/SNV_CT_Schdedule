@@ -8,6 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Add html2canvas for capturing plot as image -->
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <!-- Add jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -273,6 +275,46 @@
       opacity: 1;
       transition: 0s;
     }
+    .download-menu {
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+      z-index: 1000;
+    }
+    .download-option {
+      padding: 8px 16px;
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .download-option:hover {
+      background: #6366f1;
+      color: white;
+      transform: scale(1.05);
+    }
+    @media (max-width: 768px) {
+      .download-menu {
+        right: -10px;
+        padding: 6px;
+        gap: 6px;
+      }
+      .download-option {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+    }
     .copy-toast {
       position: fixed;
       bottom: 110px;
@@ -299,16 +341,19 @@
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
       margin-bottom: 3rem;
-      height: auto;
-      min-height: 700px;
-      overflow-y: visible;
-      overflow-x: auto;
+      height: calc(100vh - 200px);
+      min-height: 600px;
+      max-height: 1000px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
     }
     /* Mobile-specific plot container adjustments */
     @media (max-width: 768px) {
       .plot-container {
         padding: 8px;
-        min-height: 500px;
+        height: calc(100vh - 150px);
+        min-height: 400px;
         margin-bottom: 1.5rem;
       }
     }
@@ -405,10 +450,21 @@
       margin-left: 4px;
       color: #ff5722;
     }
+    /* Improve canvas display */
+    #schedule-plot {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
     /* Adjust plot size for mobile */
     @media (max-width: 768px) {
       #schedule-plot {
         max-width: 100%;
+        border-radius: 4px;
       }
     }
     /* Add this at the bottom to ensure it's applied */
@@ -448,7 +504,7 @@
 </div>
   <div class="buttons-container">
     <button id="copy-button" class="action-button" title="Copy Current Tab">📋</button>
-    <button id="copy-plot-button" class="action-button" title="Copy Plot as Image" style="display:none;">📊</button>
+    <button id="copy-plot-button" class="action-button" title="Copy Plot to Clipboard" style="display:none;">📋</button>
   </div>
 
 <script>
@@ -597,14 +653,24 @@ function cleanSingleTime(timeStr, contextPeriod = null) {
     // Only guess period if none exists and no context
     console.log('No period found, guessing based on hour...');
     
-    // For times between 1-11, assume AM for morning times (7-11) and PM for afternoon times (1-6)
-    if (hours >= 7 && hours <= 11) {
+    // Tennis court specific logic: consider both the hour and common patterns
+    if (hours === 10) {
+      // Special case: 10:30 is typically a morning class (10:30 AM)
+      period = 'AM';
+    }
+    else if (hours >= 9 && hours <= 11) {
+      // 9-11 are typically morning classes
       period = 'AM';
     }
     else if (hours >= 1 && hours <= 6) {
+      // 1-6 are typically afternoon/evening classes  
       period = 'PM';
     }
-    // For times 12, assume PM
+    else if (hours === 7 || hours === 8) {
+      // 7-8 are ambiguous, but more commonly evening classes in tennis courts
+      period = 'PM';
+    }
+    // For times 12, assume PM (noon/midnight context will be determined by other factors)
     else if (hours === 12) {
       period = 'PM';
     }
@@ -684,12 +750,10 @@ function processTimeRange(timeRange, contextPeriod = null) {
     
     console.log(`Range "${timeRange}" - detected range period: ${rangeEndPeriod}`);
     
-    // For start time: use range period if no explicit period, otherwise use context
+    // For start time: don't inherit period from end time, let it be determined by its own logic
     const hasStartExplicitPeriod = /[AP]M/i.test(parts[0]);
     let startContextPeriod = contextPeriod;
-    if (!hasStartExplicitPeriod && rangeEndPeriod) {
-      startContextPeriod = rangeEndPeriod;
-    }
+    // Removed automatic inheritance of end period for start time
     
     const startTime = cleanSingleTime(parts[0], startContextPeriod);
     
@@ -699,7 +763,16 @@ function processTimeRange(timeRange, contextPeriod = null) {
     
     // For end time, only use start period as context if the end time doesn't have explicit period
     const hasEndExplicitPeriod = /[AP]M/i.test(parts[1]);
-    const endContextPeriod = hasEndExplicitPeriod ? null : startPeriod;
+    let endContextPeriod = hasEndExplicitPeriod ? null : startPeriod;
+    
+    // Special case: if start time is 10:30AM and end time is 12:00, it should be 12:00PM (noon)
+    if (startTime === '10:30AM' && parts[1].trim() === '12:00') {
+      endContextPeriod = 'PM';
+    }
+    // More generally: if start is AM and end hour is 12, it should be PM (noon)
+    else if (startPeriod === 'AM' && parts[1].trim().startsWith('12:')) {
+      endContextPeriod = 'PM';
+    }
     
     const endTime = cleanSingleTime(parts[1], endContextPeriod);
     
@@ -808,19 +881,28 @@ function processTime(timeStr) {
 function parseTimeToHours(timeStr) {
   if (!timeStr) return null;
   
-  const match = timeStr.match(/(\d+):(\d+)([AP]M)/);
-  if (!match) return null;
+  // Clean the time string and handle various formats
+  timeStr = timeStr.trim();
+  
+  // Try to match the standard format first: "7:00PM", "12:30AM", etc.
+  const match = timeStr.match(/(\d+):(\d+)([AP]M)/i);
+  if (!match) {
+    console.log(`Failed to parse time: "${timeStr}"`);
+    return null;
+  }
   
   let [, hours, minutes, period] = match;
   hours = parseInt(hours);
   minutes = parseInt(minutes);
+  period = period.toUpperCase();
   
   // Convert to 24-hour format
   if (period === 'PM' && hours !== 12) hours += 12;
   if (period === 'AM' && hours === 12) hours = 0;
   
   // Return as decimal hours
-  return hours + (minutes / 60);
+  const result = hours + (minutes / 60);
+  return result;
 }
 
 // Extract time ranges for plotting
@@ -834,13 +916,25 @@ function extractTimeRanges(timeStr) {
   const timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
   
   for (const range of timeRanges) {
-    const parts = range.split('-');
-    if (parts.length === 2) {
-      const start = parseTimeToHours(parts[0]);
-      const end = parseTimeToHours(parts[1]);
-      
-      if (start !== null && end !== null) {
-        ranges.push({ start, end });
+    // Check if it's a range (contains dash) or single time
+    if (range.includes('-')) {
+      const parts = range.split('-');
+      if (parts.length === 2) {
+        const startStr = parts[0].trim();
+        const endStr = parts[1].trim();
+        
+        const start = parseTimeToHours(startStr);
+        const end = parseTimeToHours(endStr);
+        
+        if (start !== null && end !== null) {
+          ranges.push({ start, end });
+        }
+      }
+    } else {
+      // Single time - create a 1-hour block for visualization
+      const singleTime = parseTimeToHours(range.trim());
+      if (singleTime !== null) {
+        ranges.push({ start: singleTime, end: singleTime + 1 });
       }
     }
   }
@@ -1205,8 +1299,9 @@ async function fetchAndRenderTable() {
         const court = cells[3].textContent.trim();
         const time = cells[2].textContent.trim();
         
-        // Skip entries with no time data
+        // Skip entries with no time data - but log them for debugging
         if (!time || time.trim() === '') {
+          console.log(`Skipping court ${court} at ${location} due to empty time data`);
           return;
         }
         
@@ -1225,17 +1320,10 @@ async function fetchAndRenderTable() {
         
         // Parse time ranges from the original time data
         const timeRanges = extractTimeRanges(time);
-        console.log(`Court ${court} at ${location}: time="${time}" -> ${timeRanges.length} ranges:`, timeRanges);
         
-        // Debug: Show individual time parsing
-        if (timeRanges.length === 0 && time) {
-          console.log(`Failed to parse time ranges for "${time}"`);
-          // Try to parse individual times to see what's wrong
-          const individualTimes = time.split(/[,;&]\s*/).filter(t => t.trim());
-          individualTimes.forEach(t => {
-            const parsed = parseTimeToHours(t.trim());
-            console.log(`  Individual time "${t.trim()}" -> ${parsed}`);
-          });
+        // Debug: Show individual time parsing for failed cases
+        if (timeRanges.length === 0 && time && time.trim() !== '') {
+          console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
         }
         
         // Add all time ranges for this court
@@ -1306,40 +1394,45 @@ async function fetchAndRenderTable() {
       const isMobile = window.innerWidth <= 768;
       
       if (forCopy) {
-        // High resolution version for copying with legend
-        padding = { top: 40, right: 20, bottom: 20, left: 200 };
-        canvasWidth = Math.max(plotContainer.clientWidth - 30, 1200);
-        rowHeight = 40;
+        // High resolution version for downloading
+        padding = { top: 50, right: 30, bottom: 40, left: 200 };
+        canvasWidth = Math.max(1400, plotContainer.clientWidth * 2);
+        rowHeight = 45;
         
         if (isMobile) {
-          padding.left = 100;
-          padding.right = 10;
-          padding.top = 30;
-          padding.bottom = 15;
+          padding.left = 120;
+          padding.right = 20;
+          padding.top = 35;
+          padding.bottom = 25;
+          rowHeight = 35;
         }
         
         const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
-        canvasHeight = Math.max(calculatedHeight, 650);
-        pixelRatio = window.devicePixelRatio || 2;
+        canvasHeight = Math.max(calculatedHeight, 800);
+        pixelRatio = 2; // High resolution for export
       } else {
-        // Interactive display version - fit to screen
-        const containerWidth = plotContainer.clientWidth;
-        const containerHeight = window.innerHeight - 200; // Leave space for header and controls
+        // Interactive display version - fit to container
+        const containerRect = plotContainer.getBoundingClientRect();
+        const availableWidth = containerRect.width - 30;
+        const availableHeight = containerRect.height - 100; // Leave space for legend and controls
         
-        padding = { top: 30, right: 15, bottom: 15, left: 150 };
-        canvasWidth = containerWidth - 30;
-        rowHeight = Math.max(25, Math.min(40, (containerHeight - padding.top - padding.bottom) / sortedCourts.length));
+        padding = { top: 40, right: 20, bottom: 30, left: 180 };
+        canvasWidth = availableWidth;
+        
+        // Calculate optimal row height based on available space
+        const maxRowHeight = isMobile ? 30 : 40;
+        const minRowHeight = isMobile ? 20 : 25;
+        rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, (availableHeight - padding.top - padding.bottom) / sortedCourts.length));
         
         if (isMobile) {
-          padding.left = 80;
-          padding.right = 10;
-          padding.top = 20;
-          padding.bottom = 10;
-          rowHeight = Math.max(20, rowHeight);
+          padding.left = 100;
+          padding.right = 15;
+          padding.top = 25;
+          padding.bottom = 20;
         }
         
-        canvasHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
-        pixelRatio = 1; // Lower resolution for display performance
+        canvasHeight = Math.min(availableHeight, sortedCourts.length * rowHeight + padding.top + padding.bottom);
+        pixelRatio = window.devicePixelRatio || 1;
       }
       
       canvas.width = canvasWidth * pixelRatio;
@@ -1671,133 +1764,363 @@ async function fetchAndRenderTable() {
       });
     });
     
-    // Add handler for plot copying
-    document.getElementById("copy-plot-button").addEventListener("click", () => {
+    // Direct copy plot to clipboard
+    document.getElementById("copy-plot-button").addEventListener("click", copyPlotToClipboard);
+    
+
+
+    
+    // Create a mobile-friendly version of the plot optimized for narrow screens
+    function createMobileFriendlyPlot(day) {
+      if (!day) return;
+      
+      const plotContainer = document.getElementById('plot-container');
+      const legendContainer = document.getElementById('location-legend');
+      const canvas = document.getElementById('schedule-plot');
+      const ctx = canvas.getContext('2d');
+      
+      // Clear any existing content
+      legendContainer.innerHTML = '';
+      
+      // Get the original data from the hidden table
+      const originalTable = document.getElementById('original-table');
+      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
+      
+      // Filter rows for current day
+      const dayData = rows.filter(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        return cells[0]?.textContent.trim() === day;
+      });
+      
+      // Group by location and court
+      const courts = new Map();
+      
+      dayData.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length < 5) return;
+        
+        const location = cells[4].textContent.trim();
+        const court = cells[3].textContent.trim();
+        const time = cells[2].textContent.trim();
+        
+        // Skip entries with no time data
+        if (!time || time.trim() === '') {
+          return;
+        }
+        
+        const courtId = `${location}-${court}`;
+        
+        if (!courts.has(courtId)) {
+          courts.set(courtId, {
+            id: courtId,
+            location: location,
+            court: court,
+            label: `${location} - ${court}`,
+            timeRanges: []
+          });
+        }
+        
+        const timeRanges = extractTimeRanges(time);
+        timeRanges.forEach(range => {
+          courts.get(courtId).timeRanges.push({
+            startTime: range.start,
+            endTime: range.end
+          });
+        });
+      });
+      
+      // Convert to array and sort
+      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
+        if (a.location !== b.location) {
+          return a.location.localeCompare(b.location);
+        }
+        const aMatch = a.court.match(/(\d+)/);
+        const bMatch = b.court.match(/(\d+)/);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+        return aNum - bNum;
+      });
+      
+      // Generate modern color map for locations with gradient-like colors
+      const locations = [...new Set(sortedCourts.map(c => c.location))];
+      const colorPalette = [
+        '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
+        '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
+        '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
+      ];
+      
+      const colorMap = {};
+      locations.forEach((loc, i) => {
+        colorMap[loc] = colorPalette[i % colorPalette.length];
+      });
+      
+      // Mobile-optimized dimensions - compact and efficient
+      const padding = { top: 40, right: 25, bottom: 60, left: 180 }; // Reduced padding
+      const canvasWidth = 800; // Wider for better readability
+      const rowHeight = 35; // Compact row height for efficiency
+      const canvasHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom + 40; // Compact spacing
+      const pixelRatio = 2; // High resolution
+      
+      canvas.width = canvasWidth * pixelRatio;
+      canvas.height = canvasHeight * pixelRatio;
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+      ctx.scale(pixelRatio, pixelRatio);
+      
+      // Clear canvas with modern gradient background
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      // Create subtle gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+      gradient.addColorStop(0, '#fafafa');
+      gradient.addColorStop(1, '#f8fafc');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+      
+      // Draw time axis - use same range as display version
+      const startHour = 6; // Same as display version
+      const endHour = 23; // Same as display version
+      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
+      
+      // Draw time labels with modern styling
+      ctx.fillStyle = '#374151';
+      ctx.font = '600 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      
+      const drawTimeAxis = (yPosition, isTop) => {
+        for (let hour = startHour; hour <= endHour; hour++) {
+          const x = padding.left + (hour - startHour) * hourWidth;
+          const displayHour = hour <= 12 ? hour : hour - 12;
+          const ampm = hour < 12 ? 'AM' : 'PM';
+          
+          // Show fewer time labels for mobile
+          const showLabel = hour % 2 === 0 || hour === startHour || hour === endHour;
+          if (showLabel) {
+            ctx.fillText(`${displayHour}${ampm}`, x, yPosition);
+          }
+          
+          // Draw modern vertical grid lines
+          ctx.beginPath();
+          if (hour === 16 || hour === 20) {
+            ctx.setLineDash([2, 4]);
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
+            ctx.lineWidth = 1.5;
+          } else {
+            ctx.setLineDash([]);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+          }
+          
+          ctx.moveTo(x, padding.top);
+          ctx.lineTo(x, canvasHeight - padding.bottom - 10);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        
+        // Draw modern horizontal axis line
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+        ctx.lineWidth = 2;
+        const lineOffset = isTop ? 12 : -12;
+        ctx.moveTo(padding.left, yPosition + lineOffset);
+        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
+        ctx.stroke();
+      };
+      
+      drawTimeAxis(canvasHeight - 45, false); // Adjusted for compact layout
+      drawTimeAxis(padding.top / 2, true);
+      
+      // Draw court names and time bars
+      sortedCourts.forEach((court, index) => {
+        const y = padding.top + index * rowHeight + rowHeight / 2;
+        
+        // Draw court label with modern styling
+        ctx.fillStyle = '#374151';
+        ctx.font = '500 11px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        
+        let displayLabel = court.label;
+        // More aggressive abbreviations for mobile
+        displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
+        displayLabel = displayLabel.replace('Washington Park', 'Wash');
+        displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
+        displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
+        displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
+        displayLabel = displayLabel.replace('Serra Park', 'Serra');
+        displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
+        displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
+        displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
+        displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
+        displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
+        displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
+        displayLabel = displayLabel.replace('Mango Park', 'Mango');
+        displayLabel = displayLabel.replace('Location Mange', 'Mango');
+        
+        ctx.fillText(displayLabel, padding.left - 5, y + 3);
+        
+        // Draw subtle horizontal separator line
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y + rowHeight / 2 - 3); // Adjusted for compact rows
+        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2 - 3);
+        ctx.stroke();
+        
+        // Draw time ranges for this court
+        court.timeRanges.forEach(range => {
+          // Draw all ranges that overlap with our time window
+          if (range.endTime > startHour && range.startTime < endHour) {
+            const startX = padding.left + (range.startTime - startHour) * hourWidth;
+            const endX = padding.left + (range.endTime - startHour) * hourWidth;
+            const width = endX - startX;
+            
+            // Draw modern time bar with shadow
+            const barHeight = rowHeight - 15; // Adjusted for compact rows
+            const radius = Math.min(barHeight / 2, 6);
+            const effectiveRadius = Math.min(radius, width / 2);
+            
+            // Add subtle shadow first
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            
+            // Draw rounded rectangle with modern styling
+            ctx.fillStyle = colorMap[court.location];
+            ctx.beginPath();
+            ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
+            ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
+            ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
+            ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
+            ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
+            ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
+            ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
+            ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
+            ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
+            
+            ctx.closePath();
+            ctx.fill();
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // Draw subtle border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        });
+      });
+      
+      // Add modern legend at the bottom with proper spacing
+      const legendY = canvasHeight - 20;
+      ctx.font = '500 10px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      
+      let legendX = padding.left;
+      locations.forEach((location, index) => {
+        // Abbreviate location names for legend
+        let shortLocation = location
+          .replace('Fremont High School', 'Fremont')
+          .replace('Washington Park', 'Wash')
+          .replace('Ponderosa Park', 'Pond')
+          .replace('Sunnyvale Middle School', 'SMS')
+          .replace('Lakewood Park', 'Lakewood')
+          .replace('Sunnyvale Community Center', 'SCC')
+          .replace('Sunnyvale Tennis Center', 'STC')
+          .replace('Mango Park', 'Mango');
+        
+        // Draw modern color indicator with rounded corners
+        ctx.fillStyle = colorMap[location];
+        ctx.beginPath();
+        ctx.roundRect(legendX, legendY - 10, 10, 10, 2);
+        ctx.fill();
+        
+        // Draw text with modern color
+        ctx.fillStyle = '#374151';
+        ctx.fillText(shortLocation, legendX + 15, legendY - 2);
+        
+        // Move to next position (wrap if needed)
+        legendX += ctx.measureText(shortLocation).width + 30;
+        if (legendX > canvasWidth - 100 && index < locations.length - 1) {
+          legendX = padding.left;
+          // For simplicity, just continue on same line for mobile
+        }
+      });
+    }
+    
+    async function copyPlotToClipboard() {
       if (!currentTab) {
         alert("Please select a day and switch to plot view first");
         return;
       }
       
-      // Show a brief loading message
       const plotToast = document.getElementById("plot-toast");
-      plotToast.textContent = "Creating high-res plot...";
+      plotToast.textContent = "Copying to clipboard...";
       plotToast.style.opacity = 1;
       
-      // Create a complete temporary plot environment
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.width = '1200px';
-      tempContainer.style.height = '800px';
-      tempContainer.id = 'temp-plot-container';
-      
-      const tempLegend = document.createElement('div');
-      tempLegend.id = 'temp-location-legend';
-      tempLegend.className = 'location-legend';
-      
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.id = 'temp-schedule-plot';
-      
-      tempContainer.appendChild(tempLegend);
-      tempContainer.appendChild(tempCanvas);
-      document.body.appendChild(tempContainer);
-      
-      // Store original element references
-      const originalCanvas = document.getElementById('schedule-plot');
-      const originalContainer = document.getElementById('plot-container');
-      const originalLegend = document.getElementById('location-legend');
-      
       try {
-        // Temporarily replace the IDs so createPlot uses our temp elements
-        originalCanvas.id = 'schedule-plot-backup';
-        originalContainer.id = 'plot-container-backup';
-        originalLegend.id = 'location-legend-backup';
+        const canvas = document.getElementById('schedule-plot');
         
-        tempCanvas.id = 'schedule-plot';
-        tempContainer.id = 'plot-container';
-        tempLegend.id = 'location-legend';
+        // Create mobile-optimized version for clipboard
+        createMobileFriendlyPlot(currentTab);
         
-        // Generate high-resolution plot for copying
-        createPlot(currentTab, true);
-        
-        plotToast.textContent = "Copying plot...";
-        
-        // Detect if mobile
-        const isMobile = window.innerWidth <= 768;
-        
-        // Convert to blob and copy
-        tempCanvas.toBlob(blob => {
-          if (blob) {
-            // Always try clipboard first
-            try {
-              const item = new ClipboardItem({ "image/png": blob });
-              navigator.clipboard.write([item]).then(() => {
-                plotToast.textContent = "Copied plot ✅";
+        setTimeout(async () => {
+          try {
+            // Convert canvas to blob
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                try {
+                  // Use the Clipboard API to copy the image
+                  await navigator.clipboard.write([
+                    new ClipboardItem({
+                      'image/png': blob
+                    })
+                  ]);
+                  
+                  plotToast.textContent = "Plot copied to clipboard ✅";
+                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                  
+                  // Restore display version
+                  createPlot(currentTab, false);
+                } catch (clipboardError) {
+                  console.error('Clipboard API failed:', clipboardError);
+                  
+                  // Fallback: try to copy as data URL (less reliable but worth trying)
+                  try {
+                    const dataURL = canvas.toDataURL('image/png');
+                    await navigator.clipboard.writeText(dataURL);
+                    plotToast.textContent = "Plot data copied (paste as image) ✅";
+                    setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                  } catch (fallbackError) {
+                    console.error('Fallback clipboard failed:', fallbackError);
+                    plotToast.textContent = "Copy failed - try downloading instead ❌";
+                    setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                  }
+                  
+                  // Restore display version
+                  createPlot(currentTab, false);
+                }
+              } else {
+                plotToast.textContent = "Failed to create image ❌";
                 setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-              }).catch(err => {
-                console.error("Could not copy image to clipboard: ", err);
-                // Fallback to download if clipboard fails
-                fallbackToDownload(blob);
-              });
-            } catch (err) {
-              console.error("Clipboard API not supported: ", err);
-              // Fallback to download if clipboard API not supported
-              fallbackToDownload(blob);
-            }
-          } else {
-            console.error("Failed to create blob from canvas");
+              }
+            }, 'image/png', 1.0);
+          } catch (error) {
+            console.error('Error creating blob:', error);
             plotToast.textContent = "Copy failed ❌";
             setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
           }
-          
-          // Restore original IDs
-          originalCanvas.id = 'schedule-plot';
-          originalContainer.id = 'plot-container';
-          originalLegend.id = 'location-legend';
-          
-          // Clean up temporary elements
-          document.body.removeChild(tempContainer);
-          
-          // Restore the interactive display plot
-          createPlot(currentTab, false);
-        }, 'image/png', 1.0);
-        
+        }, 100);
       } catch (err) {
-        console.error("Error generating copy plot:", err);
+        console.error('Error copying plot:', err);
         plotToast.textContent = "Copy failed ❌";
         setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-        
-        // Restore original IDs on error
-        originalCanvas.id = 'schedule-plot';
-        originalContainer.id = 'plot-container';
-        originalLegend.id = 'location-legend';
-        
-        // Clean up on error
-        document.body.removeChild(tempContainer);
       }
-      
-      // Fallback function to download if clipboard fails
-      function fallbackToDownload(blob) {
-        try {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `tennis-courts-${currentTab.toLowerCase()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          plotToast.textContent = "Image downloaded ✅";
-          setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-        } catch(err) {
-          console.error("Download fallback failed:", err);
-          plotToast.textContent = "Copy failed ❌";
-          setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-        }
-      }
-    });
+    }
+    
+
     
     // Toggle between table and plot views
     document.getElementById('table-view-btn').addEventListener('click', () => {
@@ -1849,17 +2172,13 @@ async function fetchAndRenderTable() {
   }
 }
 
-// Test the time processing logic
-console.log('=== Time Processing Tests ===');
-console.log('Context test - Input: "4:15-7:15, 8:15-9:15"');
-console.log('Context test - Output:', processTime("4:15-7:15, 8:15-9:15"));
-console.log('Mixed periods test - Input: "8-10am, 5-6pm, 7-8:30pm"');
-console.log('Mixed periods test - Output:', processTime("8-10am, 5-6pm, 7-8:30pm"));
-console.log('Single range test - Input: "7-8:30pm"');
-console.log('Single range test - Output:', processTime("7-8:30pm"));
-console.log('Debug start time: "7" with PM context ->', cleanSingleTime("7", "PM"));
-console.log('Debug end time: "8:30pm" ->', cleanSingleTime("8:30pm", null));
-console.log('=== End Tests ===');
+// Time processing tests can be enabled for debugging by uncommenting below
+// console.log('=== Time Processing Tests ===');
+// console.log('Context test - Input: "4:15-7:15, 8:15-9:15"');
+// console.log('Context test - Output:', processTime("4:15-7:15, 8:15-9:15"));
+// console.log('Mixed periods test - Input: "8-10am, 5-6pm, 7-8:30pm"');
+// console.log('Mixed periods test - Output:', processTime("8-10am, 5-6pm, 7-8:30pm"));
+// console.log('=== End Tests ===');
 
 fetchAndRenderTable();
 
