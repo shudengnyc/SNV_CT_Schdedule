@@ -514,6 +514,9 @@ const csvUrl = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/1zp
 function processCourt(courtStr) {
   if (!courtStr) return ['Ct1']; // Default to court 1 if no valid data
   
+  // Handle N/A case specifically
+  if (courtStr.trim().toUpperCase() === 'N/A') return ['N/A'];
+  
   // Remove any non-essential characters, preserving numbers, commas, and hyphens
   const cleaned = courtStr.replace(/[^0-9,\-]/g, '').trim();
   if (!cleaned) return ['Ct1']; // Default to court 1 if no valid data
@@ -1020,9 +1023,15 @@ async function fetchAndRenderTable() {
       if (!V1) V1 = lastDay; else lastDay = V1;
       if (!V2) V2 = lastDate; else lastDate = V2;
 
-      // Skip non-valid days and empty court numbers
+      // Skip non-valid days
       if (!expectedDays.includes(V1)) continue;
-      if (!V4) continue;
+      
+      // For records with time but no court number, set court number to N/A
+      if (!V4 && V3) {
+        V4 = "N/A";
+      }
+      // Skip records with no time and no court number
+      if (!V4 && !V3) continue;
 
       // Debug: Log the court column value
       console.log('Court column V4:', V4, 'from row:', [V1, V2, V3, V4, V5, V6]);
@@ -2068,55 +2077,138 @@ async function fetchAndRenderTable() {
         
         setTimeout(async () => {
           try {
-            // Convert canvas to blob
-            canvas.toBlob(async (blob) => {
-              if (blob) {
-                try {
-                  // Use the Clipboard API to copy the image
-                  await navigator.clipboard.write([
-                    new ClipboardItem({
-                      'image/png': blob
-                    })
-                  ]);
-                  
-                  plotToast.textContent = "Plot copied to clipboard ✅";
-                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  
-                  // Restore display version
-                  createPlot(currentTab, false);
-                } catch (clipboardError) {
-                  console.error('Clipboard API failed:', clipboardError);
-                  
-                  // Fallback: try to copy as data URL (less reliable but worth trying)
+            // Try clipboard API for all browsers including Safari
+            const hasClipboardAPI = navigator.clipboard && navigator.clipboard.write;
+            
+            if (hasClipboardAPI) {
+              // Try clipboard API first for all browsers
+              canvas.toBlob(async (blob) => {
+                if (blob) {
                   try {
-                    const dataURL = canvas.toDataURL('image/png');
-                    await navigator.clipboard.writeText(dataURL);
-                    plotToast.textContent = "Plot data copied (paste as image) ✅";
+                    // This should work in Safari 13.1+ with proper user interaction
+                    await navigator.clipboard.write([
+                      new ClipboardItem({
+                        'image/png': blob
+                      })
+                    ]);
+                    
+                    plotToast.textContent = "Plot copied to clipboard ✅";
                     setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  } catch (fallbackError) {
-                    console.error('Fallback clipboard failed:', fallbackError);
-                    plotToast.textContent = "Copy failed - try downloading instead ❌";
-                    setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                    
+                    // Restore display version
+                    createPlot(currentTab, false);
+                  } catch (clipboardError) {
+                    console.error('Clipboard API failed:', clipboardError);
+                    // Try alternative Safari method
+                    safariClipboardMethod(canvas, plotToast);
                   }
-                  
-                  // Restore display version
+                } else {
+                  plotToast.textContent = "Failed to create image ❌";
+                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
                   createPlot(currentTab, false);
                 }
-              } else {
-                plotToast.textContent = "Failed to create image ❌";
-                setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-              }
-            }, 'image/png', 1.0);
+              }, 'image/png', 1.0);
+            } else {
+              // Very old browsers
+              safariClipboardMethod(canvas, plotToast);
+            }
           } catch (error) {
-            console.error('Error creating blob:', error);
-            plotToast.textContent = "Copy failed ❌";
-            setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+            console.error('Error in copy process:', error);
+            safariClipboardMethod(canvas, plotToast);
           }
         }, 100);
       } catch (err) {
         console.error('Error copying plot:', err);
         plotToast.textContent = "Copy failed ❌";
         setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+      }
+    }
+    
+    // Safari-specific clipboard method
+    async function safariClipboardMethod(canvas, plotToast) {
+      try {
+        // Method 1: Try using ClipboardItem with different approach for Safari
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                try {
+                  // Create ClipboardItem with proper MIME type for Safari
+                  const clipboardItem = new ClipboardItem({
+                    [blob.type]: blob
+                  });
+                  
+                  await navigator.clipboard.write([clipboardItem]);
+                  plotToast.textContent = "Plot copied to clipboard ✅";
+                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+                  
+                  // Restore display version
+                  createPlot(currentTab, false);
+                } catch (clipboardError) {
+                  console.error('Safari ClipboardItem failed:', clipboardError);
+                  // Try method 2
+                  tryDataURLMethod(canvas, plotToast);
+                }
+              } else {
+                tryDataURLMethod(canvas, plotToast);
+              }
+            }, 'image/png', 1.0);
+          } catch (error) {
+            console.error('Safari blob method failed:', error);
+            tryDataURLMethod(canvas, plotToast);
+          }
+        } else {
+          tryDataURLMethod(canvas, plotToast);
+        }
+      } catch (error) {
+        console.error('Safari method failed:', error);
+        tryDataURLMethod(canvas, plotToast);
+      }
+    }
+    
+    // Try copying as data URL for older Safari versions
+    async function tryDataURLMethod(canvas, plotToast) {
+      try {
+        const dataURL = canvas.toDataURL('image/png');
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(dataURL);
+          plotToast.textContent = "Plot copied as data (older Safari) ✅";
+          setTimeout(() => { plotToast.style.opacity = 0; }, 2000);
+        } else {
+          // Final fallback - show data URL for manual copy
+          showDataURLForManualCopy(dataURL, plotToast);
+        }
+        
+        // Restore display version
+        createPlot(currentTab, false);
+      } catch (error) {
+        console.error('Data URL method failed:', error);
+        plotToast.textContent = "Copy not supported in this browser ❌";
+        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
+        createPlot(currentTab, false);
+      }
+    }
+    
+    // Show data URL for manual copy (last resort)
+    function showDataURLForManualCopy(dataURL, plotToast) {
+      // Create a temporary text area for manual copy
+      const textArea = document.createElement('textarea');
+      textArea.value = dataURL;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      
+      try {
+        textArea.select();
+        document.execCommand('copy');
+        plotToast.textContent = "Plot data copied - paste as image ✅";
+        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
+      } catch (copyError) {
+        plotToast.textContent = "Please allow clipboard access ❌";
+        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
+      } finally {
+        document.body.removeChild(textArea);
       }
     }
     
