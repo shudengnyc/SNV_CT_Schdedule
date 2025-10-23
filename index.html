@@ -481,6 +481,135 @@
         background: rgba(0, 0, 0, 0.05);
       }
     }
+
+    /* Announcement Modal Styles */
+    .announcement-button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 10px;
+      transition: background-color 0.2s;
+    }
+
+    .announcement-button:hover {
+      background: #3730a3;
+    }
+
+    .announcement-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .announcement-content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow: hidden;
+    }
+
+    .announcement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .announcement-header h3 {
+      margin: 0;
+      color: #1f2937;
+      font-size: 18px;
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-button:hover {
+      color: #374151;
+    }
+
+    .announcement-body {
+      padding: 20px;
+    }
+
+    #announcement-text {
+      width: 100%;
+      height: 120px;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    #announcement-text:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+
+    .announcement-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: flex-end;
+    }
+
+    .announcement-buttons button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .announcement-buttons button:first-child {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .announcement-buttons button:first-child:hover {
+      background: #3730a3;
+    }
+
+    .announcement-buttons button:last-child {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .announcement-buttons button:last-child:hover {
+      background: #e5e7eb;
+    }
   </style>
 </head>
 <body>
@@ -491,12 +620,30 @@
   <div class="view-toggle">
     <button id="table-view-btn" class="active">Table View</button>
     <button id="plot-view-btn">Schedule Plot</button>
+    <button class="announcement-button" onclick="toggleAnnouncementModal()" title="Add Announcement">📢</button>
   </div>
   
   <div id="table-container">Loading table...</div>
   <div id="plot-container" class="plot-container" style="display:none;">
     <div id="location-legend" class="location-legend"></div>
     <canvas id="schedule-plot"></canvas>
+  </div>
+
+  <!-- Announcement Modal -->
+  <div id="announcement-modal" class="announcement-modal" style="display:none;">
+    <div class="announcement-content">
+      <div class="announcement-header">
+        <h3>Schedule Announcement</h3>
+        <button class="close-button" onclick="toggleAnnouncementModal()">&times;</button>
+      </div>
+      <div class="announcement-body">
+        <textarea id="announcement-text" placeholder="Enter announcement text...">Mango 每周三 3:30-5:30pm 学校活动 until 12/17</textarea>
+        <div class="announcement-buttons">
+          <button onclick="saveAnnouncement()">Save</button>
+          <button onclick="clearAnnouncement()">Clear</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="original-table" style="display:none;"></div>
 <div style="text-align:center; margin: 2rem 0 0 0;">
@@ -840,9 +987,24 @@ function processTime(timeStr) {
   // Clean the input: remove trailing commas and extra whitespace
   timeStr = timeStr.replace(/,\s*$/, '').trim();
   
-  // Split by commas, semicolons, OR ampersands for multiple time ranges
-  // We'll use a regex to properly split by commas, semicolons, or ampersands that aren't part of time values
-  const timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
+  // Split by commas, semicolons, ampersands, OR spaces for multiple time ranges
+  // We'll use a regex to properly split by commas, semicolons, ampersands, or spaces that aren't part of time values
+  // Split by spaces only if they separate complete time ranges (containing hyphens)
+  let timeRanges;
+  
+  // Check if this looks like space-separated multiple time ranges
+  // Pattern: multiple parts separated by spaces, each containing a hyphen
+  const spaceSeparatedParts = timeStr.split(/\s+/).filter(part => part.trim());
+  const hasMultipleTimeRanges = spaceSeparatedParts.length > 1 && 
+                               spaceSeparatedParts.every(part => part.includes('-'));
+  
+  if (hasMultipleTimeRanges) {
+    // Split by spaces for multiple time ranges like "4:00pm-4:30pm 5:30-6:30pm"
+    timeRanges = spaceSeparatedParts;
+  } else {
+    // Use original splitting for commas, semicolons, ampersands
+    timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
+  }
   
   // Process each time range independently first to check for explicit periods
   const processedRanges = [];
@@ -1013,7 +1175,7 @@ async function fetchAndRenderTable() {
       // Skip header row
       if (V1 === "Day of the Week") continue;
 
-      // Identify location rows
+      // Identify location rows - V1 contains location name, V2, V3, V4 are empty
       if (V1 && !V2 && !V3 && !V4 && !expectedDays.includes(V1)) {
         currentCourt = V1.replace(/ Park| School|Sunnyvale Middle School \(|\)/g, "").trim();
         continue;
@@ -1765,7 +1927,11 @@ async function fetchAndRenderTable() {
         }
       });
       
-      const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}`;
+      // Get announcement if available
+      const announcement = getAnnouncement();
+      const announcementText = announcement ? `\n\n📢 ${announcement}\n` : '';
+      
+      const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}${announcementText}`;
       
       navigator.clipboard.writeText(text).then(() => {
         document.getElementById("copy-toast").style.opacity = 1;
@@ -2292,6 +2458,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Announcement functionality
+function toggleAnnouncementModal() {
+    const modal = document.getElementById('announcement-modal');
+    const isVisible = modal.style.display !== 'none';
+    
+    if (isVisible) {
+        modal.style.display = 'none';
+    } else {
+        modal.style.display = 'flex';
+        // Load saved announcement
+        loadAnnouncement();
+    }
+}
+
+function loadAnnouncement() {
+    const savedAnnouncement = localStorage.getItem('scheduleAnnouncement');
+    const textarea = document.getElementById('announcement-text');
+    
+    if (savedAnnouncement) {
+        textarea.value = savedAnnouncement;
+    } else {
+        // Set default announcement
+        textarea.value = 'Mango 每周三 3:30-5:30pm 学校活动 until 12/17';
+    }
+}
+
+function saveAnnouncement() {
+    const textarea = document.getElementById('announcement-text');
+    const announcement = textarea.value.trim();
+    
+    if (announcement) {
+        localStorage.setItem('scheduleAnnouncement', announcement);
+        showNotification('Announcement saved!');
+    } else {
+        localStorage.removeItem('scheduleAnnouncement');
+        showNotification('Announcement cleared!');
+    }
+    
+    toggleAnnouncementModal();
+}
+
+function clearAnnouncement() {
+    const textarea = document.getElementById('announcement-text');
+    textarea.value = '';
+    localStorage.removeItem('scheduleAnnouncement');
+    showNotification('Announcement cleared!');
+    toggleAnnouncementModal();
+}
+
+function getAnnouncement() {
+    return localStorage.getItem('scheduleAnnouncement') || '';
+}
+
+function showNotification(message) {
+    // Create a simple notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4f46e5;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        z-index: 1001;
+        font-weight: 500;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
 </script>
 <div id="copy-toast" class="copy-toast">Copied text ✅</div>
 <div id="plot-toast" class="copy-toast">Copied plot ✅</div>
