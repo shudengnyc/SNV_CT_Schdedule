@@ -3,65 +3,179 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SNV Lifetime Courts Schedule</title>
-  <!-- Add Chart.js for plotting -->
+  <title>SNV LT Courts Schedule (Multi-Tab)</title>
+  <!-- Chart.js for plot visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Add html2canvas for capturing plot as image -->
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <!-- Add jsPDF for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background: linear-gradient(135deg, #f0f4ff, #e0ecff);
-      color: #333;
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    :root { 
+      --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg-light: #f8fafc;
+      --card: #ffffff; 
+      --text: #1e293b; 
+      --muted: #64748b; 
+      --primary: #6366f1; 
+      --primary-600: #4f46e5; 
+      --primary-700: #4338ca; 
+      --primary-light: #eef2ff;
+      --ring: #e2e8f0; 
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
     }
-    /* Mobile-friendly styles */
-    @media (max-width: 768px) {
-      body {
-        padding: 0.5rem;
-      }
-      h1 {
-        font-size: 1.4rem;
-        text-align: center;
-        margin: 0.5rem 0;
-      }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+      margin: 0; 
+      padding: 0;
+      background: var(--bg-light);
+      color: var(--text); 
+      line-height: 1.6;
     }
+    .app { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 2rem 1.5rem 140px; 
+      background: var(--bg-light);
+    }
+    h1 { 
+      margin: 0 0 0.5rem 0; 
+      font-size: 2rem; 
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    .hint { 
+      color: var(--muted); 
+      font-size: 0.95rem; 
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+    .navbar { 
+      position: sticky; 
+      top: 0; 
+      z-index: 999; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      gap: 12px; 
+      background: var(--card); 
+      border-bottom: 1px solid var(--ring); 
+      padding: 10px 16px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .navbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    .navbar .brand span.logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+      color: #fff; font-weight: 800;
+    }
+    .navbar .actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .navbar a, .navbar button { 
+      background: var(--primary-600); 
+      color: #fff; 
+      border: none; 
+      border-radius: 10px; 
+      padding: 11px 20px; 
+      font-weight: 600; 
+      font-size: 0.9rem;
+      cursor: pointer; 
+      text-decoration: none; 
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+      min-width: 100px;
+      text-align: center;
+    }
+    .navbar a:hover, .navbar button:hover { 
+      transform: translateY(-2px); 
+      box-shadow: var(--shadow-md);
+    }
+    .navbar .secondary { 
+      background: var(--primary-light); 
+      color: var(--text); 
+      border: 1px solid var(--ring); 
+    }
+    #table-view-btn, #plot-view-btn { 
+      background: var(--primary-light); 
+      color: var(--text); 
+      border: 1px solid var(--ring); 
+    }
+    #table-view-btn.active, #plot-view-btn.active { 
+      background: var(--primary-600); 
+      color: #fff; 
+      border: 1px solid var(--primary-600);
+    }
+
+    /* Segmented toggle for week filter */
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--ring);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--primary-light);
+    }
+    .segmented button {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: auto;
+    }
+    .segmented button + button { border-left: 1px solid var(--ring); }
+    .segmented button.active {
+      background: var(--primary-600);
+      color: #fff;
+    }
+    /* Floating expandable day selector (similar to original app) */
     .tab-buttons {
       position: fixed;
-      bottom: 24px;
-      left: 24px;
+      bottom: 28px;
+      left: 28px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      background: #6366f1;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
       border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4), 0 2px 8px rgba(0,0,0,0.15);
       z-index: 1000;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       max-height: 80vh;
       overflow-y: auto;
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
       padding: 0;
-      display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      border: 3px solid rgba(255,255,255,0.2);
     }
-    
+    .tab-buttons:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 32px rgba(79, 70, 229, 0.5), 0 4px 12px rgba(0,0,0,0.2);
+    }
     .tab-buttons.expanded {
       border-radius: 20px;
       width: auto;
       height: auto;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      -webkit-backdrop-filter: blur(5px);
-      backdrop-filter: blur(5px);
+      padding: 14px;
+      background: rgba(255,255,255,0.95);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--ring);
+      box-shadow: var(--shadow-lg);
     }
-    
     .tab-buttons::before {
       content: attr(data-day);
       position: absolute;
@@ -76,7 +190,6 @@
       text-align: center;
       width: 100%;
     }
-    
     .tab-buttons.expanded::before {
       content: "✕";
       font-size: 1.2rem;
@@ -85,711 +198,214 @@
       color: #333;
       width: auto;
     }
-    
-    /* Mobile tab buttons */
-    @media (max-width: 768px) {
-      .tab-buttons {
-        bottom: 16px;
-        left: 16px;
-        width: 60px;
-        height: 60px;
-      }
-      .tab-buttons::before {
-        font-size: 1rem;
-      }
-    }
-    
     .tab-buttons button {
-      padding: 8px 15px;
-      background: #c7d2fe;
-      border: none;
-      border-radius: 12px;
+      padding: 10px 18px;
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--ring);
+      border-radius: 10px;
       font-weight: 600;
       font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
       opacity: 0;
       transform: translateX(-20px);
       pointer-events: none;
-      margin-left: 25px;
+      margin-left: 30px;
       display: none;
+      box-shadow: var(--shadow-sm);
     }
-    
-    .tab-buttons.expanded button {
-      opacity: 1;
-      transform: translateX(0);
-      pointer-events: auto;
-      display: block;
-    }
-    
-    .tab-buttons button.active {
-      background: #6366f1;
-      color: white;
-    }
-    
     .tab-buttons button:hover {
-      transform: scale(1.05);
-      background: #4f46e5;
+      background: var(--primary-light);
+      transform: translateX(0) translateY(-1px);
+      box-shadow: var(--shadow-md);
     }
-    
-    .tab-buttons button::after {
-      content: "";
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      background: rgba(255,255,255,0.4);
-      border-radius: 50%;
-      transform: scale(0);
-      opacity: 0;
-      transition: transform 0.4s, opacity 0.4s;
+    .tab-buttons.expanded button { 
+      opacity: 1; 
+      transform: translateX(0); 
+      pointer-events: auto; 
+      display: block; 
     }
-    
-    .tab-buttons:active::after {
-      transform: scale(2);
-      opacity: 1;
-      transition: 0s;
+    .tab-buttons button.active { 
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-700)); 
+      color: #fff; 
+      border-color: var(--primary-600);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
-    
-    .day-section {
-      display: none;
-      animation: fadeSlide 0.5s ease;
-    }
-    
-    .day-section.active {
-      display: block;
-    }
-    
-    @keyframes fadeSlide {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .date-title {
-      font-size: 1.6rem;
-      color: #4f46e5;
-      margin: 2rem 0 1rem;
-      padding-left: 8px;
-      border-left: 4px solid #6366f1;
-    }
-    /* Mobile date title */
-    @media (max-width: 768px) {
-      .date-title {
-        font-size: 1.2rem;
-        margin: 1rem 0 0.5rem;
-      }
-    }
-    table {
-      width: 100%;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin-bottom: 3rem;
-      border-collapse: collapse;
-      font-size: 1.2rem;
-    }
-    /* Responsive tables for mobile */
-    @media (max-width: 768px) {
-      table {
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-      }
-    }
-    th, td {
-      padding: 14px;
-      text-align: center;
-    }
-    @media (max-width: 768px) {
-      th, td {
-        padding: 8px 4px;
-      }
-    }
-    th {
-      background: #4f46e5;
-      color: white;
-      text-transform: uppercase;
-    }
-    tr:nth-child(even) td {
-      background-color: #eef2ff;
-    }
-    .buttons-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    /* Adjust buttons for mobile */
-    @media (max-width: 768px) {
-      .buttons-container {
-        bottom: 16px;
-        right: 16px;
-        gap: 12px;
-      }
-    }
-    .action-button {
-      width: 80px;
-      height: 80px;
-      background: #6366f1;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      font-size: 2rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-    @media (max-width: 768px) {
-      .action-button {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-      }
-    }
-    .action-button:hover {
-      transform: scale(1.05);
-      background: #4f46e5;
-    }
-    .action-button::after {
-      content: "";
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      background: rgba(255,255,255,0.4);
-      border-radius: 50%;
-      transform: scale(0);
-      opacity: 0;
-      transition: transform 0.4s, opacity 0.4s;
-    }
-    .action-button:active::after {
-      transform: scale(2);
-      opacity: 1;
-      transition: 0s;
-    }
-    .download-menu {
-      position: absolute;
-      bottom: 100%;
-      right: 0;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 10px;
-      z-index: 1000;
-    }
-    .download-option {
-      padding: 8px 16px;
-      background: #f3f4f6;
-      border: none;
+    .date-title { 
+      font-size: 1.15rem; 
+      font-weight: 700;
+      color: var(--primary-700); 
+      margin: 1.5rem 0 0.75rem; 
+      padding: 8px 12px;
+      padding-left: 16px;
+      border-left: 5px solid var(--primary-600); 
+      background: linear-gradient(90deg, var(--primary-light) 0%, transparent 100%);
       border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      white-space: nowrap;
+    }
+    table { 
+      width: 100%; 
+      background: var(--card); 
+      border-radius: 14px; 
+      overflow: hidden; 
+      box-shadow: var(--shadow-md); 
+      border-collapse: separate; 
+      font-size: 1.08rem; 
+      margin-bottom: 1.25rem; 
+      border: 1px solid var(--ring); 
+    }
+    th, td { 
+      padding: 16px 20px; 
+      text-align: center; 
+    }
+    th { 
+      position: sticky; 
+      top: 0; 
+      z-index: 1; 
+      background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); 
+      color: #0f172a; 
+      text-transform: uppercase; 
+      font-size: 0.95rem; 
+      letter-spacing: 0.05em; 
+      font-weight: 700;
+      border-bottom: 2px solid var(--ring);
+    }
+    tbody tr {
       transition: all 0.2s ease;
     }
-    .download-option:hover {
-      background: #6366f1;
-      color: white;
-      transform: scale(1.05);
+    tbody tr:hover {
+      background: var(--primary-light) !important;
+      transform: scale(1.01);
     }
-    @media (max-width: 768px) {
-      .download-menu {
-        right: -10px;
-        padding: 6px;
-        gap: 6px;
-      }
-      .download-option {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-      }
+    tr:nth-child(even) td { 
+      background: #f8fafc; 
     }
-    .copy-toast {
-      position: fixed;
-      bottom: 110px;
-      right: 24px;
-      background: rgba(79,70,229,0.9);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
+    td {
+      border-bottom: 1px solid #f1f5f9;
+      color: #0f172a;
       font-weight: 600;
-      opacity: 0;
-      transition: opacity 0.4s;
-    }
-    @media (max-width: 768px) {
-      .copy-toast {
-        bottom: 85px;
-        right: 16px;
-        padding: 8px 16px;
-        font-size: 0.9rem;
-      }
-    }
-    .plot-container {
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      margin-bottom: 3rem;
-      height: calc(100vh - 200px);
-      min-height: 600px;
-      max-height: 1000px;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    /* Mobile-specific plot container adjustments */
-    @media (max-width: 768px) {
-      .plot-container {
-        padding: 8px;
-        height: calc(100vh - 150px);
-        min-height: 400px;
-        margin-bottom: 1.5rem;
-      }
-    }
-    .view-toggle {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .view-toggle button {
-      padding: 8px 16px;
-      background: #eef2ff;
-      border: 1px solid #c7d2fe;
-      cursor: pointer;
-    }
-    @media (max-width: 768px) {
-      .view-toggle button {
-        padding: 6px 12px;
-        font-size: 0.9rem;
-      }
-    }
-    .view-toggle button.active {
-      background: #c7d2fe;
-      font-weight: bold;
-    }
-    .view-toggle button:first-child {
-      border-radius: 20px 0 0 20px;
-    }
-    .view-toggle button:last-child {
-      border-radius: 0 20px 20px 0;
-    }
-    .location-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin: 0 auto 15px;
-      justify-content: center;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      max-width: 90%;
-      border: 1px solid #e2e8f0;
-    }
-    @media (max-width: 768px) {
-      .location-legend {
-        padding: 8px;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    @media (max-width: 768px) {
-      .legend-item {
-        font-size: 0.8rem;
-        padding: 3px 6px;
-      }
-    }
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      margin-right: 6px;
-    }
-    @media (max-width: 768px) {
-      .legend-color {
-        width: 10px;
-        height: 10px;
-        margin-right: 4px;
-      }
-    }
-    .axis-title {
-      font-weight: 600;
-      font-size: 1rem;
-      text-align: center;
-      color: #4f46e5;
-      margin: 5px 0;
-    }
-    @media (max-width: 768px) {
-      .axis-title {
-        font-size: 0.9rem;
-        margin: 3px 0;
-      }
-    }
-    .week-indicator {
-      font-weight: bold;
-      margin-left: 4px;
-      color: #ff5722;
-    }
-    /* Improve canvas display */
-    #schedule-plot {
-      max-width: 100%;
-      max-height: 100%;
-      display: block;
-      margin: 0 auto;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    /* Adjust plot size for mobile */
-    @media (max-width: 768px) {
-      #schedule-plot {
-        max-width: 100%;
-        border-radius: 4px;
-      }
-    }
-    /* Add this at the bottom to ensure it's applied */
-    @media (max-width: 768px) {
-      /* Fix horizontal scrolling issues on mobile */
-      .plot-container::-webkit-scrollbar {
-        height: 6px;
-      }
-      .plot-container::-webkit-scrollbar-thumb {
-        background-color: rgba(99, 102, 241, 0.5);
-        border-radius: 3px;
-      }
-      .plot-container::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.05);
-      }
+      line-height: 1.6;
     }
 
-    /* Announcement Modal Styles */
-    .announcement-button {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-left: 10px;
-      transition: background-color 0.2s;
+    /* Plot container as card */
+    #plot-container { 
+      background: var(--card); 
+      border: 1px solid var(--ring); 
+      border-radius: 14px; 
+      box-shadow: var(--shadow-md); 
+      padding: 20px; 
     }
 
-    .announcement-button:hover {
-      background: #3730a3;
+    /* Day sections visibility */
+    .day-section { display: none; }
+    .day-section.active { display: block; }
+
+    /* Skeleton loader */
+    .skeleton { 
+      display: grid; 
+      gap: 16px; 
+    }
+    .s-card { 
+      height: 140px; 
+      border-radius: 14px; 
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%); 
+      background-size: 400% 100%; 
+      animation: shimmer 1.4s ease-in-out infinite; 
+      border: 1px solid var(--ring); 
+      box-shadow: var(--shadow-sm);
+    }
+    @keyframes shimmer { 
+      0% { background-position: 100% 0 } 
+      100% { background-position: 0 0 } 
     }
 
-    .announcement-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+    /* Floating action buttons (copy) */
+    .buttons-container { 
+      position: fixed; 
+      bottom: 28px; 
+      right: 28px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 16px; 
     }
-
-    .announcement-content {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 600px;
-      max-height: 85vh;
-      overflow: hidden;
+    .action-button { 
+      width: 84px; 
+      height: 84px; 
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-700)); 
+      color: #fff; 
+      border: 3px solid rgba(255,255,255,0.2); 
+      border-radius: 50%; 
+      font-size: 1.6rem; 
+      cursor: pointer; 
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4), 0 2px 8px rgba(0,0,0,0.15); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    .announcement-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #e5e7eb;
-      background: #f9fafb;
+    .action-button:hover { 
+      transform: translateY(-3px) scale(1.05); 
+      box-shadow: 0 12px 32px rgba(79, 70, 229, 0.5), 0 4px 12px rgba(0,0,0,0.2);
     }
-
-    .announcement-header h3 {
-      margin: 0;
-      color: #1f2937;
-      font-size: 18px;
-    }
-
-    .close-button {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #6b7280;
-      padding: 0;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .close-button:hover {
-      color: #374151;
-    }
-
-    .announcement-body {
-      padding: 20px;
-    }
-
-    #announcement-text {
-      width: 100%;
-      height: 120px;
-      padding: 12px;
-      border: 2px solid #e5e7eb;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 14px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-
-    #announcement-text:focus {
-      outline: none;
-      border-color: #4f46e5;
-    }
-
-    .announcement-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-      justify-content: flex-end;
-    }
-
-    .announcement-buttons button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: background-color 0.2s;
-    }
-
-    .announcement-buttons button:first-child {
-      background: #4f46e5;
-      color: white;
-    }
-
-    .announcement-buttons button:first-child:hover {
-      background: #3730a3;
-    }
-
-    .announcement-buttons button:last-child {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .announcement-buttons button:last-child:hover {
-      background: #e5e7eb;
-    }
-
-    /* Enhanced Announcement Modal Styles */
-    .announcement-body {
-      padding: 20px;
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-
-    .announcement-list {
-      margin-bottom: 20px;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 20px;
-    }
-
-    .announcement-item {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-
-    .announcement-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .announcement-text {
-      font-size: 14px;
-      color: #374151;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-
-    .announcement-days {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
-
-    .day-tag {
-      background: #4f46e5;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .day-tag.all-days {
-      background: #059669;
-    }
-
-    .announcement-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .announcement-actions button {
-      padding: 4px 8px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .edit-btn {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .edit-btn:hover {
-      background: #e5e7eb;
-    }
-
-    .delete-btn {
-      background: #fef2f2;
-      color: #dc2626;
-    }
-
-    .delete-btn:hover {
-      background: #fee2e2;
-    }
-
-    .add-announcement-section {
-      border-top: 1px solid #e5e7eb;
-      padding-top: 20px;
-    }
-
-    .add-announcement-section h4 {
-      margin: 0 0 15px 0;
-      color: #1f2937;
-      font-size: 16px;
-    }
-
-    .day-selector {
-      margin: 15px 0;
-    }
-
-    .day-selector label {
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .day-checkboxes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    .day-checkboxes label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin: 0;
-      font-weight: normal;
-      cursor: pointer;
-    }
-
-    .day-checkboxes input[type="checkbox"] {
-      margin: 0;
-    }
-
-    .empty-state {
-      text-align: center;
-      color: #6b7280;
-      font-style: italic;
-      padding: 20px;
-    }
+    .loading { padding: 12px; color: #374151; }
+    .error { padding: 12px; color: #b91c1c; font-weight: 600; }
   </style>
 </head>
 <body>
-  <h1>SNV Lifetime Courts Schedule</h1>
-  
+  <div class="navbar">
+    <div class="brand"><span class="logo">🎾</span>SNV LT Schedule</div>
+    <div class="actions">
+      <button id="table-view-btn" class="secondary active">Table</button>
+      <button id="plot-view-btn" class="secondary">Plot</button>
+      <div class="segmented" id="week-toggle">
+        <button id="week-all-btn">All Weeks</button>
+        <button id="week-this-btn" class="active">This Week</button>
+      </div>
+      <button id="ann-btn">Announcements</button>
+    </div>
+  </div>
+  <div class="app">
   <div id="tab-buttons" class="tab-buttons"></div>
-  
-  <div class="view-toggle">
-    <button id="table-view-btn" class="active">Table View</button>
-    <button id="plot-view-btn">Schedule Plot</button>
-    <button class="announcement-button" onclick="toggleAnnouncementModal()" title="Add Announcement">📢</button>
+  <div id="table-container" class="loading">Loading schedule...</div>
+  <div id="original-table" style="display:none"></div>
+  <div class="buttons-container">
+    <button id="copy-fab" class="action-button" title="Copy Current Day">📋</button>
+    <button id="copy-plot-button" class="action-button" title="Copy Plot" style="display:none">🖼</button>
+  </div>
+  <div id="plot-container" style="display:none; width:100%; height:70vh; position:relative;">
+    <div id="location-legend" style="position:absolute; right:12px; top:12px; background:rgba(255,255,255,0.85); padding:8px 12px; border-radius:8px;"></div>
+    <canvas id="schedule-plot" style="width:100%; height:100%;"></canvas>
   </div>
   
-  <div id="table-container">Loading table...</div>
-  <div id="plot-container" class="plot-container" style="display:none;">
-    <div id="location-legend" class="location-legend"></div>
-    <canvas id="schedule-plot"></canvas>
+  <!-- Footer with original data link -->
+  <div style="text-align: center; padding: 2rem 1rem; margin-top: 3rem; border-top: 1px solid var(--ring);">
+    <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener" style="color: var(--primary-700); text-decoration: none; font-size: 1.1rem; font-weight: 700; transition: color 0.2s ease;">View Original Data →</a>
   </div>
-
-  <!-- Announcement Modal -->
-  <div id="announcement-modal" class="announcement-modal" style="display:none;">
-    <div class="announcement-content">
-      <div class="announcement-header">
-        <h3>Schedule Announcements</h3>
-        <button class="close-button" onclick="toggleAnnouncementModal()">&times;</button>
+  <div id="announcement-modal" class="announcement-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:1100;">
+    <div class="announcement-content" style="width:min(680px,92vw); background:#fff; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-height:80vh; overflow:auto;">
+      <div class="announcement-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+        <h3 style="margin:0;">Schedule Announcements</h3>
+        <button class="close-button" onclick="toggleAnnouncementModal()" style="border:none; background:#ef4444; color:#fff; border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;">×</button>
       </div>
       <div class="announcement-body">
-        <div class="announcement-list" id="announcement-list">
-          <!-- Announcements will be dynamically added here -->
-        </div>
-        <div class="add-announcement-section">
-          <h4>Add New Announcement</h4>
-          <textarea id="announcement-text" placeholder="Enter announcement text..."></textarea>
-          <div class="day-selector">
-            <label>Apply to days:</label>
-            <div class="day-checkboxes">
+        <div id="announcement-list" class="announcement-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
+        <div class="add-announcement-section" style="border-top:1px solid #e5e7eb; padding-top:16px;">
+          <h4 style="margin:0 0 10px 0;">Add New Announcement</h4>
+          <textarea id="announcement-text" placeholder="Enter announcement text..." style="width:100%; min-height:80px; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></textarea>
+          <div class="day-selector" style="margin-top:10px;">
+            <div class="day-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+              <label><input type="checkbox" id="select-all-days" value="All"> All Days</label>
+              <label><input type="checkbox" value="Sun"> Sun</label>
               <label><input type="checkbox" value="Mon"> Mon</label>
               <label><input type="checkbox" value="Tue"> Tue</label>
-              <label><input type="checkbox" value="Wed" checked> Wed</label>
+              <label><input type="checkbox" value="Wed"> Wed</label>
               <label><input type="checkbox" value="Thu"> Thu</label>
               <label><input type="checkbox" value="Fri"> Fri</label>
               <label><input type="checkbox" value="Sat"> Sat</label>
-              <label><input type="checkbox" value="Sun"> Sun</label>
-              <label><input type="checkbox" value="All" id="select-all-days"> All Days</label>
             </div>
           </div>
-          <div class="announcement-buttons">
+          <div class="announcement-buttons" style="margin-top:12px; display:flex; gap:10px;">
             <button onclick="addAnnouncement()">Add Announcement</button>
             <button onclick="clearAllAnnouncements()">Clear All</button>
           </div>
@@ -797,2065 +413,579 @@
       </div>
     </div>
   </div>
-  <div id="original-table" style="display:none;"></div>
-<div style="text-align:center; margin: 2rem 0 0 0;">
-  <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener" style="background:#4f46e5; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Show Original Data</a>
-</div>
-  <div class="buttons-container">
-    <button id="copy-button" class="action-button" title="Copy Current Tab">📋</button>
-    <button id="copy-plot-button" class="action-button" title="Copy Plot to Clipboard" style="display:none;">📋</button>
   </div>
-
-<script>
-const csvUrl = "https://corsproxy.io/?https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/export?format=csv";
-
-// Helper function to process court numbers
-function processCourt(courtStr) {
-  if (!courtStr) return ['Ct1']; // Default to court 1 if no valid data
-  
-  // Handle N/A case specifically
-  if (courtStr.trim().toUpperCase() === 'N/A') return ['N/A'];
-  
-  // Remove any non-essential characters, preserving numbers, commas, and hyphens
-  const cleaned = courtStr.replace(/[^0-9,\-]/g, '').trim();
-  if (!cleaned) return ['Ct1']; // Default to court 1 if no valid data
-  
-  // Process the cleaned string to extract all court numbers
-  const courts = [];
-  
-  // Split by commas first
-  const segments = cleaned.split(',').map(s => s.trim()).filter(s => s);
-  
-  segments.forEach(segment => {
-    // Check if segment contains a range (e.g., "1-5")
-    if (segment.includes('-')) {
-      const [start, end] = segment.split('-').map(n => parseInt(n.trim()));
-      // Validate that we have valid start/end numbers
-      if (!isNaN(start) && !isNaN(end) && start <= end) {
-        // Generate all numbers in the range
-        for (let i = start; i <= end; i++) {
-          courts.push(i.toString());
-        }
-      } else {
-        // Invalid range, just add as is
-        courts.push(segment);
-      }
-    } 
-    // Check if segment is a multi-digit number that should be split (like "123")
-    else if (segment.length > 1 && /^[1-9]+$/.test(segment)) {
-      // Split into individual digits
-      segment.split('').forEach(digit => courts.push(digit));
-    }
-    else {
-      // Regular number, add as is
-      courts.push(segment);
-    }
-  });
-  
-  // Return unique courts with "Ct" prefix
-  return [...new Set(courts.map(c => `Ct${c}`))];
-}
-
-// Helper function to format courts compactly for display
-function compactCourtsDisplay(courts) {
-  if (courts.length <= 1) return courts.join(', ');
-  
-  // Extract court numbers for processing
-  const numbers = courts.map(court => {
-    const match = court.match(/(\d+)/);
-    return match ? parseInt(match[1]) : null;
-  }).filter(num => num !== null);
-  
-  if (numbers.length !== courts.length) {
-    // Not all courts have numbers, just join them as is
-    return courts.join(', ');
-  }
-  
-  // Sort numbers
-  numbers.sort((a, b) => a - b);
-  
-  // Find ranges
-  const ranges = [];
-  let rangeStart = numbers[0];
-  let rangeEnd = numbers[0];
-  
-  for (let i = 1; i < numbers.length; i++) {
-    if (numbers[i] === rangeEnd + 1) {
-      // Continue the range
-      rangeEnd = numbers[i];
-    } else {
-      // End the current range and start a new one
-      if (rangeStart === rangeEnd) {
-        ranges.push(`Ct${rangeStart}`);
-      } else {
-        ranges.push(`Ct${rangeStart}-${rangeEnd}`);
-      }
-      rangeStart = rangeEnd = numbers[i];
-    }
-  }
-  
-  // Add the last range
-  if (rangeStart === rangeEnd) {
-    ranges.push(`Ct${rangeStart}`);
-  } else {
-    ranges.push(`Ct${rangeStart}-${rangeEnd}`);
-  }
-  
-  return ranges.join(', ');
-}
-
-// Helper function to clean and standardize a single time with context
-function cleanSingleTime(timeStr, contextPeriod = null) {
-  if (!timeStr) return '';
-  
-  console.log('cleanSingleTime input:', timeStr, 'context:', contextPeriod);
-  
-  // First, check if there's an explicit AM/PM in the input
-  const explicitPeriodMatch = timeStr.match(/([AP]M)/i);
-  let explicitPeriod = explicitPeriodMatch ? explicitPeriodMatch[1].toUpperCase() : null;
-  
-  console.log('Explicit period found:', explicitPeriod);
-  
-  // Remove all non-time characters except numbers and colon
-  const cleanedTime = timeStr.replace(/[^0-9:]/g, '');
-  
-  console.log('After cleaning time part:', cleanedTime);
-  
-  if (!cleanedTime) return '';
-  
-  // Ensure minutes exist
-  let timePart = cleanedTime;
-  if (!timePart.includes(':')) {
-    timePart = timePart + ':00';
-  }
-  
-  // Parse hours and minutes
-  const timeParts = timePart.split(':');
-  if (timeParts.length < 2) return '';
-  
-  let hours = parseInt(timeParts[0]);
-  let minutes = parseInt(timeParts[1]);
-  
-  console.log('Parsed hours:', hours, 'minutes:', minutes);
-  
-  // Validate hours and minutes are reasonable numbers
-  if (isNaN(hours) || isNaN(minutes)) return '';
-  if (hours < 0 || hours > 23) return '';
-  if (minutes < 0 || minutes > 59) return '';
-  
-  // Determine the period to use (explicit takes priority over context)
-  let period;
-  if (explicitPeriod) {
-    console.log('Using explicit period:', explicitPeriod);
-    period = explicitPeriod;
-  } else if (contextPeriod) {
-    console.log('Using context period:', contextPeriod);
-    period = contextPeriod;
-  } else {
-    // Only guess period if none exists and no context
-    console.log('No period found, guessing based on hour...');
-    
-    // Tennis court specific logic: consider both the hour and common patterns
-    if (hours === 10) {
-      // Special case: 10:30 is typically a morning class (10:30 AM)
-      period = 'AM';
-    }
-    else if (hours >= 9 && hours <= 11) {
-      // 9-11 are typically morning classes
-      period = 'AM';
-    }
-    else if (hours >= 1 && hours <= 6) {
-      // 1-6 are typically afternoon/evening classes  
-      period = 'PM';
-    }
-    else if (hours === 7 || hours === 8) {
-      // 7-8 are ambiguous, but more commonly evening classes in tennis courts
-      period = 'PM';
-    }
-    // For times 12, assume PM (noon/midnight context will be determined by other factors)
-    else if (hours === 12) {
-      period = 'PM';
-    }
-    // For times 0, assume AM (midnight)
-    else if (hours === 0) {
-      period = 'AM';
-    }
-    // For other cases, assume AM
-    else {
-      period = 'AM';
-    }
-  }
-  
-  console.log('Final period:', period);
-  
-  // Ensure we're working with valid 12-hour format
-  if (hours > 12) {
-    // This shouldn't happen with proper input, but handle it
-    hours = hours - 12;
-    period = 'PM';
-  }
-  if (hours === 0) {
-    hours = 12;
-    period = 'AM';
-  }
-  
-  // Format minutes
-  minutes = minutes.toString().padStart(2, '0');
-  
-  const result = `${hours}:${minutes}${period}`;
-  console.log('Final result:', result);
-  
-  return result;
-}
-
-// Helper function to convert 24-hour time to 12-hour format with period
-function format24to12Hour(hour24) {
-  let period = 'AM';
-  let hour12 = hour24;
-  
-  if (hour24 >= 12) {
-    period = 'PM';
-    if (hour24 > 12) hour12 = hour24 - 12;
-  }
-  if (hour12 === 0) hour12 = 12;
-  
-  return { hour: hour12, period };
-}
-
-// Process a single time range (e.g. "1:30pm-3:30pm") with context
-function processTimeRange(timeRange, contextPeriod = null) {
-  if (!timeRange) return '';
-  
-  // Clean input and convert semicolons to colons first
-  timeRange = timeRange.trim().replace(/;/g, ':');
-  
-  // Check if it's a time range with hyphen
-  const parts = timeRange.split('-');
-  
-  // Process single time
-  if (parts.length === 1) {
-    const result = cleanSingleTime(parts[0], contextPeriod);
-    if (result) {
-      const periodMatch = result.match(/([AP]M)$/);
-      const period = periodMatch ? periodMatch[1] : contextPeriod;
-      return { result, period };
-    }
-    return '';
-  }
-  
-  // Process time range
-  if (parts.length === 2) {
-    // Special handling: if the entire range ends with AM/PM (like "7-8:30pm"), 
-    // that period should apply to the whole range
-    const rangeEndPeriodMatch = timeRange.match(/([AP]M)\s*$/i);
-    const rangeEndPeriod = rangeEndPeriodMatch ? rangeEndPeriodMatch[1].toUpperCase() : null;
-    
-    console.log(`Range "${timeRange}" - detected range period: ${rangeEndPeriod}`);
-    
-    // For start time: don't inherit period from end time, let it be determined by its own logic
-    const hasStartExplicitPeriod = /[AP]M/i.test(parts[0]);
-    let startContextPeriod = contextPeriod;
-    // Removed automatic inheritance of end period for start time
-    
-    const startTime = cleanSingleTime(parts[0], startContextPeriod);
-    
-    // Extract period from start time to use as context for end time
-    const startMatch = startTime.match(/([AP]M)$/);
-    const startPeriod = startMatch ? startMatch[1] : contextPeriod;
-    
-    // For end time, only use start period as context if the end time doesn't have explicit period
-    const hasEndExplicitPeriod = /[AP]M/i.test(parts[1]);
-    let endContextPeriod = hasEndExplicitPeriod ? null : startPeriod;
-    
-    // Special case: if start time is 10:30AM and end time is 12:00, it should be 12:00PM (noon)
-    if (startTime === '10:30AM' && parts[1].trim() === '12:00') {
-      endContextPeriod = 'PM';
-    }
-    // More generally: if start is AM and end hour is 12, it should be PM (noon)
-    else if (startPeriod === 'AM' && parts[1].trim().startsWith('12:')) {
-      endContextPeriod = 'PM';
-    }
-    
-    const endTime = cleanSingleTime(parts[1], endContextPeriod);
-    
-    if (!startTime || !endTime) return '';
-    
-    console.log('processTimeRange - start:', startTime, 'end:', endTime);
-    
-    // Parse times for range validation
-    const startTimeMatch = startTime.match(/(\d+):(\d+)([AP]M)/);
-    const endTimeMatch = endTime.match(/(\d+):(\d+)([AP]M)/);
-    
-    if (!startTimeMatch || !endTimeMatch) return '';
-    
-    const [, startHour, startMinutes, startTimePeriod] = startTimeMatch;
-    const [, endHour, endMinutes, endTimePeriod] = endTimeMatch;
-    
-    // Convert to 24-hour for range calculation
-    let startHour24 = parseInt(startHour);
-    let endHour24 = parseInt(endHour);
-    
-    if (startTimePeriod === 'PM' && startHour24 !== 12) startHour24 += 12;
-    if (endTimePeriod === 'PM' && endHour24 !== 12) endHour24 += 12;
-    if (startTimePeriod === 'AM' && startHour24 === 12) startHour24 = 0;
-    if (endTimePeriod === 'AM' && endHour24 === 12) endHour24 = 0;
-    
-    console.log('24-hour times - start:', startHour24, 'end:', endHour24);
-    
-    // Calculate range length
-    let rangeLength = endHour24 - startHour24;
-    if (rangeLength < 0) rangeLength += 24;
-    
-    console.log('Range length:', rangeLength, 'hours');
-    
-    // Only adjust if the range is clearly invalid (> 12 hours)
-    if (rangeLength > 12) {
-      console.log('Range too long, adjusting...');
-      // Calculate new end time (2 hours after start for reasonable default)
-      let newEndHour24 = startHour24 + 2;
-      if (newEndHour24 >= 24) newEndHour24 -= 24;
-      
-      // Convert back to 12-hour format
-      const { hour: newEndHour, period: newEndPeriod } = format24to12Hour(newEndHour24);
-      
-      // Keep original minutes
-      const adjustedResult = `${startTime}-${newEndHour}:${endMinutes}${newEndPeriod}`;
-      console.log('Adjusted result:', adjustedResult);
-      return { result: adjustedResult, period: startTimePeriod };
-    }
-    
-    const result = `${startTime}-${endTime}`;
-    console.log('Normal result:', result);
-    return { result, period: startTimePeriod };
-  }
-  
-  return '';
-}
-
-// Main time processing function for multiple time ranges
-function processTime(timeStr) {
-  if (!timeStr) return '';
-  
-  // Clean the input: remove trailing commas and extra whitespace
-  timeStr = timeStr.replace(/,\s*$/, '').trim();
-  
-  // Split by commas, semicolons, ampersands, OR spaces for multiple time ranges
-  // We'll use a regex to properly split by commas, semicolons, ampersands, or spaces that aren't part of time values
-  // Split by spaces only if they separate complete time ranges (containing hyphens)
-  let timeRanges;
-  
-  // Check if this looks like space-separated multiple time ranges
-  // Pattern: multiple parts separated by spaces, each containing a hyphen
-  const spaceSeparatedParts = timeStr.split(/\s+/).filter(part => part.trim());
-  const hasMultipleTimeRanges = spaceSeparatedParts.length > 1 && 
-                               spaceSeparatedParts.every(part => part.includes('-'));
-  
-  if (hasMultipleTimeRanges) {
-    // Split by spaces for multiple time ranges like "4:00pm-4:30pm 5:30-6:30pm"
-    timeRanges = spaceSeparatedParts;
-  } else {
-    // Use original splitting for commas, semicolons, ampersands
-    timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
-  }
-  
-  // Process each time range independently first to check for explicit periods
-  const processedRanges = [];
-  let contextPeriod = null;
-  
-  for (const range of timeRanges) {
-    // Check if this range has explicit AM/PM - if so, don't use context
-    const hasExplicitPeriod = /[AP]M/i.test(range);
-    const useContext = !hasExplicitPeriod ? contextPeriod : null;
-    
-    console.log(`Processing range: "${range}", hasExplicit: ${hasExplicitPeriod}, useContext: ${useContext}`);
-    
-    const processed = processTimeRange(range.trim(), useContext);
-    
-    if (processed) {
-      // Handle both string and object returns
-      if (typeof processed === 'string') {
-        processedRanges.push(processed);
-        // Extract period for context - update only if we found a period
-        const periodMatch = processed.match(/([AP]M)/);
-        if (periodMatch) {
-          contextPeriod = periodMatch[1];
-        }
-      } else if (processed.result) {
-        processedRanges.push(processed.result);
-        // Use the period from the processed result
-        if (processed.period) {
-          contextPeriod = processed.period;
+  <script>
+    const SHEET_ID = '1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs';
+    const SHEET_NAMES = [
+      'Fremont High School',
+      'Sunnyvale Middle School (Mango)',
+      'Serra Park',
+      'Ortega Park',
+      'Ponderosa Park',
+      'Washington Park',
+      'Braly Park',
+      'Encinal Park',
+      'Orchard Gardens',
+      'Columbia Park',
+      'Lakewood Park',
+      'Fairwood Park',
+      'Seven Seas'
+    ];
+    const expectedDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const weekdayOrder = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5,"Saturday":6,"Sunday":7};
+    let CURRENT_DAY = '';
+    let SHOW_WEEK_ONLY = true; // Default to showing only current week
+    function csvUrlForSheet(name){return `https://r.jina.ai/http://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`}
+    function parseCSV(csv){const lines=csv.trim().split(/\r?\n/);return lines.map(line=>{const res=[];let cell='';let q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){q=!q}else if(ch===','&&!q){res.push(cell.trim());cell=''}else{cell+=ch}}res.push(cell.trim());return res})}
+    function processCourt(s){if(!s)return['Ct1'];if(s.trim().toUpperCase()==='N/A')return['N/A'];const cleaned=s.replace(/[^0-9,\-]/g,'').trim();if(!cleaned)return['Ct1'];const courts=[];const segs=cleaned.split(',').map(x=>x.trim()).filter(Boolean);segs.forEach(seg=>{if(seg.includes('-')){const[a,b]=seg.split('-').map(n=>parseInt(n.trim()));if(!isNaN(a)&&!isNaN(b)&&a<=b){for(let i=a;i<=b;i++)courts.push(i.toString())}else{courts.push(seg)}}else if(seg.length>1&&/^[1-9]+$/.test(seg)){seg.split('').forEach(d=>courts.push(d))}else{courts.push(seg)}});return[...new Set(courts.map(c=>`Ct${c}`))]}
+    function compactCourtsDisplay(cs){if(cs.length<=1)return cs.join(', ');const nums=cs.map(c=>{const m=c.match(/(\d+)/);return m?parseInt(m[1]):null}).filter(n=>n!==null);if(nums.length!==cs.length)return cs.join(', ');nums.sort((a,b)=>a-b);const ranges=[];let s=nums[0],e=nums[0];for(let i=1;i<nums.length;i++){if(nums[i]===e+1)e=nums[i];else{ranges.push(s===e?`Ct${s}`:`Ct${s}-${e}`);s=e=nums[i]}}ranges.push(s===e?`Ct${s}`:`Ct${s}-${e}`);return ranges.join(', ')}
+    function cleanSingleTime(t,ctx=null){if(!t)return'';const m=t.match(/([AP]M)/i);let p=m?m[1].toUpperCase():null;const cleaned=t.replace(/[^0-9:]/g,'');if(!cleaned)return'';let part=cleaned;if(!part.includes(':'))part=part+':00';const ps=part.split(':');if(ps.length<2)return'';let h=parseInt(ps[0]);let mi=parseInt(ps[1]);if(isNaN(h)||isNaN(mi)||h<0||h>23||mi<0||mi>59)return'';if(p){}else if(ctx)p=ctx;else{if(h===10)p='AM';else if(h>=9&&h<=11)p='AM';else if(h>=1&&h<=8)p='PM';else if(h===12)p='PM';else if(h===0)p='AM';else p='AM'}if(h>12){h-=12;p='PM'}if(h===0){h=12;p='AM'}mi=mi.toString().padStart(2,'0');return `${h}:${mi}${p}`}
+    function format24to12Hour(h){let p='AM',h12=h;if(h>=12){p='PM';if(h>12)h12=h-12}if(h12===0)h12=12;return {hour:h12,period:p}}
+    function processTimeRange(r,ctx=null){if(!r)return'';r=r.trim().replace(/;/g,':');const parts=r.split('-');if(parts.length===1){const rs=cleanSingleTime(parts[0],ctx);if(rs){const m=rs.match(/([AP]M)$/);const p=m?m[1]:ctx;return{result:rs,period:p}}return''}if(parts.length===2){const st=cleanSingleTime(parts[0],ctx);const sm=st.match(/([AP]M)$/);const sp=sm?sm[1]:ctx;const hasEnd=/[AP]M/i.test(parts[1]);let ectx=hasEnd?null:sp;if(sp==='AM'&&parts[1].trim().startsWith('12:'))ectx='PM';const et=cleanSingleTime(parts[1],ectx);if(!st||!et)return'';const sM=st.match(/(\d+):(\d+)([AP]M)/);const eM=et.match(/(\d+):(\d+)([AP]M)/);if(!sM||!eM)return'';let[,sh,smin,spm]=sM;let[,eh,emin,epm]=eM;sh=parseInt(sh);eh=parseInt(eh);let s24=sh,e24=eh;if(spm==='PM'&&s24!==12)s24+=12;if(epm==='PM'&&e24!==12)e24+=12;if(spm==='AM'&&s24===12)s24=0;if(epm==='AM'&&e24===12)e24=0;let len=e24-s24;if(len<0)len+=24;if(len>12){let newEnd=s24+2;if(newEnd>=24)newEnd-=24;const{hour,period}=format24to12Hour(newEnd);return{result:`${st}-${hour}:${emin}${period}`,period:spm}}return{result:`${st}-${et}`,period:spm}}return''}
+    function processTime(t){if(!t)return'';t=t.replace(/,\s*$/,'').trim();const parts=t.split(/\s+/).filter(Boolean);const spaceMulti=parts.length>1&&parts.every(p=>p.includes('-'));let ranges=spaceMulti?parts:t.split(/[,;&]\s*/).filter(r=>r.trim());const out=[];let ctx=null;for(const r of ranges){const has=/[AP]M/i.test(r);const useCtx=!has?ctx:null;const res=processTimeRange(r.trim(),useCtx);if(res){if(typeof res==='string'){out.push(res);const m=res.match(/([AP]M)/);if(m)ctx=m[1]}else if(res.result){out.push(res.result);if(res.period)ctx=res.period}}}return out.join(', ')}
+    function parseTimeToHours(s){if(!s)return null;s=s.trim();const m=s.match(/(\d+):(\d+)([AP]M)/i);if(!m)return null;let[,h,mi,p]=m;h=parseInt(h);mi=parseInt(mi);p=p.toUpperCase();if(p==='PM'&&h!==12)h+=12;if(p==='AM'&&h===12)h=0;return h+(mi/60)}
+    function extractTimeRanges(t){if(!t)return[];t=t.replace(/,\s*$/,'').trim();const ranges=[];const parts=t.split(/[,;&]\s*/).filter(r=>r.trim());for(const r of parts){if(r.includes('-')){const seg=r.split('-');if(seg.length===2){const a=seg[0].trim();const b=seg[1].trim();const start=parseTimeToHours(a);const end=parseTimeToHours(b);if(start!==null&&end!==null)ranges.push({start,end})}}else{const single=parseTimeToHours(r.trim());if(single!==null)ranges.push({start:single,end:single+1})}}return ranges}
+    function simplifyLocation(l){return l.replace('Fremont High School','Fremont').replace('Washington Park','Wash').replace('Ponderosa Park','Pond').replace('Sunnyvale Middle School','SMS').replace('Lakewood Park','Lakewood').replace('Serra Park','Serra').replace('Fairwood Park','Fairwood').replace('Ortega Park','Ortega').replace('Raynor Park','Raynor').replace('De Anza Park','DeAnza').replace('Sunnyvale Community Center','SCC').replace('Sunnyvale Tennis Center','STC').replace('Mango Park','Mango')}
+    async function fetchOneSheet(name){
+      // Try corsproxy first since jina.ai is rate-limited
+      const urlPrimary = `https://corsproxy.io/?https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+      const urlFallback = `https://r.jina.ai/http://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+      let lastErr;
+      for (const url of [urlPrimary, urlFallback]) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
+          const text = await res.text();
+          return { name, rows: parseCSV(text) };
+        } catch (e) {
+          lastErr = e;
+          console.warn(`Failed to fetch ${name} from ${url}:`, e);
         }
       }
+      throw lastErr || new Error(`All proxies failed for ${name}`);
     }
-  }
-  
-  // Join back with commas
-  return processedRanges.join(', ');
-}
-
-// Helper function to parse time string into hours (for plotting)
-function parseTimeToHours(timeStr) {
-  if (!timeStr) return null;
-  
-  // Clean the time string and handle various formats
-  timeStr = timeStr.trim();
-  
-  // Try to match the standard format first: "7:00PM", "12:30AM", etc.
-  const match = timeStr.match(/(\d+):(\d+)([AP]M)/i);
-  if (!match) {
-    console.log(`Failed to parse time: "${timeStr}"`);
-    return null;
-  }
-  
-  let [, hours, minutes, period] = match;
-  hours = parseInt(hours);
-  minutes = parseInt(minutes);
-  period = period.toUpperCase();
-  
-  // Convert to 24-hour format
-  if (period === 'PM' && hours !== 12) hours += 12;
-  if (period === 'AM' && hours === 12) hours = 0;
-  
-  // Return as decimal hours
-  const result = hours + (minutes / 60);
-  return result;
-}
-
-// Extract time ranges for plotting
-function extractTimeRanges(timeStr) {
-  if (!timeStr) return [];
-  
-  // Clean the input: remove trailing commas and extra whitespace
-  timeStr = timeStr.replace(/,\s*$/, '').trim();
-  
-  const ranges = [];
-  const timeRanges = timeStr.split(/[,;&]\s*/).filter(range => range.trim());
-  
-  for (const range of timeRanges) {
-    // Check if it's a range (contains dash) or single time
-    if (range.includes('-')) {
-      const parts = range.split('-');
-      if (parts.length === 2) {
-        const startStr = parts[0].trim();
-        const endStr = parts[1].trim();
+    async function getStoredTabNames(){try{const s=localStorage.getItem('sheetNames');if(!s)return null;const arr=JSON.parse(s);return Array.isArray(arr)&&arr.length?arr:null}catch(_){return null}}
+    function setStoredTabNames(names){try{localStorage.setItem('sheetNames',JSON.stringify(names))}catch(_){}}
+    async function discoverSheetNames(){try{const url=`https://r.jina.ai/http://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;const html=await fetch(url).then(r=>r.text());
+      // Try to isolate the sheets metadata block first
+      let names=[];
+      const sheetsBlockMatch=html.match(/"sheets":\[(.*?)\]/s);
+      const block=sheetsBlockMatch? sheetsBlockMatch[1] : html;
+      const re=/"title":"([^"]+)"/g; let m; const seen=new Set();
+      while((m=re.exec(block))!==null){const title=m[1].trim();if(title && !seen.has(title) && title.toLowerCase()!=='sheet1'){seen.add(title);names.push(title)}}
+      // Fallback: scan for 'Day of the Week' header lines to capture location from header
+      if(names.length===0){const reHeader=/\"([^"]+) Day of the Week\"/g; let h; const seen2=new Set(); while((h=reHeader.exec(html))!==null){const t=h[1].trim(); if(t && !seen2.has(t)){seen2.add(t); names.push(t)}}}
+      setStoredTabNames(names); return names;
+    }catch(e){console.warn('Tab discovery failed:', e); return []}}
+    async function getSheetNames(){ if (Array.isArray(SHEET_NAMES) && SHEET_NAMES.length) return SHEET_NAMES; const stored=await getStoredTabNames(); if(stored) return stored; const names=await discoverSheetNames(); return names&&names.length?names:[] }
+    async function fetchAllSheets(){const names=await getSheetNames(); if(!names || !names.length){return{successes:[],failures:[]}} const tasks=names.map(n=>fetchOneSheet(n).then(v=>({status:'fulfilled',value:v})).catch(e=>({status:'rejected',reason:e,name:n})));const results=await Promise.all(tasks);const successes=results.filter(r=>r.status==='fulfilled').map(r=>r.value);const failures=results.filter(r=>r.status==='rejected');return{successes,failures}}
+    function normalizeDateStr(d){if(!d)return'';const p=d.split('/');if(p.length===2)return`${p[0]}/${p[1]}/2025`;if(p.length===3&&p[2].length===2)return`${p[0]}/${p[1]}/20${p[2]}`;return d}
+    async function loadAndRender(){const container=document.getElementById('table-container');const tabs=document.getElementById('tab-buttons');const originalTable=document.getElementById('original-table');container.innerHTML='<div class="skeleton"><div class="s-card"></div><div class="s-card"></div><div class="s-card"></div></div>';tabs.innerHTML='';originalTable.innerHTML='';try{const{successes,failures}=await fetchAllSheets();if(successes.length===0){container.innerHTML=`<div class="error">No sheets loaded. Click 'Scan Tabs' or check sharing.</div>`;return}let rawData=[];for(const sheet of successes){const sheetName=sheet.name; // discovered title
+      // Derive display location from the header cell like "<Location> Day of the Week" or "<Location> Monday Tuesday..."
+      let displayLocation=sheetName; 
+      if(sheet.rows&&sheet.rows.length>0&&sheet.rows[0]&&sheet.rows[0][0]){
+        let hdr=sheet.rows[0][0].trim();
+        console.log('Processing header for sheet', sheetName, ':', hdr);
         
-        const start = parseTimeToHours(startStr);
-        const end = parseTimeToHours(endStr);
-        
-        if (start !== null && end !== null) {
-          ranges.push({ start, end });
-        }
-      }
-    } else {
-      // Single time - create a 1-hour block for visualization
-      const singleTime = parseTimeToHours(range.trim());
-      if (singleTime !== null) {
-        ranges.push({ start: singleTime, end: singleTime + 1 });
-      }
-    }
-  }
-  
-  return ranges;
-}
-
-// Helper function to get week number
-function getWeekNumber(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
-async function fetchAndRenderTable() {
-  const expectedDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const weekdayOrder = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5,"Saturday":6,"Sunday":7};
-
-  const tabs = document.getElementById("tab-buttons");
-  const container = document.getElementById("table-container");
-  const originalTable = document.getElementById("original-table");
-  // removed toggleBtn because link now directly opens external
-
-  try {
-    const response = await fetch(csvUrl);
-    const csvText = await response.text();
-
-    // Parse CSV properly using a more robust approach
-    const parseCSV = (csv) => {
-      const lines = csv.trim().split(/\r?\n/);
-      return lines.map(line => {
-        // Split by comma but respect quotes
-        const result = [];
-        let cell = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-          const char = line[i];
-          
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            result.push(cell.trim());
-            cell = '';
-          } else {
-            cell += char;
-          }
+        // First, remove "Day of the Week" if present
+        if(/day of the week/i.test(hdr)){
+          hdr=hdr.replace(/day of the week/i,'').trim();
+          console.log('After removing "Day of the Week":', hdr);
         }
         
-        // Add the last cell
-        result.push(cell.trim());
-        return result;
-      });
-    };
-
-    const rows = parseCSV(csvText);
-    let rawData = [];
-
-    let lastDay = "";
-    let lastDate = "";
-    let currentCourt = "";
-
-    // First pass: collect raw data
-    for (let row of rows) {
-      // Ensure we have enough columns
-      if (row.length < 5) continue;
-      
-      // Extract values and trim
-      let [V1, V2, V3, V4, V5, V6] = row.map(cell => cell ? cell.trim() : '');
-      
-      // Skip header row
-      if (V1 === "Day of the Week") continue;
-
-      // Identify location rows - V1 contains location name, V2, V3, V4 are empty
-      if (V1 && !V2 && !V3 && !V4 && !expectedDays.includes(V1)) {
-        currentCourt = V1.replace(/ Park| School|Sunnyvale Middle School \(|\)/g, "").trim();
-        continue;
-      }
-
-      // Fill in missing values from previous rows
-      if (!V1) V1 = lastDay; else lastDay = V1;
-      if (!V2) V2 = lastDate; else lastDate = V2;
-
-      // Skip non-valid days
-      if (!expectedDays.includes(V1)) continue;
-      
-      // For records with time but no court number, set court number to N/A
-      if (!V4 && V3) {
-        V4 = "N/A";
-      }
-      // Skip records with no time and no court number
-      if (!V4 && !V3) continue;
-
-      // Debug: Log the court column value
-      console.log('Court column V4:', V4, 'from row:', [V1, V2, V3, V4, V5, V6]);
-
-      // Process date format
-      let d = V2;
-      let parts = d.split("/");
-      if (parts.length === 2) {
-        d = `${parts[0]}/${parts[1]}/2025`;
-      } else if (parts.length === 3 && parts[2].length === 2) {
-        d = `${parts[0]}/${parts[1]}/20${parts[2]}`;
-      }
-      let dateObj = new Date(d);
-      
-      // For each court in this row, create a separate entry with the time(s) from this row only
-      let courtNumbers = processCourt(V4);
-      console.log('Processed court numbers:', courtNumbers, 'from V4:', V4);
-      
-      courtNumbers.forEach(court => {
-        rawData.push({
-          Day: V1,
-          Date: d,
-          DateObj: dateObj,
-          RawTime: V3,
-          Time: processTime(V3),
-          RawCourt: V4,
-          Court: court,
-          Location: currentCourt
-        });
-      });
-    }
-    
-    // Second pass: combine times for the same court on the same date/location only if they are from the same row
-    // (in this case, there should be only one time per court per row, but we keep the logic for safety)
-    let cleaned = [];
-    const combinedData = {};
-    rawData.forEach(item => {
-      const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;
-      if (!combinedData[key]) {
-        combinedData[key] = {
-          ...item,
-          Times: [item.Time]
-        };
-      } else {
-        if (!combinedData[key].Times.includes(item.Time)) {
-          combinedData[key].Times.push(item.Time);
-        }
-      }
-    });
-    // Convert back to array and set combined time string
-    cleaned = Object.values(combinedData).map(item => ({
-      ...item,
-      Time: item.Times.join(', ')
-    }));
-
-    console.log('Processed data sample:', cleaned.slice(0, 10));
-
-    // Sort by day, date, location, court
-    cleaned.sort((a, b) => {
-      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day]) 
-        return weekdayOrder[a.Day] - weekdayOrder[b.Day];
-      if (b.DateObj - a.DateObj !== 0) 
-        return b.DateObj - a.DateObj;
-      if (a.Location !== b.Location) 
-        return a.Location.localeCompare(b.Location);
+        // Then remove all day names from the string (whether or not "Day of the Week" was present)
+        const cleanedHeader=hdr.replace(/\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/gi,'').replace(/\s+/g,' ').trim();
+        console.log('After removing day names:', cleanedHeader);
         
-      // Extract court numbers for numeric comparison
-      const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
-      const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
-      return aNum - bNum;
-    });
-
-    // Debug: Log some sample data to see what we have
-    console.log('Sample cleaned data after sorting:', cleaned.slice(0, 5).map(item => ({
-      Day: item.Day,
-      Date: item.Date,
-      Location: item.Location,
-      Court: item.Court,
-      Time: item.Time
-    })));
-
-    // Group for display
-    const grouped = {};
-    cleaned.forEach(row => {
-      if (!grouped[row.Day]) grouped[row.Day] = {};
-      if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
-      grouped[row.Day][row.Date].push(row);
-    });
-
-    container.innerHTML = "";
-    tabs.innerHTML = "";
-
-    // Generate plot data for current data
-    let allPlotData = {};
-    
-    for (const day of expectedDays) {
-      if (grouped[day]) {
-        const btn = document.createElement("button");
-        btn.textContent = day;
-        btn.onclick = () => switchTab(day);
-        tabs.appendChild(btn);
-
-        const section = document.createElement("div");
-        section.id = `section-${day}`;
-        section.className = "day-section";
-
-        // Initialize plot data for this day
-        allPlotData[day] = [];
-
-        for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
-          const dateTitle = document.createElement("div");
-          dateTitle.className = "date-title";
-          dateTitle.textContent = date;
-          section.appendChild(dateTitle);
-
-          const table = document.createElement("table");
-          const thead = document.createElement("thead");
-          const headRow = document.createElement("tr");
-
-          ["Location", "Courts", "Time"].forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            headRow.appendChild(th);
-          });
-
-          thead.appendChild(headRow);
-          table.appendChild(thead);
-
-          const tbody = document.createElement("tbody");
-          
-          // Group by location and time
-          const locationTimeGroups = {};
-          
-          // Sort entries by location and court number
-          grouped[day][date].sort((a, b) => {
-            if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
-            const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
-            const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
-            return aNum - bNum;
-          }).forEach(row => {
-            // Use the original row data to preserve court groupings from the same row
-            const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
-            
-            // Debug: Log what we're processing
-            console.log('Processing row:', { location: row.Location, court: row.Court, time: row.Time, rawCourt: row.RawCourt, key: key });
-            
-            if (!locationTimeGroups[key]) {
-              locationTimeGroups[key] = {
-                location: row.Location,
-                time: row.Time,
-                courts: [row.Court],
-                rawCourt: row.RawCourt
-              };
-            } else {
-              // Add court if not already included
-              if (!locationTimeGroups[key].courts.includes(row.Court)) {
-                locationTimeGroups[key].courts.push(row.Court);
-              }
-            }
-          });
-          
-          // Debug: Log the grouped data
-          console.log('Location time groups for', date, ':', locationTimeGroups);
-          
-          // Sort by location
-          Object.values(locationTimeGroups)
-            .sort((a, b) => a.location.localeCompare(b.location))
-            .forEach(group => {
-              const tr = document.createElement("tr");
-              
-              // Sort and format the courts for display
-              const sortedCourts = group.courts.sort((a, b) => {
-                const aNum = parseInt(a.replace(/\D/g, '')) || 0;
-                const bNum = parseInt(b.replace(/\D/g, '')) || 0;
-                return aNum - bNum;
-              });
-              
-              // Format courts compactly when possible
-              const formattedCourts = compactCourtsDisplay(sortedCourts);
-              
-              [group.location, formattedCourts, group.time].forEach(cell => {
-                const td = document.createElement("td");
-                td.textContent = cell;
-                tr.appendChild(td);
-              });
-              
-              tbody.appendChild(tr);
-              
-              // Separate each court to own entry for plot visualization
-              const timeRanges = extractTimeRanges(group.time);
-              group.courts.forEach(court => {
-                timeRanges.forEach(range => {
-                  if (!allPlotData[day]) allPlotData[day] = [];
-                  
-                  // Add one data point per court per time range
-                  allPlotData[day].push({
-                    location: group.location,
-                    court: court,
-                    date: date,
-                    startTime: range.start,
-                    endTime: range.end
-                  });
-                });
-              });
-            });
-          
-          table.appendChild(tbody);
-          section.appendChild(table);
+        // Use cleaned header if it's not empty, otherwise use sheet name
+        if(cleanedHeader&&cleanedHeader.length>0){
+          displayLocation=cleanedHeader;
+          console.log('Using cleaned header:', displayLocation);
+        } else {
+          displayLocation=sheetName;
+          console.log('Cleaned header empty, using sheet name:', displayLocation);
         }
-
-        container.appendChild(section);
+        
+        // Final fallback: if displayLocation is empty or just whitespace, use sheet name
+        if(!displayLocation||displayLocation.trim().length===0){
+          displayLocation=sheetName;
+          console.log('Display location was empty, falling back to sheet name:', displayLocation);
+        }
+      }
+      console.log('Final displayLocation for', sheetName, ':', displayLocation);
+      let lastDay='';let lastDate='';
+      for(const row of sheet.rows){if(row.length<5)continue;let[V1,V2,V3,V4,V5]=row.map(c=>c?c.trim():'');const headerCell=V1||'';if(/day of the week/i.test(headerCell)||V2==='Date')continue;if(!V1)V1=lastDay;else lastDay=V1;if(!V2)V2=lastDate;else lastDate=V2;if(!expectedDays.includes(V1))continue;if(!V4&&V3)V4='N/A';if(!V4&&!V3)continue;const d=normalizeDateStr(V2);const dateObj=new Date(d);const courts=processCourt(V4);courts.forEach(court=>{rawData.push({Day:V1,Date:d,DateObj:dateObj,RawTime:V3,Time:processTime(V3),RawCourt:V4,Court:court,Location:displayLocation})})}}
+    const combined={};rawData.forEach(item=>{const key=`${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;if(!combined[key])combined[key]={...item,Times:[item.Time]};else if(!combined[key].Times.includes(item.Time))combined[key].Times.push(item.Time)});let cleaned=Object.values(combined).map(it=>({...it,Time:it.Times.join(', ')}));
+    // Filter by current week if enabled
+    if(SHOW_WEEK_ONLY){const now=new Date();const dayOfWeek=now.getDay();const startOfWeek=new Date(now);startOfWeek.setDate(now.getDate()-dayOfWeek);startOfWeek.setHours(0,0,0,0);const endOfWeek=new Date(startOfWeek);endOfWeek.setDate(startOfWeek.getDate()+6);endOfWeek.setHours(23,59,59,999);cleaned=cleaned.filter(r=>r.DateObj>=startOfWeek&&r.DateObj<=endOfWeek)}
+    cleaned.sort((a,b)=>{if(weekdayOrder[a.Day]!==weekdayOrder[b.Day])return weekdayOrder[a.Day]-weekdayOrder[b.Day];if(b.DateObj-a.DateObj!==0)return b.DateObj-a.DateObj;if(a.Location!==b.Location)return a.Location.localeCompare(b.Location);const aNum=parseInt(a.Court.replace(/\D/g,''))||0;const bNum=parseInt(b.Court.replace(/\D/g,''))||0;return aNum-bNum});const grouped={};cleaned.forEach(r=>{if(!grouped[r.Day])grouped[r.Day]={};if(!grouped[r.Day][r.Date])grouped[r.Day][r.Date]=[];grouped[r.Day][r.Date].push(r)});
+    container.innerHTML='';tabs.innerHTML='';for(const day of expectedDays){if(!grouped[day])continue;const btn=document.createElement('button');btn.textContent=day;btn.onclick=()=>switchTab(day);tabs.appendChild(btn);const section=document.createElement('div');section.id=`section-${day}`;section.className='day-section';for(const date of Object.keys(grouped[day]).sort((a,b)=>new Date(b)-new Date(a))){const dateTitle=document.createElement('div');dateTitle.className='date-title';dateTitle.textContent=date;section.appendChild(dateTitle);const table=document.createElement('table');const thead=document.createElement('thead');const headRow=document.createElement('tr');['Location','Courts','Time'].forEach(h=>{const th=document.createElement('th');th.textContent=h;headRow.appendChild(th)});thead.appendChild(headRow);table.appendChild(thead);const tbody=document.createElement('tbody');
+    // First pass: group by Location|Time to combine courts at same time
+    const timeGroups={};grouped[day][date].forEach(r=>{const k=`${r.Location}|${r.Time}`;if(!timeGroups[k])timeGroups[k]={Location:r.Location,Courts:[],Time:r.Time};timeGroups[k].Courts.push(r.Court)});
+    // Second pass: group by Location|Courts to combine times for same courts
+    const finalGroups={};Object.values(timeGroups).forEach(g=>{const courtsKey=compactCourtsDisplay(g.Courts);const k=`${g.Location}|${courtsKey}`;if(!finalGroups[k])finalGroups[k]={Location:g.Location,Courts:courtsKey,Times:[]};if(!finalGroups[k].Times.includes(g.Time))finalGroups[k].Times.push(g.Time)});
+    // Sort and render
+    Object.values(finalGroups).sort((a,b)=>{if(a.Location!==b.Location)return a.Location.localeCompare(b.Location);return a.Courts.localeCompare(b.Courts)}).forEach(g=>{
+      // Sort times chronologically
+      g.Times.sort((a,b)=>{const aHour=parseTimeToHours(a.split(',')[0].split('-')[0].trim());const bHour=parseTimeToHours(b.split(',')[0].split('-')[0].trim());return (aHour||0)-(bHour||0)});
+      const tr=document.createElement('tr');const tdLoc=document.createElement('td');tdLoc.textContent=g.Location;tr.appendChild(tdLoc);const tdCourt=document.createElement('td');tdCourt.textContent=g.Courts;tr.appendChild(tdCourt);const tdTime=document.createElement('td');tdTime.textContent=g.Times.join(', ');tr.appendChild(tdTime);tbody.appendChild(tr)});table.appendChild(tbody);section.appendChild(table)}container.appendChild(section)}
+    const tbody=document.createElement('tbody');cleaned.forEach(r=>{const tr=document.createElement('tr');['Day','Date','Time','Court','Location'].forEach(k=>{const td=document.createElement('td');td.textContent=r[k];tr.appendChild(td)});tbody.appendChild(tr)});originalTable.appendChild(tbody);
+    let initialDayName = expectedDays[new Date().getDay()];
+    const defaultDay = grouped[initialDayName] ? initialDayName : expectedDays.find(d => grouped[d]);
+    if (defaultDay) {
+      switchTab(defaultDay);
+      const tabContainer = document.querySelector('.tab-buttons');
+      if (tabContainer) tabContainer.setAttribute('data-day', defaultDay.substring(0,3));
+    }
+    if(failures.length){console.warn('Sheets failed to load:',failures.map(f=>f.name||f))}}catch(e){console.error('Failed to load:',e);container.innerHTML=`<div class="error">Could not load schedule. Please check network or sheet access.</div>`}}
+    function switchTab(day){
+      // Hide all sections and remove active markers
+      document.querySelectorAll('.day-section').forEach(sec=>{ sec.classList.remove('active'); sec.style.display='none'; });
+      document.querySelectorAll('.tab-buttons button').forEach(btn=>btn.classList.remove('active'));
+      // Activate selected
+      const section=document.getElementById(`section-${day}`);
+      if(section){ section.classList.add('active'); section.style.display='block'; }
+      const btn=Array.from(document.getElementById('tab-buttons').children).find(b=>b.textContent===day);
+      if(btn)btn.classList.add('active');
+      CURRENT_DAY=day;
+      const tabContainer=document.querySelector('.tab-buttons');
+      if(tabContainer)tabContainer.setAttribute('data-day', day.substring(0,3));
+      // Respect current view
+      const isPlotView=document.getElementById('plot-view-btn').classList.contains('active');
+      if(isPlotView){
+        document.getElementById('table-container').style.display='none';
+        document.getElementById('plot-container').style.display='block';
+        document.getElementById('copy-plot-button').style.display='flex';
+        createPlot(day,false)
+      }else{
+        document.getElementById('table-container').style.display='block';
+        document.getElementById('plot-container').style.display='none';
+        document.getElementById('copy-plot-button').style.display='none'
       }
     }
-
-    // build original data table
-    const tableOrig = document.createElement("table");
-    const theadOrig = document.createElement("thead");
-    const headRowOrig = document.createElement("tr");
-    ["Day", "Date", "Time", "Court", "Location"].forEach(header => {
-      const th = document.createElement("th");
-      th.textContent = header;
-      headRowOrig.appendChild(th);
-    });
-    theadOrig.appendChild(headRowOrig);
-    tableOrig.appendChild(theadOrig);
-    const tbodyOrig = document.createElement("tbody");
-    cleaned.forEach(row => {
-      const tr = document.createElement("tr");
-      [row.Day, row.Date, row.Time, row.Court, row.Location].forEach(cell => {
-        const td = document.createElement("td");
-        td.textContent = cell;
-        tr.appendChild(td);
-      });
-      tbodyOrig.appendChild(tr);
-    });
-    tableOrig.appendChild(tbodyOrig);
-    originalTable.appendChild(tableOrig);
-
-    let currentTab = "";
-    
-    // Create plot for schedule visualization
-    function createPlot(day, forCopy = false) {
-      if (!day) return;
+    function normalizeDate(dateStr){const parts=dateStr.split('/');const m=parseInt(parts[0]);const d=parseInt(parts[1]);const y=parts[2]?parseInt(parts[2]):new Date().getFullYear();return `${m}/${d}/${y}`}
+    function getCopyTextForDay(day){
+      const originalTable=document.getElementById('original-table');
+      const rows=Array.from(originalTable.querySelectorAll('tbody tr'));
+      const dayRows=rows.filter(r=>(r.querySelectorAll('td')[0]?.textContent.trim()===day));
+      const dateGroups={};
       
-      const plotContainer = document.getElementById('plot-container');
-      const legendContainer = document.getElementById('location-legend');
-      const canvas = document.getElementById('schedule-plot');
-      const ctx = canvas.getContext('2d');
-      
-      // Clear any existing content
-      legendContainer.innerHTML = '';
-      
-      // Use the original cleaned data instead of parsing the table
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === day;
+      // Group by date, location, and collect court/time pairs
+      dayRows.forEach(row=>{
+        const cells=Array.from(row.querySelectorAll('td'));
+        const date=normalizeDate(cells[1].textContent.trim());
+        const location=cells[4].textContent.trim();
+        const court=cells[3].textContent.trim();
+        const time=cells[2].textContent.trim();
+        if(!time||time.trim()==='')return;
+        if(!dateGroups[date])dateGroups[date]={};
+        if(!dateGroups[date][location])dateGroups[date][location]=[];
+        dateGroups[date][location].push({court,time});
       });
       
-      console.log(`Found ${dayData.length} rows for ${day}`);
+      const today=new Date();
+      today.setHours(0,0,0,0);
+      let todayData='';
+      let otherData='';
+      let todayDateDisplay='';
       
-      // Group by location and court
-      const courts = new Map();
-      
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length < 5) return;
+      Object.entries(dateGroups).forEach(([date,locations])=>{
+        const parts=date.split('/').map(x=>parseInt(x));
+        const dateObj=new Date(parts[2],parts[0]-1,parts[1]);
+        dateObj.setHours(0,0,0,0);
+        const dateDisplay=`${parts[0]}/${parts[1]}`;
+        const isToday=dateObj.getTime()===today.getTime();
+        if(isToday)todayDateDisplay=dateDisplay;
         
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
+        let sectionText='';
+        const sortedLocations=Object.keys(locations).sort();
         
-        // Skip entries with no time data - but log them for debugging
-        if (!time || time.trim() === '') {
-          console.log(`Skipping court ${court} at ${location} due to empty time data`);
-          return;
-        }
-        
-        const courtId = `${location}-${court}`;
-        
-        // Store the court if it's not already in our map
-        if (!courts.has(courtId)) {
-          courts.set(courtId, {
-            id: courtId,
-            location: location,
-            court: court,
-            label: `${location} - ${court}`,
-            timeRanges: []
-          });
-        }
-        
-        // Parse time ranges from the original time data
-        const timeRanges = extractTimeRanges(time);
-        
-        // Debug: Show individual time parsing for failed cases
-        if (timeRanges.length === 0 && time && time.trim() !== '') {
-          console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
-        }
-        
-        // Add all time ranges for this court
-        timeRanges.forEach(range => {
-          courts.get(courtId).timeRanges.push({
-            startTime: range.start,
-            endTime: range.end
-          });
-        });
-      });
-      
-      console.log(`Total courts found: ${courts.size}`);
-      console.log('Courts data:', Array.from(courts.values()));
-      
-      // Convert to array and sort by location and court number
-      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
-        if (a.location !== b.location) {
-          return a.location.localeCompare(b.location);
-        }
-        
-        // Extract and compare court numbers
-        const aMatch = a.court.match(/(\d+)/);
-        const bMatch = b.court.match(/(\d+)/);
-        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
-        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
-        return aNum - bNum;
-      });
-      
-      // Generate color map for locations
-      const locations = [...new Set(sortedCourts.map(c => c.location))];
-      const colorPalette = [
-        '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', 
-        '#0284c7', '#9333ea', '#0891b2', '#ca8a04', '#be185d',
-        '#4338ca', '#15803d', '#b91c1c', '#4f46e5', '#0f766e'
-      ];
-      
-      const colorMap = {};
-      locations.forEach((loc, i) => {
-        colorMap[loc] = colorPalette[i % colorPalette.length];
-      });
-      
-      // Create legend only for copy version
-      if (forCopy) {
-        const legendTitle = document.createElement('div');
-        legendTitle.className = 'axis-title';
-        legendTitle.textContent = 'Court Locations';
-        legendContainer.appendChild(legendTitle);
-        
-        locations.forEach(location => {
-          const legendItem = document.createElement('div');
-          legendItem.className = 'legend-item';
+        sortedLocations.forEach((location,index)=>{
+          const locationData=locations[location];
+          const datePrefix=isToday?'':` (${dateDisplay})`;
           
-          const colorBox = document.createElement('div');
-          colorBox.className = 'legend-color';
-          colorBox.style.backgroundColor = colorMap[location];
-          
-          const label = document.createElement('span');
-          label.textContent = location;
-          
-          legendItem.appendChild(colorBox);
-          legendItem.appendChild(label);
-          legendContainer.appendChild(legendItem);
-        });
-      }
-      
-      // Set canvas size based on whether it's for copy or display
-      let padding, canvasWidth, canvasHeight, rowHeight, pixelRatio;
-      const isMobile = window.innerWidth <= 768;
-      
-      if (forCopy) {
-        // High resolution version for downloading
-        padding = { top: 50, right: 30, bottom: 40, left: 200 };
-        canvasWidth = Math.max(1400, plotContainer.clientWidth * 2);
-        rowHeight = 45;
-        
-        if (isMobile) {
-          padding.left = 120;
-          padding.right = 20;
-          padding.top = 35;
-          padding.bottom = 25;
-          rowHeight = 35;
-        }
-        
-        const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
-        canvasHeight = Math.max(calculatedHeight, 800);
-        pixelRatio = 2; // High resolution for export
-      } else {
-        // Interactive display version - fit to container
-        const containerRect = plotContainer.getBoundingClientRect();
-        const availableWidth = containerRect.width - 30;
-        const availableHeight = containerRect.height - 100; // Leave space for legend and controls
-        
-        padding = { top: 40, right: 20, bottom: 30, left: 180 };
-        canvasWidth = availableWidth;
-        
-        // Calculate optimal row height based on available space
-        const maxRowHeight = isMobile ? 30 : 40;
-        const minRowHeight = isMobile ? 20 : 25;
-        rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, (availableHeight - padding.top - padding.bottom) / sortedCourts.length));
-        
-        if (isMobile) {
-          padding.left = 100;
-          padding.right = 15;
-          padding.top = 25;
-          padding.bottom = 20;
-        }
-        
-        canvasHeight = Math.min(availableHeight, sortedCourts.length * rowHeight + padding.top + padding.bottom);
-        pixelRatio = window.devicePixelRatio || 1;
-      }
-      
-      canvas.width = canvasWidth * pixelRatio;
-      canvas.height = canvasHeight * pixelRatio;
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-      ctx.scale(pixelRatio, pixelRatio);
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Draw time axis
-      const startHour = 6; // 6 AM
-      const endHour = 23; // 11 PM
-      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
-      
-      // Draw time labels
-      ctx.fillStyle = '#333';
-      ctx.font = isMobile ? 'bold 10px Arial' : (forCopy ? 'bold 14px Arial' : 'bold 12px Arial');
-      ctx.textAlign = 'center';
-      
-      // Draw both top and bottom time axes
-      const drawTimeAxis = (yPosition, isTop) => {
-        for (let hour = startHour; hour <= endHour; hour++) {
-          const x = padding.left + (hour - startHour) * hourWidth;
-          const displayHour = hour <= 12 ? hour : hour - 12;
-          const ampm = hour < 12 ? 'AM' : 'PM';
-          
-          // Show time labels based on screen space
-          const showLabel = isMobile ? (hour % 2 === 0 || hour === startHour || hour === endHour) : true;
-          if (showLabel) {
-            ctx.fillText(`${displayHour} ${ampm}`, x, yPosition);
-          }
-          
-          // Draw vertical grid line, dotted at 4 PM and 8 PM
-          ctx.beginPath();
-          if (hour === 16 || hour === 20) {
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-          }
-          
-          ctx.moveTo(x, padding.top);
-          ctx.lineTo(x, canvasHeight - padding.bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-        
-        // Draw horizontal axis line
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.lineWidth = 1;
-        const lineOffset = isTop ? 15 : -15;
-        ctx.moveTo(padding.left, yPosition + lineOffset);
-        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
-        ctx.stroke();
-        ctx.lineWidth = 1;
-      };
-      
-      drawTimeAxis(canvasHeight - 10, false);
-      drawTimeAxis(padding.top / 2, true);
-      
-      // Draw court names and time bars
-      sortedCourts.forEach((court, index) => {
-        const y = padding.top + index * rowHeight + rowHeight / 2;
-        
-        // Draw court label
-        ctx.fillStyle = '#333';
-        ctx.font = isMobile ? '9px Arial' : (forCopy ? '14px Arial' : '11px Arial');
-        ctx.textAlign = 'right';
-        
-        // Abbreviate court label for mobile or non-copy version
-        let displayLabel = court.label;
-        if (isMobile || !forCopy) {
-          displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
-          displayLabel = displayLabel.replace('Washington Park', 'Wash');
-          displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
-          displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
-          displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
-          displayLabel = displayLabel.replace('Serra Park', 'Serra');
-          displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
-          displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
-          displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
-          displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
-          displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
-          displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
-          displayLabel = displayLabel.replace('Mango Park', 'Mango');
-          displayLabel = displayLabel.replace('Location Mange', 'Mango');
-        }
-        
-        ctx.fillText(displayLabel, padding.left - 5, y + 4);
-        
-        // Draw horizontal line for this court
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y + rowHeight / 2);
-        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2);
-        ctx.stroke();
-        
-        // Draw time ranges for this court
-        court.timeRanges.forEach(range => {
-          const startX = padding.left + (range.startTime - startHour) * hourWidth;
-          const endX = padding.left + (range.endTime - startHour) * hourWidth;
-          const width = endX - startX;
-          
-          // Draw time bar
-          ctx.fillStyle = colorMap[court.location];
-          const barHeight = rowHeight - (forCopy ? 14 : 8);
-          
-          // Draw rounded rectangle
-          const radius = barHeight / 2;
-          const effectiveRadius = Math.min(radius, width / 2);
-          
-          ctx.beginPath();
-          ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
-          ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
-          ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
-          ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
-          ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
-          ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
-          ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
-          ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
-          ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
-          
-          ctx.closePath();
-          ctx.fill();
-          
-          // Draw border
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-          ctx.stroke();
-        });
-      });
-      
-      // Only add time axis title for copy version
-      if (forCopy) {
-        const timeAxisTitle = document.createElement('div');
-        timeAxisTitle.className = 'axis-title';
-        timeAxisTitle.textContent = '';
-        legendContainer.appendChild(timeAxisTitle);
-      }
-    }
-
-    function switchTab(day) {
-      document.querySelectorAll('.day-section').forEach(sec => sec.classList.remove('active'));
-      document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`section-${day}`).classList.add('active');
-      Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
-      currentTab = day;
-      
-      // Update the button text with abbreviation
-      document.querySelector('.tab-buttons').setAttribute('data-day', day.substring(0, 3));
-      
-      // Check if we're in plot view
-      const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
-      
-      // Set display based on current view
-      if (isPlotView) {
-        container.style.display = "none";
-        document.getElementById('plot-container').style.display = "block";
-        document.getElementById('copy-plot-button').style.display = "flex";
-        createPlot(day, false); // Display version without legend
-      } else {
-        container.style.display = "block";
-        document.getElementById('plot-container').style.display = "none";
-        document.getElementById('copy-plot-button').style.display = "none";
-      }
-      
-      originalTable.style.display = "none";
-    }
-
-    // Improved copy function for better formatting
-    document.getElementById("copy-button").addEventListener("click", () => {
-      if (!currentTab) return;
-      
-      // Get today's date for comparison
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // Helper function to simplify location names
-      function simplifyLocation(location) {
-        return location
-          .replace('Fremont High School', 'Fremont')
-          .replace('Washington Park', 'Wash')
-          .replace('Ponderosa Park', 'Pond')
-          .replace('Sunnyvale Middle School', 'SMS')
-          .replace('Lakewood Park', 'Lakewood')
-          .replace('Serra Park', 'Serra')
-          .replace('Fairwood Park', 'Fairwood')
-          .replace('Ortega Park', 'Ortega')
-          .replace('Raynor Park', 'Raynor')
-          .replace('De Anza Park', 'DeAnza')
-          .replace('Sunnyvale Community Center', 'SCC')
-          .replace('Sunnyvale Tennis Center', 'STC')
-          .replace('Mango Park', 'Mango')
-          .replace('Location Mange', 'Mango');
-      }
-      
-      // Helper function to normalize date format
-      function normalizeDate(dateStr) {
-        const parts = dateStr.split('/');
-        const month = parseInt(parts[0]);
-        const day = parseInt(parts[1]);
-        const year = parts[2] ? parseInt(parts[2]) : new Date().getFullYear();
-        return `${month}/${day}/${year}`;
-      }
-      
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === currentTab;
-      });
-      
-      // Group by normalized date
-      const dateGroups = {};
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        const date = normalizeDate(cells[1].textContent.trim());
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
-        
-        // Skip entries with no time data
-        if (!time || time.trim() === '') {
-          return;
-        }
-        
-        if (!dateGroups[date]) {
-          dateGroups[date] = {};
-        }
-        if (!dateGroups[date][location]) {
-          dateGroups[date][location] = [];
-        }
-        dateGroups[date][location].push({ court, time });
-      });
-      
-      let todayData = '';
-      let otherData = '';
-      let todayDateDisplay = '';
-      
-      // Process each date group
-      Object.entries(dateGroups).forEach(([date, locations]) => {
-        // Parse date
-        const dateParts = date.split('/');
-        const month = parseInt(dateParts[0]);
-        const day = parseInt(dateParts[1]);
-        const year = parseInt(dateParts[2]);
-        
-        const dateObj = new Date(year, month - 1, day);
-        dateObj.setHours(0, 0, 0, 0);
-        
-        // Format date for display
-        const dateDisplay = `${month}/${day}`;
-        
-        // Add date with parentheses if not today
-        const isToday = dateObj.getTime() === today.getTime();
-        const datePrefix = isToday ? '' : `(${dateDisplay})`;
-        
-        if (isToday) {
-          todayDateDisplay = dateDisplay;
-        }
-        
-        // Process each location
-        const sortedLocations = Object.keys(locations).sort();
-        let sectionText = '';
-        
-        sortedLocations.forEach((location, index) => {
-          const locationData = locations[location];
-          
-          // Mango Park is now available - process normally
-          // (removed special unavailable handling)
-          
-          // Group by time and filter out empty times
-          const timeGroups = {};
-          locationData.forEach(item => {
-            // Skip items with no valid time
-            if (!item.time || item.time.trim() === '') {
-              return;
-            }
-            if (!timeGroups[item.time]) {
-              timeGroups[item.time] = [];
-            }
+          // Group courts by time
+          const timeGroups={};
+          locationData.forEach(item=>{
+            if(!item.time||item.time.trim()==='')return;
+            if(!timeGroups[item.time])timeGroups[item.time]=[];
             timeGroups[item.time].push(item.court);
           });
           
-          const timeEntries = Object.entries(timeGroups);
+          const timeEntries=Object.entries(timeGroups);
+          if(timeEntries.length===0)return;
           
-          // Skip locations with no valid time entries
-          if (timeEntries.length === 0) {
-            return;
-          }
+          const simpleLocation=simplifyLocation(location);
           
-          const simpleLocation = simplifyLocation(location);
-          
-          if (timeEntries.length === 1) {
-            const [time, courts] = timeEntries[0];
-            sectionText += `${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
-          } else {
-            sectionText += `${simpleLocation}${datePrefix}:\n`;
-            timeEntries.forEach(([time, courts]) => {
-              sectionText += `  ${courts.join(', ')}: ${time}\n`;
+          // Format: if single time, inline; if multiple times, multi-line
+          if(timeEntries.length===1){
+            const[time,courts]=timeEntries[0];
+            sectionText+=`${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
+          }else{
+            sectionText+=`${simpleLocation}${datePrefix}:\n`;
+            timeEntries.forEach(([time,courts])=>{
+              sectionText+=`  ${courts.join(', ')}: ${time}\n`;
             });
           }
           
-          if (index < sortedLocations.length - 1) {
-            sectionText += '\n';
+          if(index<sortedLocations.length-1){
+            sectionText+='\n';
           }
         });
         
-        if (isToday) {
-          todayData = sectionText;
-        } else {
-          otherData += sectionText;
+        if(isToday){
+          todayData=sectionText;
+        }else{
+          otherData+=sectionText;
         }
       });
       
-      // Get day-specific announcements
-      const announcementText = getAnnouncementText(currentTab);
-      
-      const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}${announcementText}`;
-      
-      navigator.clipboard.writeText(text).then(() => {
-        document.getElementById("copy-toast").style.opacity = 1;
-        setTimeout(() => { document.getElementById("copy-toast").style.opacity = 0; }, 1500);
-      });
-    });
-    
-    // Direct copy plot to clipboard
-    document.getElementById("copy-plot-button").addEventListener("click", copyPlotToClipboard);
-    
+      const announcementText=getAnnouncementText(day);
+      const text=`SNV LT 教练占场信息 ${day} ${todayDateDisplay}\n${todayData}${otherData}${announcementText}`;
+      return text;
+    }
+document.getElementById('copy-fab').addEventListener('click',()=>{if(!CURRENT_DAY)return;const text=getCopyTextForDay(CURRENT_DAY);navigator.clipboard.writeText(text)});
+document.getElementById('ann-btn').addEventListener('click',()=>toggleAnnouncementModal());
+document.getElementById('table-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='block';document.getElementById('plot-container').style.display='none';document.getElementById('table-view-btn').classList.add('active');document.getElementById('plot-view-btn').classList.remove('active');document.getElementById('copy-plot-button').style.display='none'});
+document.getElementById('plot-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='none';document.getElementById('plot-container').style.display='block';document.getElementById('table-view-btn').classList.remove('active');document.getElementById('plot-view-btn').classList.add('active');document.getElementById('copy-plot-button').style.display='flex';if(CURRENT_DAY)createPlot(CURRENT_DAY,false)});
+let __resizeTimer;window.addEventListener('resize',()=>{clearTimeout(__resizeTimer);__resizeTimer=setTimeout(()=>{const isPlot=document.getElementById('plot-view-btn').classList.contains('active');if(isPlot&&CURRENT_DAY)createPlot(CURRENT_DAY,false)},250)});
+document.getElementById('copy-plot-button').addEventListener('click',copyPlotToClipboard);
+// Expand/collapse day bubble and close on outside click
+document.addEventListener('DOMContentLoaded',function(){
+  const tabButtons=document.querySelector('.tab-buttons');
+  if(tabButtons){
+    tabButtons.addEventListener('click',function(e){ if(e.target===this) this.classList.toggle('expanded'); });
+    document.addEventListener('click',function(e){ if(!tabButtons.contains(e.target)) tabButtons.classList.remove('expanded'); });
+  }
+});
+loadAndRender();
 
-
-    
-    // Create a mobile-friendly version of the plot optimized for narrow screens
-    function createMobileFriendlyPlot(day) {
-      if (!day) return;
-      
-      const plotContainer = document.getElementById('plot-container');
-      const legendContainer = document.getElementById('location-legend');
-      const canvas = document.getElementById('schedule-plot');
-      const ctx = canvas.getContext('2d');
-      
-      // Clear any existing content
-      legendContainer.innerHTML = '';
-      
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === day;
-      });
-      
-      // Group by location and court
-      const courts = new Map();
-      
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length < 5) return;
-        
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
-        
-        // Skip entries with no time data
-        if (!time || time.trim() === '') {
-          return;
-        }
-        
-        const courtId = `${location}-${court}`;
-        
-        if (!courts.has(courtId)) {
-          courts.set(courtId, {
-            id: courtId,
-            location: location,
-            court: court,
-            label: `${location} - ${court}`,
-            timeRanges: []
-          });
-        }
-        
-        const timeRanges = extractTimeRanges(time);
-        timeRanges.forEach(range => {
-          courts.get(courtId).timeRanges.push({
-            startTime: range.start,
-            endTime: range.end
-          });
-        });
-      });
-      
-      // Convert to array and sort
-      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
-        if (a.location !== b.location) {
-          return a.location.localeCompare(b.location);
-        }
-        const aMatch = a.court.match(/(\d+)/);
-        const bMatch = b.court.match(/(\d+)/);
-        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
-        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
-        return aNum - bNum;
-      });
-      
-      // Generate modern color map for locations with gradient-like colors
-      const locations = [...new Set(sortedCourts.map(c => c.location))];
-      const colorPalette = [
-        '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
-        '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
-        '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
-      ];
-      
-      const colorMap = {};
-      locations.forEach((loc, i) => {
-        colorMap[loc] = colorPalette[i % colorPalette.length];
-      });
-      
-      // Mobile-optimized dimensions - compact and efficient
-      const padding = { top: 40, right: 25, bottom: 60, left: 180 }; // Reduced padding
-      const canvasWidth = 800; // Wider for better readability
-      const rowHeight = 35; // Compact row height for efficiency
-      const canvasHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom + 40; // Compact spacing
-      const pixelRatio = 2; // High resolution
-      
-      canvas.width = canvasWidth * pixelRatio;
-      canvas.height = canvasHeight * pixelRatio;
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-      ctx.scale(pixelRatio, pixelRatio);
-      
-      // Clear canvas with modern gradient background
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Create subtle gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-      gradient.addColorStop(0, '#fafafa');
-      gradient.addColorStop(1, '#f8fafc');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Draw time axis - use same range as display version
-      const startHour = 6; // Same as display version
-      const endHour = 23; // Same as display version
-      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
-      
-      // Draw time labels with modern styling
-      ctx.fillStyle = '#374151';
-      ctx.font = '600 12px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      
-      const drawTimeAxis = (yPosition, isTop) => {
-        for (let hour = startHour; hour <= endHour; hour++) {
-          const x = padding.left + (hour - startHour) * hourWidth;
-          const displayHour = hour <= 12 ? hour : hour - 12;
-          const ampm = hour < 12 ? 'AM' : 'PM';
-          
-          // Show fewer time labels for mobile
-          const showLabel = hour % 2 === 0 || hour === startHour || hour === endHour;
-          if (showLabel) {
-            ctx.fillText(`${displayHour}${ampm}`, x, yPosition);
-          }
-          
-          // Draw modern vertical grid lines
-          ctx.beginPath();
-          if (hour === 16 || hour === 20) {
-            ctx.setLineDash([2, 4]);
-            ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
-            ctx.lineWidth = 1.5;
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
-            ctx.lineWidth = 1;
-          }
-          
-          ctx.moveTo(x, padding.top);
-          ctx.lineTo(x, canvasHeight - padding.bottom - 10);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-        
-        // Draw modern horizontal axis line
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
-        ctx.lineWidth = 2;
-        const lineOffset = isTop ? 12 : -12;
-        ctx.moveTo(padding.left, yPosition + lineOffset);
-        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
-        ctx.stroke();
-      };
-      
-      drawTimeAxis(canvasHeight - 45, false); // Adjusted for compact layout
-      drawTimeAxis(padding.top / 2, true);
-      
-      // Draw court names and time bars
-      sortedCourts.forEach((court, index) => {
-        const y = padding.top + index * rowHeight + rowHeight / 2;
-        
-        // Draw court label with modern styling
-        ctx.fillStyle = '#374151';
-        ctx.font = '500 11px system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'right';
-        
-        let displayLabel = court.label;
-        // More aggressive abbreviations for mobile
-        displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
-        displayLabel = displayLabel.replace('Washington Park', 'Wash');
-        displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
-        displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
-        displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
-        displayLabel = displayLabel.replace('Serra Park', 'Serra');
-        displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
-        displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
-        displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
-        displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
-        displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
-        displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
-        displayLabel = displayLabel.replace('Mango Park', 'Mango');
-        displayLabel = displayLabel.replace('Location Mange', 'Mango');
-        
-        ctx.fillText(displayLabel, padding.left - 5, y + 3);
-        
-        // Draw subtle horizontal separator line
-        ctx.strokeStyle = 'rgba(226, 232, 240, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y + rowHeight / 2 - 3); // Adjusted for compact rows
-        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2 - 3);
-        ctx.stroke();
-        
-        // Draw time ranges for this court
-        court.timeRanges.forEach(range => {
-          // Draw all ranges that overlap with our time window
-          if (range.endTime > startHour && range.startTime < endHour) {
-            const startX = padding.left + (range.startTime - startHour) * hourWidth;
-            const endX = padding.left + (range.endTime - startHour) * hourWidth;
-            const width = endX - startX;
-            
-            // Draw modern time bar with shadow
-            const barHeight = rowHeight - 15; // Adjusted for compact rows
-            const radius = Math.min(barHeight / 2, 6);
-            const effectiveRadius = Math.min(radius, width / 2);
-            
-            // Add subtle shadow first
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetY = 2;
-            
-            // Draw rounded rectangle with modern styling
-            ctx.fillStyle = colorMap[court.location];
-            ctx.beginPath();
-            ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
-            ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
-            ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
-            ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
-            ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
-            ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
-            ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
-            ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
-            ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
-            
-            ctx.closePath();
-            ctx.fill();
-            
-            // Reset shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
-            
-            // Draw subtle border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        });
-      });
-      
-      // Add modern legend at the bottom with proper spacing
-      const legendY = canvasHeight - 20;
-      ctx.font = '500 10px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'left';
-      
-      let legendX = padding.left;
-      locations.forEach((location, index) => {
-        // Abbreviate location names for legend
-        let shortLocation = location
-          .replace('Fremont High School', 'Fremont')
-          .replace('Washington Park', 'Wash')
-          .replace('Ponderosa Park', 'Pond')
-          .replace('Sunnyvale Middle School', 'SMS')
-          .replace('Lakewood Park', 'Lakewood')
-          .replace('Sunnyvale Community Center', 'SCC')
-          .replace('Sunnyvale Tennis Center', 'STC')
-          .replace('Mango Park', 'Mango');
-        
-        // Draw modern color indicator with rounded corners
-        ctx.fillStyle = colorMap[location];
-        ctx.beginPath();
-        ctx.roundRect(legendX, legendY - 10, 10, 10, 2);
-        ctx.fill();
-        
-        // Draw text with modern color
-        ctx.fillStyle = '#374151';
-        ctx.fillText(shortLocation, legendX + 15, legendY - 2);
-        
-        // Move to next position (wrap if needed)
-        legendX += ctx.measureText(shortLocation).width + 30;
-        if (legendX > canvasWidth - 100 && index < locations.length - 1) {
-          legendX = padding.left;
-          // For simplicity, just continue on same line for mobile
-        }
-      });
-    }
-    
-    async function copyPlotToClipboard() {
-      if (!currentTab) {
-        alert("Please select a day and switch to plot view first");
-        return;
-      }
-      
-      const plotToast = document.getElementById("plot-toast");
-      plotToast.textContent = "Copying to clipboard...";
-      plotToast.style.opacity = 1;
-      
-      try {
-        const canvas = document.getElementById('schedule-plot');
-        
-        // Create mobile-optimized version for clipboard
-        createMobileFriendlyPlot(currentTab);
-        
-        setTimeout(async () => {
-          try {
-            // Try clipboard API for all browsers including Safari
-            const hasClipboardAPI = navigator.clipboard && navigator.clipboard.write;
-            
-            if (hasClipboardAPI) {
-              // Try clipboard API first for all browsers
-              canvas.toBlob(async (blob) => {
-                if (blob) {
-                  try {
-                    // This should work in Safari 13.1+ with proper user interaction
-                    await navigator.clipboard.write([
-                      new ClipboardItem({
-                        'image/png': blob
-                      })
-                    ]);
-                    
-                    plotToast.textContent = "Plot copied to clipboard ✅";
-                    setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                    
-                    // Restore display version
-                    createPlot(currentTab, false);
-                  } catch (clipboardError) {
-                    console.error('Clipboard API failed:', clipboardError);
-                    // Try alternative Safari method
-                    safariClipboardMethod(canvas, plotToast);
-                  }
-                } else {
-                  plotToast.textContent = "Failed to create image ❌";
-                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  createPlot(currentTab, false);
-                }
-              }, 'image/png', 1.0);
-            } else {
-              // Very old browsers
-              safariClipboardMethod(canvas, plotToast);
-            }
-          } catch (error) {
-            console.error('Error in copy process:', error);
-            safariClipboardMethod(canvas, plotToast);
-          }
-        }, 100);
-      } catch (err) {
-        console.error('Error copying plot:', err);
-        plotToast.textContent = "Copy failed ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-      }
-    }
-    
-    // Safari-specific clipboard method
-    async function safariClipboardMethod(canvas, plotToast) {
-      try {
-        // Method 1: Try using ClipboardItem with different approach for Safari
-        if (navigator.clipboard && window.ClipboardItem) {
-          try {
-            canvas.toBlob(async (blob) => {
-              if (blob) {
-                try {
-                  // Create ClipboardItem with proper MIME type for Safari
-                  const clipboardItem = new ClipboardItem({
-                    [blob.type]: blob
-                  });
-                  
-                  await navigator.clipboard.write([clipboardItem]);
-                  plotToast.textContent = "Plot copied to clipboard ✅";
-                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  
-                  // Restore display version
-                  createPlot(currentTab, false);
-                } catch (clipboardError) {
-                  console.error('Safari ClipboardItem failed:', clipboardError);
-                  // Try method 2
-                  tryDataURLMethod(canvas, plotToast);
-                }
-              } else {
-                tryDataURLMethod(canvas, plotToast);
-              }
-            }, 'image/png', 1.0);
-          } catch (error) {
-            console.error('Safari blob method failed:', error);
-            tryDataURLMethod(canvas, plotToast);
-          }
-        } else {
-          tryDataURLMethod(canvas, plotToast);
-        }
-      } catch (error) {
-        console.error('Safari method failed:', error);
-        tryDataURLMethod(canvas, plotToast);
-      }
-    }
-    
-    // Try copying as data URL for older Safari versions
-    async function tryDataURLMethod(canvas, plotToast) {
-      try {
-        const dataURL = canvas.toDataURL('image/png');
-        
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(dataURL);
-          plotToast.textContent = "Plot copied as data (older Safari) ✅";
-          setTimeout(() => { plotToast.style.opacity = 0; }, 2000);
-        } else {
-          // Final fallback - show data URL for manual copy
-          showDataURLForManualCopy(dataURL, plotToast);
-        }
-        
-        // Restore display version
-        createPlot(currentTab, false);
-      } catch (error) {
-        console.error('Data URL method failed:', error);
-        plotToast.textContent = "Copy not supported in this browser ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-        createPlot(currentTab, false);
-      }
-    }
-    
-    // Show data URL for manual copy (last resort)
-    function showDataURLForManualCopy(dataURL, plotToast) {
-      // Create a temporary text area for manual copy
-      const textArea = document.createElement('textarea');
-      textArea.value = dataURL;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      document.body.appendChild(textArea);
-      
-      try {
-        textArea.select();
-        document.execCommand('copy');
-        plotToast.textContent = "Plot data copied - paste as image ✅";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-      } catch (copyError) {
-        plotToast.textContent = "Please allow clipboard access ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-      } finally {
-        document.body.removeChild(textArea);
-      }
-    }
-    
-
-    
-    // Toggle between table and plot views
-    document.getElementById('table-view-btn').addEventListener('click', () => {
-      document.getElementById('table-container').style.display = 'block';
-      document.getElementById('plot-container').style.display = 'none';
-      document.getElementById('table-view-btn').classList.add('active');
-      document.getElementById('plot-view-btn').classList.remove('active');
-      document.getElementById('copy-plot-button').style.display = 'none';
-    });
-    
-    document.getElementById('plot-view-btn').addEventListener('click', () => {
-      document.getElementById('table-container').style.display = 'none';
-      document.getElementById('plot-container').style.display = 'block';
-      document.getElementById('table-view-btn').classList.remove('active');
-      document.getElementById('plot-view-btn').classList.add('active');
-      document.getElementById('copy-plot-button').style.display = 'flex';
-      
-      if (currentTab) {
-        createPlot(currentTab, false); // Display version without legend
-      }
-    });
-    
-    // Add window resize handler for responsive plot
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      // Debounce resize events
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        // Only recreate plot if we're currently viewing it
-        const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
-        if (isPlotView && currentTab) {
-          createPlot(currentTab, false);
-        }
-      }, 250);
-    });
-
-    const today = new Date();
-    const todayDay = expectedDays[today.getDay()];
-    const defaultDay = grouped[todayDay] ? todayDay : expectedDays.find(day => grouped[day]);
-    if (defaultDay) {
-      switchTab(defaultDay);
-      // Set the initial day text with abbreviation
-      document.querySelector('.tab-buttons').setAttribute('data-day', defaultDay.substring(0, 3));
-    }
-
-  } catch (error) {
-    console.error("Failed to fetch or render CSV:", error);
-    document.getElementById("table-container").innerHTML = "Could not load schedule. Please check network or CSV URL.";
+function toggleAnnouncementModal() {
+  const modal = document.getElementById('announcement-modal');
+  const isVisible = modal.style.display === 'flex';
+  modal.style.display = isVisible ? 'none' : 'flex';
+  if (!isVisible) {
+    renderAnnouncements();
+    setupDaySelector();
   }
 }
 
-// Time processing tests can be enabled for debugging by uncommenting below
-// console.log('=== Time Processing Tests ===');
-// console.log('Context test - Input: "4:15-7:15, 8:15-9:15"');
-// console.log('Context test - Output:', processTime("4:15-7:15, 8:15-9:15"));
-// console.log('Mixed periods test - Input: "8-10am, 5-6pm, 7-8:30pm"');
-// console.log('Mixed periods test - Output:', processTime("8-10am, 5-6pm, 7-8:30pm"));
-// console.log('=== End Tests ===');
-
-fetchAndRenderTable();
-
-// Add this to your existing JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelector('.tab-buttons');
-    
-    // Add click handler for the expand/collapse button
-    tabButtons.addEventListener('click', function(e) {
-        if (e.target === this || e.target === this.firstElementChild) {
-            this.classList.toggle('expanded');
-        }
-    });
-    
-    // Close the menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!tabButtons.contains(e.target)) {
-            tabButtons.classList.remove('expanded');
-        }
-    });
-});
-
-// Enhanced Announcement functionality
-let announcements = [];
-let editingIndex = -1;
-
-function toggleAnnouncementModal() {
-    const modal = document.getElementById('announcement-modal');
-    const isVisible = modal.style.display !== 'none';
-    
-    if (isVisible) {
-        modal.style.display = 'none';
-    } else {
-        modal.style.display = 'flex';
-        loadAnnouncements();
-        setupDaySelector();
-    }
-}
-
 function loadAnnouncements() {
-    const saved = localStorage.getItem('scheduleAnnouncements');
-    announcements = saved ? JSON.parse(saved) : [];
-    
-    // Add default announcement if none exist
-    if (announcements.length === 0) {
-        announcements = [{
-            id: Date.now(),
-            text: 'Mango 每周三 3:30-5:30pm 学校活动 until 12/17',
-            days: ['Wed'],
-            createdAt: new Date().toISOString()
-        }];
-        saveAnnouncements();
-    }
-    
-    renderAnnouncements();
+  try {
+    const stored = localStorage.getItem('announcements');
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error('Failed to load announcements:', e);
+    return [];
+  }
 }
 
-function saveAnnouncements() {
-    localStorage.setItem('scheduleAnnouncements', JSON.stringify(announcements));
+function saveAnnouncements(announcements) {
+  try {
+    localStorage.setItem('announcements', JSON.stringify(announcements));
+  } catch (e) {
+    console.error('Failed to save announcements:', e);
+  }
 }
 
 function renderAnnouncements() {
-    const list = document.getElementById('announcement-list');
-    
-    if (announcements.length === 0) {
-        list.innerHTML = '<div class="empty-state">No announcements yet. Add one below!</div>';
-        return;
-    }
-    
-    list.innerHTML = announcements.map((announcement, index) => `
-        <div class="announcement-item">
-            <div class="announcement-text">${announcement.text}</div>
-            <div class="announcement-days">
-                ${announcement.days.map(day => 
-                    `<span class="day-tag ${day === 'All' ? 'all-days' : ''}">${day}</span>`
-                ).join('')}
-            </div>
-            <div class="announcement-actions">
-                <button class="edit-btn" onclick="editAnnouncement(${index})">Edit</button>
-                <button class="delete-btn" onclick="deleteAnnouncement(${index})">Delete</button>
-            </div>
+  const announcements = loadAnnouncements();
+  const list = document.getElementById('announcement-list');
+  list.innerHTML = announcements.map((ann, idx) => `
+    <div class="announcement-item" style="padding:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:start; gap:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:600; margin-bottom:4px;">${ann.days.join(', ')}</div>
+          <div style="color:#6b7280;">${ann.text}</div>
         </div>
-    `).join('');
+        <button class="delete-btn" onclick="deleteAnnouncement(${idx})">Delete</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function setupDaySelector() {
-    const selectAllCheckbox = document.getElementById('select-all-days');
-    const dayCheckboxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
-    
-    // Handle "Select All" checkbox
-    selectAllCheckbox.addEventListener('change', function() {
-        dayCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
+  const selectAll = document.getElementById('select-all-days');
+  const dayBoxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
+  selectAll.addEventListener('change', function() { dayBoxes.forEach(cb => cb.checked = this.checked); });
+  dayBoxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      const allChecked = Array.from(dayBoxes).every(x => x.checked);
+      const noneChecked = Array.from(dayBoxes).every(x => !x.checked);
+      if (allChecked) { selectAll.checked = true; selectAll.indeterminate = false; }
+      else if (noneChecked) { selectAll.checked = false; selectAll.indeterminate = false; }
+      else { selectAll.checked = false; selectAll.indeterminate = true; }
     });
-    
-    // Handle individual day checkboxes
-    dayCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const allChecked = Array.from(dayCheckboxes).every(cb => cb.checked);
-            const noneChecked = Array.from(dayCheckboxes).every(cb => !cb.checked);
-            
-            if (allChecked) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else if (noneChecked) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
-            }
-        });
-    });
-}
-
-function addAnnouncement() {
-    const textarea = document.getElementById('announcement-text');
-    const text = textarea.value.trim();
-    
-    if (!text) {
-        showNotification('Please enter announcement text!');
-        return;
-    }
-    
-    const selectedDays = getSelectedDays();
-    if (selectedDays.length === 0) {
-        showNotification('Please select at least one day!');
-        return;
-    }
-    
-    if (editingIndex >= 0) {
-        // Update existing announcement
-        announcements[editingIndex] = {
-            ...announcements[editingIndex],
-            text: text,
-            days: selectedDays,
-            updatedAt: new Date().toISOString()
-        };
-        editingIndex = -1;
-        showNotification('Announcement updated!');
-    } else {
-        // Add new announcement
-        announcements.push({
-            id: Date.now(),
-            text: text,
-            days: selectedDays,
-            createdAt: new Date().toISOString()
-        });
-        showNotification('Announcement added!');
-    }
-    
-    saveAnnouncements();
-    renderAnnouncements();
-    clearForm();
-}
-
-function editAnnouncement(index) {
-    const announcement = announcements[index];
-    const textarea = document.getElementById('announcement-text');
-    
-    textarea.value = announcement.text;
-    editingIndex = index;
-    
-    // Clear all checkboxes first
-    document.querySelectorAll('.day-checkboxes input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
-    
-    // Check the days for this announcement
-    announcement.days.forEach(day => {
-        const checkbox = document.querySelector(`input[value="${day}"]`);
-        if (checkbox) checkbox.checked = true;
-    });
-    
-    // Update button text
-    const addButton = document.querySelector('.announcement-buttons button:first-child');
-    addButton.textContent = 'Update Announcement';
-    
-    // Scroll to form
-    document.querySelector('.add-announcement-section').scrollIntoView({ behavior: 'smooth' });
-}
-
-function deleteAnnouncement(index) {
-    if (confirm('Are you sure you want to delete this announcement?')) {
-        announcements.splice(index, 1);
-        saveAnnouncements();
-        renderAnnouncements();
-        showNotification('Announcement deleted!');
-    }
-}
-
-function clearAllAnnouncements() {
-    if (confirm('Are you sure you want to delete ALL announcements?')) {
-        announcements = [];
-        saveAnnouncements();
-        renderAnnouncements();
-        clearForm();
-        showNotification('All announcements cleared!');
-    }
+  });
 }
 
 function getSelectedDays() {
-    const dayCheckboxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
-    const selectedDays = Array.from(dayCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
-    
-    // If "All Days" is selected, return ['All']
-    const selectAllChecked = document.getElementById('select-all-days').checked;
-    return selectAllChecked ? ['All'] : selectedDays;
+  const dayBoxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
+  const selected = Array.from(dayBoxes).filter(cb => cb.checked).map(cb => cb.value);
+  return document.getElementById('select-all-days').checked ? ['All'] : selected;
+}
+
+function addAnnouncement() {
+  const textarea = document.getElementById('announcement-text');
+  const text = (textarea.value || '').trim();
+  if (!text) return;
+  const days = getSelectedDays();
+  if (days.length === 0) {
+    alert('Please select at least one day');
+    return;
+  }
+  const announcements = loadAnnouncements();
+  announcements.push({ text, days });
+  saveAnnouncements(announcements);
+  renderAnnouncements();
+  clearForm();
+}
+
+function editAnnouncement(idx) {
+  const announcements = loadAnnouncements();
+  const ann = announcements[idx];
+  if (!ann) return;
+  document.getElementById('announcement-text').value = ann.text;
+  const dayBoxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
+  dayBoxes.forEach(cb => {
+    cb.checked = ann.days.includes('All') || ann.days.includes(cb.value);
+  });
+  deleteAnnouncement(idx);
+}
+
+function deleteAnnouncement(idx) {
+  const announcements = loadAnnouncements();
+  announcements.splice(idx, 1);
+  saveAnnouncements(announcements);
+  renderAnnouncements();
+}
+
+function clearAllAnnouncements() {
+  if (confirm('Are you sure you want to clear all announcements?')) {
+    saveAnnouncements([]);
+    renderAnnouncements();
+  }
 }
 
 function clearForm() {
-    document.getElementById('announcement-text').value = '';
-    document.querySelectorAll('.day-checkboxes input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
-    document.getElementById('select-all-days').checked = false;
-    document.getElementById('select-all-days').indeterminate = false;
-    editingIndex = -1;
-    
-    // Reset button text
-    const addButton = document.querySelector('.announcement-buttons button:first-child');
-    addButton.textContent = 'Add Announcement';
+  document.getElementById('announcement-text').value = '';
+  document.querySelectorAll('.day-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
 }
 
 function getAnnouncementsForDay(day) {
-    return announcements.filter(announcement => 
-        announcement.days.includes('All') || announcement.days.includes(day)
-    );
+  const announcements = loadAnnouncements();
+  return announcements.filter(ann => ann.days.includes('All') || ann.days.some(d => day.startsWith(d)));
 }
 
 function getAnnouncementText(day) {
-    const dayAnnouncements = getAnnouncementsForDay(day);
-    if (dayAnnouncements.length === 0) return '';
-    
-    const announcementTexts = dayAnnouncements.map(a => a.text);
-    return `\n\n📢 ${announcementTexts.join('\n📢 ')}\n`;
+  const announcements = getAnnouncementsForDay(day);
+  if (announcements.length === 0) return '';
+  return '\n\n📢 Announcements:\n' + announcements.map(ann => `• ${ann.text}`).join('\n');
 }
 
 function showNotification(message) {
-    // Create a simple notification
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4f46e5;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        z-index: 1001;
-        font-weight: 500;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-        }
-    }, 3000);
+  const notification = document.createElement('div');
+  notification.textContent = message;
+  notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;';
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 2000);
 }
-</script>
-<div id="copy-toast" class="copy-toast">Copied text ✅</div>
-<div id="plot-toast" class="copy-toast">Copied plot ✅</div>
+    async function copyPlotToClipboard(){const canvas=document.getElementById('schedule-plot');try{if(typeof ClipboardItem!=='undefined'&&navigator.clipboard.write){const blob=await new Promise(res=>canvas.toBlob(res));await navigator.clipboard.write([new ClipboardItem({'image/png':blob})])}}catch(e){console.error(e)}}
+    function createPlot(day,forCopy=false){
+      if(!day)return;
+      const canvas=document.getElementById('schedule-plot');
+      const ctx=canvas.getContext('2d');
+      
+      // Get data from original table
+      const originalTable=document.getElementById('original-table');
+      const rows=Array.from(originalTable.querySelectorAll('tbody tr'));
+      const dayData=rows.filter(row=>{
+        const cells=Array.from(row.querySelectorAll('td'));
+        return cells[0]?.textContent.trim()===day;
+      });
+      
+      // Group by location and court
+      const courtsMap={};
+      dayData.forEach(row=>{
+        const cells=Array.from(row.querySelectorAll('td'));
+        if(cells.length<5)return;
+        const location=cells[4].textContent.trim();
+        const court=cells[3].textContent.trim();
+        const time=cells[2].textContent.trim();
+        if(!time||!time.trim())return;
+        
+        const key=`${location}|||${court}`;
+        if(!courtsMap[key]){
+          courtsMap[key]={
+            location:location,
+            court:court,
+            times:[]
+          };
+        }
+        
+        const ranges=extractTimeRanges(time);
+        courtsMap[key].times.push(...ranges);
+      });
+      
+      // Convert to array and sort
+      const courtsList=Object.values(courtsMap)
+        .filter(c=>c.times.length>0)
+        .sort((a,b)=>{
+          if(a.location!==b.location)return a.location.localeCompare(b.location);
+          const aNum=parseInt(a.court.match(/\d+/)?.[0])||0;
+          const bNum=parseInt(b.court.match(/\d+/)?.[0])||0;
+          return aNum-bNum;
+        });
+      
+      // Create labels for Y-axis
+      const yLabels=courtsList.map(c=>`${simplifyLocation(c.location)} ${c.court}`);
+      
+      // Calculate time bounds
+      let minTime=24,maxTime=0;
+      courtsList.forEach(court=>{
+        court.times.forEach(t=>{
+          if(t.start<minTime)minTime=t.start;
+          if(t.end>maxTime)maxTime=t.end;
+        });
+      });
+      minTime=Math.max(8,Math.floor(minTime-0.5));
+      maxTime=Math.min(22,Math.ceil(maxTime+0.5));
+      
+      // Create color map
+      const locations=[...new Set(courtsList.map(c=>c.location))];
+      const colors=['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22'];
+      const colorMap={};
+      locations.forEach((loc,i)=>colorMap[loc]=colors[i%colors.length]);
+      
+      // Create datasets - one per time slot
+      const allData=[];
+      courtsList.forEach((court,idx)=>{
+        court.times.forEach(timeRange=>{
+          allData.push({
+            x:[timeRange.start,timeRange.end],
+            y:yLabels[idx],
+            backgroundColor:colorMap[court.location],
+            borderColor:'rgba(255,255,255,0.6)',
+            borderWidth:1,
+            barThickness:44
+          });
+        });
+      });
+      
+      // Single dataset with all bars
+      const datasets=[{
+        data:allData,
+        backgroundColor:allData.map(d=>d.backgroundColor),
+        borderColor:allData.map(d=>d.borderColor),
+        borderWidth:1,
+        barThickness:44,
+        borderRadius:22,
+        borderSkipped:false,
+        categoryPercentage:0.95,
+        barPercentage:0.95
+      }];
+      
+      // Destroy old chart
+      if(window.scheduleChart)window.scheduleChart.destroy();
+      
+      // Create chart
+      window.scheduleChart=new Chart(ctx,{
+        type:'bar',
+        data:{
+          labels:yLabels,
+          datasets:datasets
+        },
+        options:{
+          indexAxis:'y',
+          responsive:true,
+          maintainAspectRatio:false,
+          elements:{
+            bar:{
+              borderRadius:22,
+              borderSkipped:false
+            }
+          },
+          datasets:{
+            bar:{
+              borderRadius:22,
+              borderSkipped:false,
+              categoryPercentage:0.95,
+              barPercentage:0.95,
+              barThickness:44,
+              maxBarThickness:48
+            }
+          },
+          scales:{
+            x:{
+              type:'linear',
+              min:minTime,
+              max:maxTime,
+              ticks:{
+                stepSize:1,
+                callback:v=>{
+                  const h=Math.floor(v);
+                  if(h===12)return'12PM';
+                  if(h>12)return`${h-12}PM`;
+                  return`${h}AM`;
+                }
+              },
+              title:{display:true,text:'Time'}
+            },
+            y:{
+              type:'category',
+              labels:yLabels,
+              ticks:{
+                font:{size:11,weight:'600'}
+              }
+            }
+          },
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                label:ctx=>{
+                  const d=ctx.raw;
+                  const formatTime=h=>{
+                    const hr=Math.floor(h);
+                    const min=Math.round((h-hr)*60);
+                    const h12=hr>12?hr-12:(hr===0?12:hr);
+                    const p=hr>=12?'PM':'AM';
+                    return min===0?`${h12}${p}`:`${h12}:${min.toString().padStart(2,'0')}${p}`;
+                  };
+                  return`${formatTime(d.x[0])}-${formatTime(d.x[1])}`;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Hide legend
+      document.getElementById('location-legend').style.display='none';
+    }
+
+    // Week toggle wiring
+    function updateWeekToggleUI(){
+      const allBtn=document.getElementById('week-all-btn');
+      const thisBtn=document.getElementById('week-this-btn');
+      if(!allBtn||!thisBtn) return;
+      if(SHOW_WEEK_ONLY){
+        thisBtn.classList.add('active');
+        allBtn.classList.remove('active');
+      }else{
+        allBtn.classList.add('active');
+        thisBtn.classList.remove('active');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      // Attach week segmented toggle
+      const allBtn=document.getElementById('week-all-btn');
+      const thisBtn=document.getElementById('week-this-btn');
+      if(allBtn) allBtn.addEventListener('click',()=>{ if(SHOW_WEEK_ONLY){ SHOW_WEEK_ONLY=false; updateWeekToggleUI(); loadAndRender(); }});
+      if(thisBtn) thisBtn.addEventListener('click',()=>{ if(!SHOW_WEEK_ONLY){ SHOW_WEEK_ONLY=true; updateWeekToggleUI(); loadAndRender(); }});
+      updateWeekToggleUI();
+    });
+  </script>
 </body>
 </html>
