@@ -271,52 +271,194 @@
     }
 
     /* Mobile Optimizations */
+    /* Compact Mobile Layout */
     @media (max-width: 768px) {
-      .navbar {
-        padding: 0.75rem;
-        flex-direction: column;
-        gap: 0.75rem;
-        align-items: stretch;
-      }
-      
-      .navbar .brand { justify-content: center; }
-      
-      .navbar .actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        width: 100%;
-      }
-      
-      .segmented {
-        grid-column: 1 / -1;
-        display: flex;
-      }
-      
-      .segmented button { flex: 1; text-align: center; }
-      
-      .tab-buttons {
-        top: 110px; /* Adjusted for taller mobile navbar */
-        padding: 0.5rem 0.75rem;
-      }
-      
-      .app { padding: 0.75rem; }
-      
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border);
-      }
-      
-      th, td { padding: 0.75rem; }
-      
-      .buttons-container {
-        bottom: 1.5rem;
-        right: 1.5rem;
-      }
-    }
 
+        /* Navbar: Single Row, No Title */
+        .navbar {
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 12px;
+            height: 56px;
+        }
+
+        .navbar .brand {
+            display: none;
+            /* Hide title as requested */
+        }
+
+        .navbar .actions {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        /* Compact Buttons */
+        .navbar button,
+        .segmented button {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        /* Segmented Control Compact */
+        .segmented {
+            flex: 1;
+            display: flex;
+            max-width: 140px;
+            /* Limit width */
+        }
+
+        /* View Toggle Group */
+        .view-toggle {
+            display: flex;
+            background: var(--background);
+            padding: 3px;
+            border-radius: 999px;
+        }
+
+        .view-toggle button {
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 999px;
+        }
+
+        .view-toggle button.active {
+            background: white;
+            color: var(--text-main);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Hide "Announcements" text, use icon if possible, or just make it small */
+        #ann-btn {
+            padding: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--background);
+            color: var(--text-main);
+        }
+
+        #ann-btn span {
+            display: none;
+        }
+
+        /* Hide text */
+        #ann-btn::after {
+            content: '📢';
+            font-size: 1rem;
+        }
+
+        /* Icon only */
+
+        /* Sticky Day Bar */
+        .tab-buttons {
+            top: 56px;
+            /* Match navbar height */
+            padding: 4px 8px;
+            height: 48px;
+            align-items: center;
+        }
+
+        .tab-buttons button {
+            padding: 4px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Compact Table */
+        .app {
+            padding: 0;
+        }
+
+        /* Remove outer padding */
+
+        .day-section {
+            padding: 0 8px;
+        }
+
+        .date-title {
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+            text-align: center;
+        }
+
+        table {
+            display: table;
+            /* Revert to table layout to force columns to fit */
+            width: 100%;
+            table-layout: fixed;
+            /* Force fixed width */
+            margin-bottom: 1rem;
+        }
+
+        th,
+        td {
+            padding: 8px 4px;
+            /* Minimal padding */
+            font-size: 0.8rem;
+            white-space: normal;
+            /* Allow wrapping */
+            word-wrap: break-word;
+        }
+
+        /* Column Widths */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 32%;
+        }
+
+        /* Location */
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 18%;
+            text-align: center;
+        }
+
+        /* Court */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 50%;
+        }
+
+        /* Time */
+
+        td:nth-child(2) {
+            font-weight: 500;
+        }
+
+        /* Time column specific */
+        td:nth-child(3) {
+            font-family: var(--font-sans);
+            /* Use sans for better readability than mono */
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+
+        /* Compact Plot */
+        #plot-container {
+            height: 40vh !important;
+            /* Reduced height */
+            min-height: 300px;
+        }
+
+        /* FAB Position */
+        .buttons-container {
+            bottom: 1rem;
+            right: 1rem;
+        }
+
+        .action-button {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+    }
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
