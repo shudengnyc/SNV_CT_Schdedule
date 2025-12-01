@@ -15,7 +15,7 @@
       --primary: #4f46e5;
       --primary-light: #eef2ff;
       --surface: #ffffff;
-      --background: #f1f5f9;
+      --background: #ffffff;
       --text-main: #0f172a;
       --text-secondary: #64748b;
       --border: #e2e8f0;
@@ -110,33 +110,52 @@
       box-shadow: var(--shadow-sm);
     }
 
+    .view-toggle {
+      display: inline-flex;
+      background: var(--background);
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      gap: 0.25rem;
+    }
+
+    .view-toggle button {
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .view-toggle button.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
     /* Sticky Day Selector Bar */
     .tab-buttons {
       position: sticky;
       top: 60px; /* Adjusted for smaller navbar */
       z-index: 90;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 0.5rem 1rem;
+      background: var(--surface);
+      padding: 0.75rem 1rem;
       display: flex;
       gap: 0.5rem;
       overflow-x: auto;
-      border-bottom: 1px solid var(--border);
       scrollbar-width: none; /* Firefox */
+      justify-content: center;
+      flex-wrap: wrap;
     }
-    
+
     .tab-buttons::-webkit-scrollbar { display: none; }
 
     /* Transform the existing bubble structure to a strip via CSS */
     .tab-buttons {
       width: 100% !important;
       height: auto !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
       transform: none !important;
       flex-direction: row !important;
-      justify-content: flex-start !important;
+      justify-content: center !important;
       left: 0 !important;
       bottom: auto !important;
       max-height: none !important;
@@ -157,7 +176,13 @@
       padding: 0.4rem 1rem;
       border-radius: 999px;
       font-size: 0.8rem;
-      box-shadow: var(--shadow-sm);
+      box-shadow: none;
+    }
+
+    body.plot-view-active .tab-buttons {
+      position: static;
+      top: auto;
+      z-index: initial;
     }
 
     .tab-buttons button.active {
@@ -169,13 +194,129 @@
 
     /* Main Content */
     .app {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 1rem;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .section-card {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      background: var(--surface);
+      overflow: visible;
+    }
+
+    .section-card > * {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-card > *:last-child {
+      border-bottom: none;
+    }
+
+    .footer-card {
+      text-align: center;
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .footer-card a {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .footer-card a:hover { text-decoration: underline; }
+
+    .eyebrow {
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.2s ease, color 0.2s ease, border 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #3b36c5; }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-main);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .btn-small {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: 8px;
     }
 
     .day-section {
       animation: slideUp 0.3s ease-out;
+      padding: 1rem 0;
+    }
+
+    .schedule-card {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .schedule-card .day-section + .day-section {
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
     }
 
     .date-title {
@@ -248,215 +389,203 @@
       z-index: 100;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px);
+      border-radius: 999px;
+      box-shadow: var(--shadow-lg);
     }
 
     .action-button {
       width: 56px;
       height: 56px;
-      border-radius: 20px;
+      border-radius: var(--radius);
       background: var(--text-main);
       color: white;
       font-size: 1.25rem;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       box-shadow: var(--shadow-lg);
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+      position: relative;
     }
 
     .action-button:hover {
-      transform: scale(1.1) rotate(-5deg);
+      transform: translateY(-3px) scale(1.02);
       background: black;
+    }
+
+    .action-button::after {
+      content: attr(data-feedback);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      right: 0;
+      background: var(--text-main);
+      color: #fff;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(6px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .action-button[data-state="copied"]::after {
+      opacity: 1;
+      transform: translateY(0);
+      background: var(--success);
+    }
+
+    .action-button[data-state="copied"] {
+      background: var(--success);
+      color: white;
+    }
+
+    .action-button.error {
+      background: #ef4444;
     }
 
     /* Mobile Optimizations */
     /* Compact Mobile Layout */
     @media (max-width: 768px) {
 
-        /* Navbar: Single Row, No Title */
         .navbar {
             flex-direction: row;
-            flex-wrap: nowrap;
+            align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            padding: 8px 12px;
-            height: 56px;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            height: auto;
         }
 
         .navbar .brand {
             display: none;
-            /* Hide title as requested */
         }
 
         .navbar .actions {
             display: flex;
             width: 100%;
-            justify-content: space-between;
-            gap: 8px;
+            gap: 0.4rem;
+            align-items: center;
         }
 
-        /* Compact Buttons */
-        .navbar button,
-        .segmented button {
-            padding: 6px 10px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-        }
-
-        /* Segmented Control Compact */
+        .view-toggle,
         .segmented {
             flex: 1;
-            display: flex;
-            max-width: 140px;
-            /* Limit width */
+            min-width: 0;
         }
 
-        /* View Toggle Group */
-        .view-toggle {
-            display: flex;
-            background: var(--background);
-            padding: 3px;
-            border-radius: 999px;
+        .view-toggle button,
+        .segmented button {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.75rem;
         }
 
-        .view-toggle button {
-            background: transparent;
-            color: var(--text-secondary);
-            border-radius: 999px;
-        }
-
-        .view-toggle button.active {
-            background: white;
-            color: var(--text-main);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* Hide "Announcements" text, use icon if possible, or just make it small */
         #ann-btn {
-            padding: 6px;
-            width: 32px;
-            height: 32px;
-            display: flex;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-main);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: var(--background);
-            color: var(--text-main);
         }
 
-        #ann-btn span {
+        #ann-btn span.sr-only {
             display: none;
         }
 
-        /* Hide text */
-        #ann-btn::after {
-            content: '📢';
-            font-size: 1rem;
-        }
-
-        /* Icon only */
-
-        /* Sticky Day Bar */
         .tab-buttons {
-            top: 56px;
-            /* Match navbar height */
-            padding: 4px 8px;
-            height: 48px;
+            position: static;
+            padding: 0.5rem 0.75rem;
+            height: auto;
             align-items: center;
+            justify-content: center;
         }
 
         .tab-buttons button {
-            padding: 4px 12px;
-            font-size: 0.8rem;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.85rem;
         }
 
-        /* Compact Table */
         .app {
-            padding: 0;
+            padding: 0.5rem;
         }
-
-        /* Remove outer padding */
 
         .day-section {
-            padding: 0 8px;
+            padding: 0 0.5rem;
         }
 
         .date-title {
-            font-size: 1.1rem;
-            margin: 1rem 0 0.5rem;
+            font-size: 1rem;
+            margin: 0.75rem 0 0.4rem;
             text-align: center;
         }
 
         table {
             display: table;
-            /* Revert to table layout to force columns to fit */
             width: 100%;
             table-layout: fixed;
-            /* Force fixed width */
             margin-bottom: 1rem;
         }
 
         th,
         td {
             padding: 8px 4px;
-            /* Minimal padding */
             font-size: 0.8rem;
             white-space: normal;
-            /* Allow wrapping */
             word-wrap: break-word;
         }
 
-        /* Column Widths */
         th:nth-child(1),
-        td:nth-child(1) {
-            width: 32%;
-        }
+        td:nth-child(1) { width: 32%; }
 
-        /* Location */
         th:nth-child(2),
-        td:nth-child(2) {
-            width: 18%;
-            text-align: center;
-        }
+        td:nth-child(2) { width: 18%; text-align: center; }
 
-        /* Court */
         th:nth-child(3),
-        td:nth-child(3) {
-            width: 50%;
-        }
+        td:nth-child(3) { width: 50%; }
 
-        /* Time */
+        td:nth-child(2) { font-weight: 500; }
 
-        td:nth-child(2) {
-            font-weight: 500;
-        }
-
-        /* Time column specific */
         td:nth-child(3) {
             font-family: var(--font-sans);
-            /* Use sans for better readability than mono */
             font-size: 0.75rem;
             line-height: 1.2;
         }
 
-        /* Compact Plot */
         #plot-container {
             height: 40vh !important;
-            /* Reduced height */
             min-height: 300px;
         }
 
-        /* FAB Position */
+
         .buttons-container {
-            bottom: 1rem;
-            right: 1rem;
+            bottom: 0.75rem;
+            right: 0.75rem;
+            flex-direction: row;
+            border-radius: 20px;
+            padding: 0.5rem;
+            gap: 0.5rem;
         }
 
         .action-button {
             width: 48px;
             height: 48px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+        }
+
+        .announcement-content {
+            padding: 1rem;
         }
     }
     @keyframes slideUp {
@@ -478,14 +607,176 @@
       border-radius: var(--radius);
       padding: 1rem;
       box-shadow: var(--shadow);
+      width: 100%;
+      height: 70vh;
+      position: relative;
+      display: none;
     }
-    
+
+    .plot-legend {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      background: rgba(255,255,255,0.85);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      box-shadow: var(--shadow);
+    }
+
+    #schedule-plot {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .toast-stack {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1200;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--success);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.error {
+      background: #ef4444;
+    }
+
     /* Announcement Modal */
-    .announcement-modal { backdrop-filter: blur(4px); background: rgba(0,0,0,0.2) !important; }
+    .announcement-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 1100;
+    }
+
+    .announcement-modal.visible {
+      display: flex;
+    }
+
     .announcement-content {
-      border-radius: 24px !important;
-      border: none !important;
-      box-shadow: var(--shadow-lg) !important;
+      width: min(720px, 95vw);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .announcement-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+
+    .announcement-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .announcement-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .announcement-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+      background: var(--background);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .announcement-item strong {
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .announcement-empty {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 1rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .announcement-form {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .modal-input {
+      width: 100%;
+      min-height: 90px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
+    .modal-input:focus {
+      outline: 2px solid var(--primary-light);
+      border-color: var(--primary);
+    }
+
+    .day-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .day-checkboxes label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .announcement-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: flex-end;
     }
   </style>
 </head>
@@ -493,45 +784,64 @@
   <div class="navbar">
     <div class="brand"><span class="logo">🎾</span>SNV LT Schedule</div>
     <div class="actions">
-      <button id="table-view-btn" class="secondary active">Table</button>
-      <button id="plot-view-btn" class="secondary">Plot</button>
+      <div class="view-toggle" id="view-toggle">
+        <button id="table-view-btn" class="active">Table</button>
+        <button id="plot-view-btn">Plot</button>
+      </div>
       <div class="segmented" id="week-toggle">
         <button id="week-all-btn">All Weeks</button>
         <button id="week-this-btn" class="active">This Week</button>
       </div>
-      <button id="ann-btn">Announcements</button>
+      <button id="ann-btn" aria-label="Announcements">
+        <span aria-hidden="true">📢</span>
+        <span class="sr-only">Announcements</span>
+      </button>
     </div>
   </div>
   <div class="app">
-  <div id="tab-buttons" class="tab-buttons"></div>
-  <div id="table-container" class="loading">Loading schedule...</div>
-  <div id="original-table" style="display:none"></div>
-  <div class="buttons-container">
-    <button id="copy-fab" class="action-button" title="Copy Current Day">📋</button>
-    <button id="copy-plot-button" class="action-button" title="Copy Plot" style="display:none">🖼</button>
+  <div class="section-card">
+    <div id="tab-buttons" class="tab-buttons"></div>
+    <div id="table-container" class="schedule-card loading">Loading schedule...</div>
+    <div id="plot-container" class="schedule-card">
+      <div id="location-legend" class="plot-legend"></div>
+      <canvas id="schedule-plot"></canvas>
+    </div>
+    <!-- Footer with original data link -->
+    <div class="footer-card">
+      <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener">View Original Data →</a>
+    </div>
   </div>
-  <div id="plot-container" style="display:none; width:100%; height:70vh; position:relative;">
-    <div id="location-legend" style="position:absolute; right:12px; top:12px; background:rgba(255,255,255,0.85); padding:8px 12px; border-radius:8px;"></div>
-    <canvas id="schedule-plot" style="width:100%; height:100%;"></canvas>
+  <div id="original-table" class="sr-only" aria-hidden="true"></div>
+  <div class="buttons-container" aria-live="polite">
+    <button id="copy-fab" class="action-button" title="Copy Current Day" data-feedback="Copied!" aria-label="Copy schedule for selected day">
+      <span aria-hidden="true">📋</span>
+      <span class="sr-only">Copy schedule for current day</span>
+    </button>
+    <button id="copy-plot-button" class="action-button" title="Copy Plot" data-feedback="Copied!" style="display:none" aria-label="Copy plot as image">
+      <span aria-hidden="true">🖼</span>
+      <span class="sr-only">Copy plot image</span>
+    </button>
   </div>
-  
-  <!-- Footer with original data link -->
-  <div style="text-align: center; padding: 2rem 1rem; margin-top: 3rem; border-top: 1px solid var(--ring);">
-    <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener" style="color: var(--primary-700); text-decoration: none; font-size: 1.1rem; font-weight: 700; transition: color 0.2s ease;">View Original Data →</a>
-  </div>
-  <div id="announcement-modal" class="announcement-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:1100;">
-    <div class="announcement-content" style="width:min(680px,92vw); background:#fff; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-height:80vh; overflow:auto;">
-      <div class="announcement-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
-        <h3 style="margin:0;">Schedule Announcements</h3>
-        <button class="close-button" onclick="toggleAnnouncementModal()" style="border:none; background:#ef4444; color:#fff; border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;">×</button>
+  <div id="announcement-modal" class="announcement-modal" aria-hidden="true">
+    <div class="announcement-content">
+      <div class="announcement-header">
+        <div>
+          <p class="eyebrow">Schedule Updates</p>
+          <h3 style="margin:0;">Announcements</h3>
+        </div>
+        <button class="btn btn-ghost" type="button" onclick="toggleAnnouncementModal(false)">Close</button>
       </div>
       <div class="announcement-body">
-        <div id="announcement-list" class="announcement-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
-        <div class="add-announcement-section" style="border-top:1px solid #e5e7eb; padding-top:16px;">
-          <h4 style="margin:0 0 10px 0;">Add New Announcement</h4>
-          <textarea id="announcement-text" placeholder="Enter announcement text..." style="width:100%; min-height:80px; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></textarea>
-          <div class="day-selector" style="margin-top:10px;">
-            <div class="day-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <div id="announcement-list" class="announcement-list"></div>
+        <div class="announcement-form">
+          <div>
+            <p class="eyebrow">Add New</p>
+            <h4 style="margin:0;">Keep everyone informed</h4>
+          </div>
+          <textarea id="announcement-text" class="modal-input" placeholder="Enter announcement text..."></textarea>
+          <div class="day-selector">
+            <p class="eyebrow" style="margin-bottom:0.25rem;">Apply to</p>
+            <div class="day-checkboxes">
               <label><input type="checkbox" id="select-all-days" value="All"> All Days</label>
               <label><input type="checkbox" value="Sun"> Sun</label>
               <label><input type="checkbox" value="Mon"> Mon</label>
@@ -542,14 +852,15 @@
               <label><input type="checkbox" value="Sat"> Sat</label>
             </div>
           </div>
-          <div class="announcement-buttons" style="margin-top:12px; display:flex; gap:10px;">
-            <button onclick="addAnnouncement()">Add Announcement</button>
-            <button onclick="clearAllAnnouncements()">Clear All</button>
+          <div class="announcement-buttons">
+            <button class="btn btn-ghost" type="button" onclick="clearAllAnnouncements()">Clear All</button>
+            <button class="btn btn-primary" type="button" onclick="addAnnouncement()">Add Announcement</button>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <div id="toast-root" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
   </div>
   <script>
     const SHEET_ID = '1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs';
@@ -699,6 +1010,7 @@
         document.getElementById('plot-container').style.display='none';
         document.getElementById('copy-plot-button').style.display='none'
       }
+      document.body.classList.toggle('plot-view-active', isPlotView);
     }
     function normalizeDate(dateStr){const parts=dateStr.split('/');const m=parseInt(parts[0]);const d=parseInt(parts[1]);const y=parts[2]?parseInt(parts[2]):new Date().getFullYear();return `${m}/${d}/${y}`}
     function getCopyTextForDay(day){
@@ -781,10 +1093,11 @@
       const text=`SNV LT 教练占场信息 ${day} ${todayDateDisplay}\n${todayData}${otherData}${announcementText}`;
       return text;
     }
-document.getElementById('copy-fab').addEventListener('click',()=>{if(!CURRENT_DAY)return;const text=getCopyTextForDay(CURRENT_DAY);navigator.clipboard.writeText(text)});
-document.getElementById('ann-btn').addEventListener('click',()=>toggleAnnouncementModal());
-document.getElementById('table-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='block';document.getElementById('plot-container').style.display='none';document.getElementById('table-view-btn').classList.add('active');document.getElementById('plot-view-btn').classList.remove('active');document.getElementById('copy-plot-button').style.display='none'});
-document.getElementById('plot-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='none';document.getElementById('plot-container').style.display='block';document.getElementById('table-view-btn').classList.remove('active');document.getElementById('plot-view-btn').classList.add('active');document.getElementById('copy-plot-button').style.display='flex';if(CURRENT_DAY)createPlot(CURRENT_DAY,false)});
+const copyFabButton=document.getElementById('copy-fab');
+if(copyFabButton){copyFabButton.addEventListener('click',async()=>{if(!CURRENT_DAY)return;const text=getCopyTextForDay(CURRENT_DAY);try{await navigator.clipboard.writeText(text);setCopyButtonState(copyFabButton,true);showNotification('Schedule copied to clipboard')}catch(err){console.error('Failed to copy schedule',err);setCopyButtonState(copyFabButton,false,'Copy failed');showNotification('Unable to copy schedule', 'error')}});}
+document.getElementById('ann-btn').addEventListener('click',()=>toggleAnnouncementModal(true));
+document.getElementById('table-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='block';document.getElementById('plot-container').style.display='none';document.getElementById('table-view-btn').classList.add('active');document.getElementById('plot-view-btn').classList.remove('active');document.getElementById('copy-plot-button').style.display='none';document.body.classList.remove('plot-view-active');});
+document.getElementById('plot-view-btn').addEventListener('click',()=>{document.getElementById('table-container').style.display='none';document.getElementById('plot-container').style.display='block';document.getElementById('table-view-btn').classList.remove('active');document.getElementById('plot-view-btn').classList.add('active');document.getElementById('copy-plot-button').style.display='flex';document.body.classList.add('plot-view-active');if(CURRENT_DAY)createPlot(CURRENT_DAY,false)});
 let __resizeTimer;window.addEventListener('resize',()=>{clearTimeout(__resizeTimer);__resizeTimer=setTimeout(()=>{const isPlot=document.getElementById('plot-view-btn').classList.contains('active');if(isPlot&&CURRENT_DAY)createPlot(CURRENT_DAY,false)},250)});
 document.getElementById('copy-plot-button').addEventListener('click',copyPlotToClipboard);
 // Expand/collapse day bubble and close on outside click
@@ -797,15 +1110,24 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 loadAndRender();
 
-function toggleAnnouncementModal() {
+function toggleAnnouncementModal(forceState) {
   const modal = document.getElementById('announcement-modal');
-  const isVisible = modal.style.display === 'flex';
-  modal.style.display = isVisible ? 'none' : 'flex';
-  if (!isVisible) {
+  if (!modal) return;
+  const shouldShow = typeof forceState === 'boolean' ? forceState : !modal.classList.contains('visible');
+  modal.classList.toggle('visible', shouldShow);
+  modal.setAttribute('aria-hidden', (!shouldShow).toString());
+  document.body.style.overflow = shouldShow ? 'hidden' : '';
+  if (shouldShow) {
     renderAnnouncements();
     setupDaySelector();
+  } else {
+    clearForm();
   }
 }
+
+const announcementModal=document.getElementById('announcement-modal');
+if(announcementModal){announcementModal.addEventListener('click',e=>{if(e.target===announcementModal)toggleAnnouncementModal(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&announcementModal.classList.contains('visible'))toggleAnnouncementModal(false);});}
 
 function loadAnnouncements() {
   try {
@@ -828,31 +1150,73 @@ function saveAnnouncements(announcements) {
 function renderAnnouncements() {
   const announcements = loadAnnouncements();
   const list = document.getElementById('announcement-list');
-  list.innerHTML = announcements.map((ann, idx) => `
-    <div class="announcement-item" style="padding:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
-      <div style="display:flex; justify-content:space-between; align-items:start; gap:10px;">
-        <div style="flex:1;">
-          <div style="font-weight:600; margin-bottom:4px;">${ann.days.join(', ')}</div>
-          <div style="color:#6b7280;">${ann.text}</div>
-        </div>
-        <button class="delete-btn" onclick="deleteAnnouncement(${idx})">Delete</button>
-      </div>
-    </div>
-  `).join('');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!announcements.length) {
+    const empty = document.createElement('div');
+    empty.className = 'announcement-empty';
+    empty.textContent = 'No announcements yet. Add one below to keep the team in sync.';
+    list.appendChild(empty);
+    return;
+  }
+
+  announcements.forEach((ann, idx) => {
+    const item = document.createElement('div');
+    item.className = 'announcement-item';
+
+    const copy = document.createElement('div');
+    copy.style.flex = '1';
+    const days = document.createElement('strong');
+    days.textContent = ann.days.join(', ');
+    const text = document.createElement('div');
+    text.textContent = ann.text;
+    copy.appendChild(days);
+    copy.appendChild(text);
+
+    const actions = document.createElement('div');
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-ghost btn-small';
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => deleteAnnouncement(idx));
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(copy);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
 }
 
 function setupDaySelector() {
   const selectAll = document.getElementById('select-all-days');
+  if (!selectAll) return;
   const dayBoxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
-  selectAll.addEventListener('change', function() { dayBoxes.forEach(cb => cb.checked = this.checked); });
-  dayBoxes.forEach(cb => {
-    cb.addEventListener('change', function() {
-      const allChecked = Array.from(dayBoxes).every(x => x.checked);
-      const noneChecked = Array.from(dayBoxes).every(x => !x.checked);
-      if (allChecked) { selectAll.checked = true; selectAll.indeterminate = false; }
-      else if (noneChecked) { selectAll.checked = false; selectAll.indeterminate = false; }
-      else { selectAll.checked = false; selectAll.indeterminate = true; }
+
+  if (selectAll.dataset.bound !== 'true') {
+    selectAll.addEventListener('change', function() {
+      dayBoxes.forEach(cb => { cb.checked = this.checked; });
+      selectAll.indeterminate = false;
     });
+    selectAll.dataset.bound = 'true';
+  }
+
+  dayBoxes.forEach(cb => {
+    if (cb.dataset.bound === 'true') return;
+    cb.addEventListener('change', function() {
+      const boxes = document.querySelectorAll('.day-checkboxes input[type="checkbox"]:not(#select-all-days)');
+      const checkedCount = Array.from(boxes).filter(x => x.checked).length;
+      if (checkedCount === boxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+      } else if (checkedCount === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+      }
+    });
+    cb.dataset.bound = 'true';
   });
 }
 
@@ -876,6 +1240,7 @@ function addAnnouncement() {
   saveAnnouncements(announcements);
   renderAnnouncements();
   clearForm();
+  showNotification('Announcement saved');
 }
 
 function editAnnouncement(idx) {
@@ -895,18 +1260,25 @@ function deleteAnnouncement(idx) {
   announcements.splice(idx, 1);
   saveAnnouncements(announcements);
   renderAnnouncements();
+  showNotification('Announcement removed');
 }
 
 function clearAllAnnouncements() {
   if (confirm('Are you sure you want to clear all announcements?')) {
     saveAnnouncements([]);
     renderAnnouncements();
+    showNotification('All announcements cleared');
   }
 }
 
 function clearForm() {
   document.getElementById('announcement-text').value = '';
   document.querySelectorAll('.day-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+  const selectAll = document.getElementById('select-all-days');
+  if (selectAll) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+  }
 }
 
 function getAnnouncementsForDay(day) {
@@ -920,18 +1292,44 @@ function getAnnouncementText(day) {
   return '\n\n📢 Announcements:\n' + announcements.map(ann => `• ${ann.text}`).join('\n');
 }
 
-function showNotification(message) {
-  const notification = document.createElement('div');
-  notification.textContent = message;
-  notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;';
-  document.body.appendChild(notification);
-  setTimeout(() => notification.remove(), 2000);
+function showNotification(message, variant = 'success') {
+  const stack = document.getElementById('toast-root');
+  if (!stack) return;
+  const toast = document.createElement('div');
+  toast.className = `toast${variant === 'error' ? ' error' : ''}`;
+  toast.textContent = message;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }, 2200);
 }
-    async function copyPlotToClipboard(){const canvas=document.getElementById('schedule-plot');try{if(typeof ClipboardItem!=='undefined'&&navigator.clipboard.write){const blob=await new Promise(res=>canvas.toBlob(res));await navigator.clipboard.write([new ClipboardItem({'image/png':blob})])}}catch(e){console.error(e)}}
+
+function setCopyButtonState(button, isSuccess, customMessage) {
+  if (!button) return;
+  const defaultFeedback = button.dataset.defaultFeedback || button.getAttribute('data-feedback') || 'Copied!';
+  button.dataset.defaultFeedback = defaultFeedback;
+  button.dataset.feedback = customMessage || (isSuccess ? defaultFeedback : 'Try again');
+  button.dataset.state = 'copied';
+  button.classList.toggle('error', !isSuccess);
+  clearTimeout(button.__copyTimer);
+  button.__copyTimer = setTimeout(() => {
+    button.dataset.state = '';
+    button.dataset.feedback = button.dataset.defaultFeedback;
+    button.classList.remove('error');
+  }, 2000);
+}
+    async function copyPlotToClipboard(){const canvas=document.getElementById('schedule-plot');const button=document.getElementById('copy-plot-button');if(!canvas)return;try{if(typeof ClipboardItem==='undefined'||!navigator.clipboard?.write)throw new Error('Clipboard API not available');const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Unable to render plot image'))));await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);setCopyButtonState(button,true,'Plot copied');showNotification('Plot copied to clipboard')}catch(e){console.error('Failed to copy plot',e);setCopyButtonState(button,false,'Copy failed');showNotification('Unable to copy plot', 'error')}}
     function createPlot(day,forCopy=false){
       if(!day)return;
       const canvas=document.getElementById('schedule-plot');
       const ctx=canvas.getContext('2d');
+      const isMobile=window.matchMedia('(max-width: 768px)').matches;
+      const barThickness=isMobile?26:44;
+      const barRadius=isMobile?14:22;
+      const tickFontSize=isMobile?10:12;
+      const xTickFontSize=isMobile?10:11;
       
       // Get data from original table
       const originalTable=document.getElementById('original-table');
@@ -1015,8 +1413,8 @@ function showNotification(message) {
         backgroundColor:allData.map(d=>d.backgroundColor),
         borderColor:allData.map(d=>d.borderColor),
         borderWidth:1,
-        barThickness:44,
-        borderRadius:22,
+        barThickness:barThickness,
+        borderRadius:barRadius,
         borderSkipped:false,
         categoryPercentage:0.95,
         barPercentage:0.95
@@ -1038,18 +1436,18 @@ function showNotification(message) {
           maintainAspectRatio:false,
           elements:{
             bar:{
-              borderRadius:22,
+              borderRadius:barRadius,
               borderSkipped:false
             }
           },
           datasets:{
             bar:{
-              borderRadius:22,
+              borderRadius:barRadius,
               borderSkipped:false,
               categoryPercentage:0.95,
               barPercentage:0.95,
-              barThickness:44,
-              maxBarThickness:48
+              barThickness:barThickness,
+              maxBarThickness:barThickness+6
             }
           },
           scales:{
@@ -1057,8 +1455,10 @@ function showNotification(message) {
               type:'linear',
               min:minTime,
               max:maxTime,
+              grid:{color:'rgba(148,163,184,0.2)'},
               ticks:{
                 stepSize:1,
+                font:{size:xTickFontSize},
                 callback:v=>{
                   const h=Math.floor(v);
                   if(h===12)return'12PM';
@@ -1072,7 +1472,7 @@ function showNotification(message) {
               type:'category',
               labels:yLabels,
               ticks:{
-                font:{size:11,weight:'600'}
+                font:{size:tickFontSize,weight:'600'}
               }
             }
           },
