@@ -924,18 +924,15 @@ function compactCourtsDisplay(courts) {
 function cleanSingleTime(timeStr, contextPeriod = null) {
   if (!timeStr) return '';
   
-  console.log('cleanSingleTime input:', timeStr, 'context:', contextPeriod);
   
   // First, check if there's an explicit AM/PM in the input
   const explicitPeriodMatch = timeStr.match(/([AP])M?\b/i);
   let explicitPeriod = explicitPeriodMatch ? `${explicitPeriodMatch[1].toUpperCase()}M` : null;
   
-  console.log('Explicit period found:', explicitPeriod);
   
   // Remove all non-time characters except numbers and colon
   const cleanedTime = timeStr.replace(/[^0-9:]/g, '');
   
-  console.log('After cleaning time part:', cleanedTime);
   
   if (!cleanedTime) return '';
   
@@ -952,7 +949,6 @@ function cleanSingleTime(timeStr, contextPeriod = null) {
   let hours = parseInt(timeParts[0]);
   let minutes = parseInt(timeParts[1]);
   
-  console.log('Parsed hours:', hours, 'minutes:', minutes);
   
   // Validate hours and minutes are reasonable numbers
   if (isNaN(hours) || isNaN(minutes)) return '';
@@ -962,14 +958,11 @@ function cleanSingleTime(timeStr, contextPeriod = null) {
   // Determine the period to use (explicit takes priority over context)
   let period;
   if (explicitPeriod) {
-    console.log('Using explicit period:', explicitPeriod);
     period = explicitPeriod;
   } else if (contextPeriod) {
-    console.log('Using context period:', contextPeriod);
     period = contextPeriod;
   } else {
     // Only guess period if none exists and no context
-    console.log('No period found, guessing based on hour...');
     
     // Tennis court specific logic: consider both the hour and common patterns
     if (hours === 10) {
@@ -1002,7 +995,6 @@ function cleanSingleTime(timeStr, contextPeriod = null) {
     }
   }
   
-  console.log('Final period:', period);
   
   // Ensure we're working with valid 12-hour format
   if (hours > 12) {
@@ -1019,7 +1011,6 @@ function cleanSingleTime(timeStr, contextPeriod = null) {
   minutes = minutes.toString().padStart(2, '0');
   
   const result = `${hours}:${minutes}${period}`;
-  console.log('Final result:', result);
   
   return result;
 }
@@ -1066,7 +1057,6 @@ function processTimeRange(timeRange, contextPeriod = null) {
     const rangeEndPeriodMatch = timeRange.match(/([AP])M?\s*$/i);
     const rangeEndPeriod = rangeEndPeriodMatch ? `${rangeEndPeriodMatch[1].toUpperCase()}M` : null;
     
-    console.log(`Range "${timeRange}" - detected range period: ${rangeEndPeriod}`);
     
     // For start time: don't inherit period from end time, let it be determined by its own logic
     const hasStartExplicitPeriod = /[AP]M?\b/i.test(parts[0]);
@@ -1096,7 +1086,6 @@ function processTimeRange(timeRange, contextPeriod = null) {
     
     if (!startTime || !endTime) return '';
     
-    console.log('processTimeRange - start:', startTime, 'end:', endTime);
     
     // Parse times for range validation
     const startTimeMatch = startTime.match(/(\d+):(\d+)([AP]M)/);
@@ -1116,17 +1105,14 @@ function processTimeRange(timeRange, contextPeriod = null) {
     if (startTimePeriod === 'AM' && startHour24 === 12) startHour24 = 0;
     if (endTimePeriod === 'AM' && endHour24 === 12) endHour24 = 0;
     
-    console.log('24-hour times - start:', startHour24, 'end:', endHour24);
     
     // Calculate range length
     let rangeLength = endHour24 - startHour24;
     if (rangeLength < 0) rangeLength += 24;
     
-    console.log('Range length:', rangeLength, 'hours');
     
     // Only adjust if the range is clearly invalid (> 12 hours)
     if (rangeLength > 12) {
-      console.log('Range too long, adjusting...');
       // Calculate new end time (2 hours after start for reasonable default)
       let newEndHour24 = startHour24 + 2;
       if (newEndHour24 >= 24) newEndHour24 -= 24;
@@ -1136,12 +1122,10 @@ function processTimeRange(timeRange, contextPeriod = null) {
       
       // Keep original minutes
       const adjustedResult = `${startTime}-${newEndHour}:${endMinutes}${newEndPeriod}`;
-      console.log('Adjusted result:', adjustedResult);
       return { result: adjustedResult, period: startTimePeriod };
     }
     
     const result = `${startTime}-${endTime}`;
-    console.log('Normal result:', result);
     return { result, period: startTimePeriod };
   }
   
@@ -1183,7 +1167,6 @@ function processTime(timeStr) {
     const hasExplicitPeriod = /[AP]M?\b/i.test(range);
     const useContext = !hasExplicitPeriod ? contextPeriod : null;
     
-    console.log(`Processing range: "${range}", hasExplicit: ${hasExplicitPeriod}, useContext: ${useContext}`);
     
     const processed = processTimeRange(range.trim(), useContext);
     
@@ -1220,7 +1203,6 @@ function parseTimeToHours(timeStr) {
   // Try to match the standard format first: "7:00PM", "12:30AM", etc.
   const match = timeStr.match(/(\d+):(\d+)([AP]M)/i);
   if (!match) {
-    console.log(`Failed to parse time: "${timeStr}"`);
     return null;
   }
   
@@ -1275,15 +1257,6 @@ function extractTimeRanges(timeStr) {
   return ranges;
 }
 
-// Helper function to get week number
-function getWeekNumber(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
 function normalizeDay(dayValue) {
   const day = (dayValue || "").toString().trim().toLowerCase();
   const dayMap = {
@@ -1299,10 +1272,13 @@ function normalizeDay(dayValue) {
 }
 
 function normalizeLocationName(sheetName) {
-  return (sheetName || "")
+  const normalized = (sheetName || "")
     .toString()
     .replace(/\s+/g, " ")
     .trim();
+
+  if (normalized === "Sunnyvale Middle School (Mango)") return "Mango";
+  return normalized;
 }
 
 function excelSerialToDate(serial) {
@@ -1430,8 +1406,6 @@ async function fetchAndRenderTable() {
   const tabs = document.getElementById("tab-buttons");
   const container = document.getElementById("table-container");
   const originalTable = document.getElementById("original-table");
-  // removed toggleBtn because link now directly opens external
-
   try {
     let rawData = [];
     for (const sheetName of courtSheetTabs) {
@@ -1518,7 +1492,6 @@ async function fetchAndRenderTable() {
       Time: item.Times.join(', ')
     }));
 
-    console.log('Processed data sample:', cleaned.slice(0, 10));
 
     // Sort by day, date, location, court
     cleaned.sort((a, b) => {
@@ -1535,15 +1508,6 @@ async function fetchAndRenderTable() {
       return aNum - bNum;
     });
 
-    // Debug: Log some sample data to see what we have
-    console.log('Sample cleaned data after sorting:', cleaned.slice(0, 5).map(item => ({
-      Day: item.Day,
-      Date: item.Date,
-      Location: item.Location,
-      Court: item.Court,
-      Time: item.Time
-    })));
-
     // Group for display
     const grouped = {};
     cleaned.forEach(row => {
@@ -1555,9 +1519,6 @@ async function fetchAndRenderTable() {
     container.innerHTML = "";
     tabs.innerHTML = "";
 
-    // Generate plot data for current data
-    let allPlotData = {};
-    
     for (const day of expectedDays) {
       if (grouped[day]) {
         const btn = document.createElement("button");
@@ -1568,9 +1529,6 @@ async function fetchAndRenderTable() {
         const section = document.createElement("div");
         section.id = `section-${day}`;
         section.className = "day-section";
-
-        // Initialize plot data for this day
-        allPlotData[day] = [];
 
         for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
           const dateTitle = document.createElement("div");
@@ -1606,8 +1564,6 @@ async function fetchAndRenderTable() {
             // Use the original row data to preserve court groupings from the same row
             const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
             
-            // Debug: Log what we're processing
-            console.log('Processing row:', { location: row.Location, court: row.Court, time: row.Time, rawCourt: row.RawCourt, key: key });
             
             if (!locationTimeGroups[key]) {
               locationTimeGroups[key] = {
@@ -1624,8 +1580,6 @@ async function fetchAndRenderTable() {
             }
           });
           
-          // Debug: Log the grouped data
-          console.log('Location time groups for', date, ':', locationTimeGroups);
           
           // Sort by location
           Object.values(locationTimeGroups)
@@ -1651,22 +1605,6 @@ async function fetchAndRenderTable() {
               
               tbody.appendChild(tr);
               
-              // Separate each court to own entry for plot visualization
-              const timeRanges = extractTimeRanges(group.time);
-              group.courts.forEach(court => {
-                timeRanges.forEach(range => {
-                  if (!allPlotData[day]) allPlotData[day] = [];
-                  
-                  // Add one data point per court per time range
-                  allPlotData[day].push({
-                    location: group.location,
-                    court: court,
-                    date: date,
-                    startTime: range.start,
-                    endTime: range.end
-                  });
-                });
-              });
             });
           
           table.appendChild(tbody);
@@ -1726,7 +1664,6 @@ async function fetchAndRenderTable() {
         return cells[0]?.textContent.trim() === day;
       });
       
-      console.log(`Found ${dayData.length} rows for ${day}`);
       
       // Group by location and court
       const courts = new Map();
@@ -1739,9 +1676,8 @@ async function fetchAndRenderTable() {
         const court = cells[3].textContent.trim();
         const time = cells[2].textContent.trim();
         
-        // Skip entries with no time data - but log them for debugging
+        // Skip entries with no time data
         if (!time || time.trim() === '') {
-          console.log(`Skipping court ${court} at ${location} due to empty time data`);
           return;
         }
         
@@ -1761,7 +1697,6 @@ async function fetchAndRenderTable() {
         // Parse time ranges from the original time data
         const timeRanges = extractTimeRanges(time);
         
-        // Debug: Show individual time parsing for failed cases
         if (timeRanges.length === 0 && time && time.trim() !== '') {
           console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
         }
@@ -1775,8 +1710,6 @@ async function fetchAndRenderTable() {
         });
       });
       
-      console.log(`Total courts found: ${courts.size}`);
-      console.log('Courts data:', Array.from(courts.values()));
       
       // Convert to array and sort by location and court number
       const sortedCourts = Array.from(courts.values()).sort((a, b) => {
@@ -2698,17 +2631,9 @@ async function fetchAndRenderTable() {
   }
 }
 
-// Time processing tests can be enabled for debugging by uncommenting below
-// console.log('=== Time Processing Tests ===');
-// console.log('Context test - Input: "4:15-7:15, 8:15-9:15"');
-// console.log('Context test - Output:', processTime("4:15-7:15, 8:15-9:15"));
-// console.log('Mixed periods test - Input: "8-10am, 5-6pm, 7-8:30pm"');
-// console.log('Mixed periods test - Output:', processTime("8-10am, 5-6pm, 7-8:30pm"));
-// console.log('=== End Tests ===');
 
 fetchAndRenderTable();
 
-// Add this to your existing JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelector('.tab-buttons');
     
