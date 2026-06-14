@@ -180,6 +180,67 @@
         margin: 1rem 0 0.5rem;
       }
     }
+
+    /* Collapsible week groups */
+    .week-group {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06);
+      overflow: hidden;
+    }
+    .week-group > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #4f46e5;
+      user-select: none;
+      transition: background 0.2s ease;
+    }
+    .week-group > summary::-webkit-details-marker { display: none; }
+    .week-group > summary::before {
+      content: "▸";
+      font-size: 0.85rem;
+      color: #94a3b8;
+      transition: transform 0.2s ease;
+    }
+    .week-group[open] > summary::before { transform: rotate(90deg); }
+    .week-group > summary:hover { background: rgba(99, 102, 241, 0.06); }
+    .week-count {
+      margin-left: auto;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #eef2ff;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .week-group .date-title:first-of-type { margin-top: 0.75rem; }
+    .week-group > *:not(summary) { margin-left: 18px; margin-right: 18px; }
+    .week-group > table:last-child { margin-bottom: 1.25rem; }
+    /* This Week: highlighted as the primary group */
+    .week-this {
+      background: linear-gradient(135deg, #ffffff, #eef2ff);
+      border-color: #c7d2fe;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12);
+    }
+    .week-this > summary { font-size: 1.2rem; }
+    .week-this > summary .week-label::after {
+      content: "•";
+      color: #22c55e;
+      margin-left: 8px;
+    }
+    @media (max-width: 768px) {
+      .week-group > summary { font-size: 1rem; padding: 12px 14px; }
+      .week-this > summary { font-size: 1.05rem; }
+      .week-group > *:not(summary) { margin-left: 10px; margin-right: 10px; }
+    }
     table {
       width: 100%;
       background: white;
@@ -1408,15 +1469,19 @@ async function fetchAndRenderTable() {
   const originalTable = document.getElementById("original-table");
   try {
     let rawData = [];
-    for (const sheetName of courtSheetTabs) {
-      let rows = [];
-      try {
-        rows = await fetchSheetRowsViaGviz(sheetName);
-      } catch (err) {
-        console.warn(`Failed to fetch sheet "${sheetName}" via GViz:`, err);
-        continue;
+    // Fetch all sheets in parallel for much faster load (order is restored by sorting later)
+    const sheetResults = await Promise.allSettled(
+      courtSheetTabs.map(sheetName => fetchSheetRowsViaGviz(sheetName))
+    );
+
+    courtSheetTabs.forEach((sheetName, sheetIndex) => {
+      const result = sheetResults[sheetIndex];
+      if (result.status !== "fulfilled") {
+        console.warn(`Failed to fetch sheet "${sheetName}" via GViz:`, result.reason);
+        return;
       }
-      if (!Array.isArray(rows) || rows.length === 0) continue;
+      const rows = result.value;
+      if (!Array.isArray(rows) || rows.length === 0) return;
 
       const location = normalizeLocationName(sheetName);
       let lastDay = "";
@@ -1467,8 +1532,8 @@ async function fetchAndRenderTable() {
           });
         });
       });
-    }
-    
+    });
+
     // Second pass: combine times for the same court on the same date/location only if they are from the same row
     // (in this case, there should be only one time per court per row, but we keep the logic for safety)
     let cleaned = [];
@@ -1519,6 +1584,23 @@ async function fetchAndRenderTable() {
     container.innerHTML = "";
     tabs.innerHTML = "";
 
+    // Compute the start of the current week (Sunday, local midnight) for week bucketing
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    // Classify a date into a week bucket relative to the current week
+    function getWeekBucket(dateObj) {
+      const d = new Date(dateObj);
+      d.setHours(0, 0, 0, 0);
+      const diffDays = Math.round((d - weekStart) / 86400000);
+      if (diffDays >= 0 && diffDays <= 6)   return { key: "this",    label: "This Week",  order: 0, open: true };
+      if (diffDays >= 7 && diffDays <= 13)  return { key: "next",    label: "Next Week",  order: 1, open: false };
+      if (diffDays >= 14)                   return { key: "later",   label: "Upcoming",   order: 2, open: false };
+      if (diffDays >= -7 && diffDays <= -1) return { key: "last",    label: "Last Week",  order: 3, open: false };
+      return                                       { key: "earlier", label: "Earlier",    order: 4, open: false };
+    }
+
     for (const day of expectedDays) {
       if (grouped[day]) {
         const btn = document.createElement("button");
@@ -1530,11 +1612,31 @@ async function fetchAndRenderTable() {
         section.id = `section-${day}`;
         section.className = "day-section";
 
+        // Build collapsible week groups; This Week is rendered first and expanded
+        const bucketEls = {};
+        const ensureBucket = (info) => {
+          if (bucketEls[info.key]) return bucketEls[info.key];
+          const details = document.createElement("details");
+          details.className = `week-group week-${info.key}`;
+          if (info.open) details.open = true;
+          const summary = document.createElement("summary");
+          summary.innerHTML = `<span class="week-label">${info.label}</span><span class="week-count"></span>`;
+          details.appendChild(summary);
+          details._order = info.order;
+          details._count = 0;
+          bucketEls[info.key] = details;
+          return details;
+        };
+
         for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
+          const bucketInfo = getWeekBucket(new Date(date));
+          const bucket = ensureBucket(bucketInfo);
+          bucket._count += 1;
+
           const dateTitle = document.createElement("div");
           dateTitle.className = "date-title";
           dateTitle.textContent = date;
-          section.appendChild(dateTitle);
+          bucket.appendChild(dateTitle);
 
           const table = document.createElement("table");
           const thead = document.createElement("thead");
@@ -1608,8 +1710,17 @@ async function fetchAndRenderTable() {
             });
           
           table.appendChild(tbody);
-          section.appendChild(table);
+          bucket.appendChild(table);
         }
+
+        // Append week groups in order (This Week first), filling in the count badges
+        Object.values(bucketEls)
+          .sort((a, b) => a._order - b._order)
+          .forEach(details => {
+            const countEl = details.querySelector(".week-count");
+            if (countEl) countEl.textContent = details._count === 1 ? "1 day" : `${details._count} days`;
+            section.appendChild(details);
+          });
 
         container.appendChild(section);
       }
