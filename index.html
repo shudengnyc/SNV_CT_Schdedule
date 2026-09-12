@@ -4,15 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SNV Lifetime Courts Schedule</title>
-  <!-- Add Chart.js for plotting -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Add html2canvas for capturing plot as image -->
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <!-- Add jsPDF for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
       padding: 2rem;
       background: linear-gradient(135deg, #f0f4ff, #e0ecff);
@@ -46,7 +40,6 @@
       width: 80px;
       height: 80px;
       padding: 0;
-      display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
@@ -336,46 +329,6 @@
       opacity: 1;
       transition: 0s;
     }
-    .download-menu {
-      position: absolute;
-      bottom: 100%;
-      right: 0;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 10px;
-      z-index: 1000;
-    }
-    .download-option {
-      padding: 8px 16px;
-      background: #f3f4f6;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    .download-option:hover {
-      background: #6366f1;
-      color: white;
-      transform: scale(1.05);
-    }
-    @media (max-width: 768px) {
-      .download-menu {
-        right: -10px;
-        padding: 6px;
-        gap: 6px;
-      }
-      .download-option {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-      }
-    }
     .copy-toast {
       position: fixed;
       bottom: 110px;
@@ -506,10 +459,19 @@
         margin: 3px 0;
       }
     }
-    .week-indicator {
-      font-weight: bold;
-      margin-left: 4px;
-      color: #ff5722;
+    .status-message {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 1rem 0;
+      color: #475569;
+      text-align: center;
+    }
+    .status-message.warning {
+      border-color: #fcd34d;
+      background: #fffbeb;
+      color: #92400e;
     }
     /* Improve canvas display */
     #schedule-plot {
@@ -614,10 +576,6 @@
 
     .close-button:hover {
       color: #374151;
-    }
-
-    .announcement-body {
-      padding: 20px;
     }
 
     #announcement-text {
@@ -858,7 +816,6 @@
       </div>
     </div>
   </div>
-  <div id="original-table" style="display:none;"></div>
 <div style="text-align:center; margin: 2rem 0 0 0;">
   <a href="https://docs.google.com/spreadsheets/d/1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs/edit?gid=0#gid=0" target="_blank" rel="noopener" style="background:#4f46e5; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">Show Original Data</a>
 </div>
@@ -1197,9 +1154,11 @@ function processTimeRange(timeRange, contextPeriod = null) {
 function processTime(timeStr) {
   if (!timeStr) return '';
   
-  // Clean the input: remove trailing commas and extra whitespace
-  timeStr = timeStr.replace(/,\s*$/, '').trim();
-  
+  // Clean the input: remove trailing commas and extra whitespace.
+  // A semicolon between digits is a typo for a colon ("1;30pm"); fix it before we
+  // split on semicolons as a range separator below.
+  timeStr = timeStr.replace(/(\d);(\d)/g, '$1:$2').replace(/,\s*$/, '').trim();
+
   // Split by commas, semicolons, ampersands, OR spaces for multiple time ranges
   // We'll use a regex to properly split by commas, semicolons, ampersands, or spaces that aren't part of time values
   // Split by spaces only if they separate complete time ranges (containing hyphens)
@@ -1342,6 +1301,44 @@ function normalizeLocationName(sheetName) {
   return normalized;
 }
 
+// Short labels for locations, used in the plot axis, legend and copied text
+const locationAbbreviations = [
+  ["Fremont High School", "Fremont"],
+  ["Washington Park", "Wash"],
+  ["Ponderosa Park", "Pond"],
+  ["Sunnyvale Middle School", "SMS"],
+  ["Lakewood Park", "Lakewood"],
+  ["Serra Park", "Serra"],
+  ["Fairwood Park", "Fairwood"],
+  ["Ortega Park", "Ortega"],
+  ["Raynor Park", "Raynor"],
+  ["De Anza Park", "DeAnza"],
+  ["Sunnyvale Community Center", "SCC"],
+  ["Sunnyvale Tennis Center", "STC"],
+  ["Mango Park", "Mango"],
+  ["Location Mange", "Mango"]
+];
+
+function abbreviateLocation(text) {
+  let out = text;
+  for (const [full, short] of locationAbbreviations) out = out.replace(full, short);
+  return out;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function courtNumber(court) {
+  const match = String(court).match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
 function excelSerialToDate(serial) {
   const excelEpoch = new Date(Date.UTC(1899, 11, 30));
   const millis = Math.round(Number(serial) * 86400000);
@@ -1380,23 +1377,25 @@ function normalizeDateCell(dateValue) {
   const raw = (dateValue || "").toString().trim();
   if (!raw || /^ongoing$/i.test(raw)) return null;
 
-  const direct = new Date(raw);
-  if (!Number.isNaN(direct.getTime())) {
-    const month = direct.getMonth() + 1;
-    const day = direct.getDate();
-    const year = direct.getFullYear();
-    return {
-      dateStr: `${month}/${day}/${year}`,
-      dateObj: new Date(year, month - 1, day)
-    };
-  }
-
+  // Handle M/D and M/D/YY(YY) explicitly first: `new Date("9/14")` would silently
+  // resolve to the year 2001 in most browsers.
   const mmdd = raw.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
   if (mmdd) {
     const month = parseInt(mmdd[1], 10);
     const day = parseInt(mmdd[2], 10);
     const yearRaw = mmdd[3] ? parseInt(mmdd[3], 10) : new Date().getFullYear();
     const year = yearRaw < 100 ? yearRaw + 2000 : yearRaw;
+    return {
+      dateStr: `${month}/${day}/${year}`,
+      dateObj: new Date(year, month - 1, day)
+    };
+  }
+
+  const direct = new Date(raw);
+  if (!Number.isNaN(direct.getTime())) {
+    const month = direct.getMonth() + 1;
+    const day = direct.getDate();
+    const year = direct.getFullYear();
     return {
       dateStr: `${month}/${day}/${year}`,
       dateObj: new Date(year, month - 1, day)
@@ -1466,9 +1465,9 @@ async function fetchAndRenderTable() {
 
   const tabs = document.getElementById("tab-buttons");
   const container = document.getElementById("table-container");
-  const originalTable = document.getElementById("original-table");
   try {
     let rawData = [];
+    const failedSheets = [];
     // Fetch all sheets in parallel for much faster load (order is restored by sorting later)
     const sheetResults = await Promise.allSettled(
       courtSheetTabs.map(sheetName => fetchSheetRowsViaGviz(sheetName))
@@ -1478,6 +1477,7 @@ async function fetchAndRenderTable() {
       const result = sheetResults[sheetIndex];
       if (result.status !== "fulfilled") {
         console.warn(`Failed to fetch sheet "${sheetName}" via GViz:`, result.reason);
+        failedSheets.push(normalizeLocationName(sheetName));
         return;
       }
       const rows = result.value;
@@ -1534,44 +1534,44 @@ async function fetchAndRenderTable() {
       });
     });
 
-    // Second pass: combine times for the same court on the same date/location only if they are from the same row
-    // (in this case, there should be only one time per court per row, but we keep the logic for safety)
-    let cleaned = [];
-    const combinedData = {};
-    rawData.forEach(item => {
+    // Second pass: drop exact duplicates (same day/date/location/court/time)
+    const seen = new Set();
+    const cleaned = rawData.filter(item => {
       const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;
-      if (!combinedData[key]) {
-        combinedData[key] = {
-          ...item,
-          Times: [item.Time]
-        };
-      } else {
-        if (!combinedData[key].Times.includes(item.Time)) {
-          combinedData[key].Times.push(item.Time);
-        }
-      }
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
-    // Convert back to array and set combined time string
-    cleaned = Object.values(combinedData).map(item => ({
-      ...item,
-      Time: item.Times.join(', ')
-    }));
-
 
     // Sort by day, date, location, court
     cleaned.sort((a, b) => {
-      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day]) 
+      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day])
         return weekdayOrder[a.Day] - weekdayOrder[b.Day];
-      if (b.DateObj - a.DateObj !== 0) 
+      if (b.DateObj - a.DateObj !== 0)
         return b.DateObj - a.DateObj;
-      if (a.Location !== b.Location) 
+      if (a.Location !== b.Location)
         return a.Location.localeCompare(b.Location);
-        
-      // Extract court numbers for numeric comparison
-      const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
-      const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
-      return aNum - bNum;
+      return courtNumber(a.Court) - courtNumber(b.Court);
     });
+
+    // Rows for one weekday, used by the plot and the copy-text builder
+    const getDayRows = (day) => cleaned.filter(row => row.Day === day);
+
+    if (cleaned.length === 0) {
+      let msg;
+      if (failedSheets.length === courtSheetTabs.length) {
+        const firstError = sheetResults.find(r => r.status === "rejected")?.reason?.message || "";
+        msg = "Could not load any schedule data from Google Sheets. ";
+        msg += location.protocol === "file:"
+          ? "This page was opened as a local file; some browsers block remote scripts in that mode. Try the deployed site or serve it over http."
+          : "Check your network connection, ad/content blockers, or the spreadsheet sharing settings.";
+        if (firstError) msg += ` (${firstError})`;
+      } else {
+        msg = "No schedule entries were found in the spreadsheet.";
+      }
+      container.innerHTML = `<div class="status-message warning">${escapeHtml(msg)}<br><br><button class="announcement-button" style="margin:0" onclick="location.reload()">Retry</button></div>`;
+      return;
+    }
 
     // Group for display
     const grouped = {};
@@ -1583,6 +1583,13 @@ async function fetchAndRenderTable() {
 
     container.innerHTML = "";
     tabs.innerHTML = "";
+
+    if (failedSheets.length > 0) {
+      const warn = document.createElement("div");
+      warn.className = "status-message warning";
+      warn.textContent = `Could not load ${failedSheets.length} location(s): ${failedSheets.join(", ")}. Their schedules are not shown.`;
+      container.appendChild(warn);
+    }
 
     // Compute the start of the current week (Sunday, local midnight) for week bucketing
     const weekStart = new Date();
@@ -1659,9 +1666,7 @@ async function fetchAndRenderTable() {
           // Sort entries by location and court number
           grouped[day][date].sort((a, b) => {
             if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
-            const aNum = parseInt(a.Court.replace(/\D/g, '')) || 0;
-            const bNum = parseInt(b.Court.replace(/\D/g, '')) || 0;
-            return aNum - bNum;
+            return courtNumber(a.Court) - courtNumber(b.Court);
           }).forEach(row => {
             // Use the original row data to preserve court groupings from the same row
             const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
@@ -1690,11 +1695,7 @@ async function fetchAndRenderTable() {
               const tr = document.createElement("tr");
               
               // Sort and format the courts for display
-              const sortedCourts = group.courts.sort((a, b) => {
-                const aNum = parseInt(a.replace(/\D/g, '')) || 0;
-                const bNum = parseInt(b.replace(/\D/g, '')) || 0;
-                return aNum - bNum;
-              });
+              const sortedCourts = group.courts.sort((a, b) => courtNumber(a) - courtNumber(b));
               
               // Format courts compactly when possible
               const formattedCourts = compactCourtsDisplay(sortedCourts);
@@ -1726,116 +1727,52 @@ async function fetchAndRenderTable() {
       }
     }
 
-    // build original data table
-    const tableOrig = document.createElement("table");
-    const theadOrig = document.createElement("thead");
-    const headRowOrig = document.createElement("tr");
-    ["Day", "Date", "Time", "Court", "Location"].forEach(header => {
-      const th = document.createElement("th");
-      th.textContent = header;
-      headRowOrig.appendChild(th);
-    });
-    theadOrig.appendChild(headRowOrig);
-    tableOrig.appendChild(theadOrig);
-    const tbodyOrig = document.createElement("tbody");
-    cleaned.forEach(row => {
-      const tr = document.createElement("tr");
-      [row.Day, row.Date, row.Time, row.Court, row.Location].forEach(cell => {
-        const td = document.createElement("td");
-        td.textContent = cell;
-        tr.appendChild(td);
-      });
-      tbodyOrig.appendChild(tr);
-    });
-    tableOrig.appendChild(tbodyOrig);
-    originalTable.appendChild(tableOrig);
-
     let currentTab = "";
-    
-    // Create plot for schedule visualization
-    function createPlot(day, forCopy = false) {
-      if (!day) return;
-      
-      const plotContainer = document.getElementById('plot-container');
-      const legendContainer = document.getElementById('location-legend');
-      const canvas = document.getElementById('schedule-plot');
-      const ctx = canvas.getContext('2d');
-      
-      // Clear any existing content
-      legendContainer.innerHTML = '';
-      
-      // Use the original cleaned data instead of parsing the table
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === day;
-      });
-      
-      
-      // Group by location and court
+
+    // Build the per-court time-range list used by both plot renderers
+    function buildCourtRows(day) {
       const courts = new Map();
-      
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length < 5) return;
-        
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
-        
-        // Skip entries with no time data
-        if (!time || time.trim() === '') {
-          return;
-        }
-        
+      getDayRows(day).forEach(row => {
+        const { Location: location, Court: court, Time: time } = row;
+        if (!time) return;
         const courtId = `${location}-${court}`;
-        
-        // Store the court if it's not already in our map
         if (!courts.has(courtId)) {
           courts.set(courtId, {
             id: courtId,
-            location: location,
-            court: court,
+            location,
+            court,
             label: `${location} - ${court}`,
             timeRanges: []
           });
         }
-        
-        // Parse time ranges from the original time data
         const timeRanges = extractTimeRanges(time);
-        
-        if (timeRanges.length === 0 && time && time.trim() !== '') {
+        if (timeRanges.length === 0) {
           console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
         }
-        
-        // Add all time ranges for this court
         timeRanges.forEach(range => {
-          courts.get(courtId).timeRanges.push({
-            startTime: range.start,
-            endTime: range.end
-          });
+          courts.get(courtId).timeRanges.push({ startTime: range.start, endTime: range.end });
         });
       });
-      
-      
-      // Convert to array and sort by location and court number
-      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
-        if (a.location !== b.location) {
-          return a.location.localeCompare(b.location);
-        }
-        
-        // Extract and compare court numbers
-        const aMatch = a.court.match(/(\d+)/);
-        const bMatch = b.court.match(/(\d+)/);
-        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
-        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
-        return aNum - bNum;
+      return Array.from(courts.values()).sort((a, b) => {
+        if (a.location !== b.location) return a.location.localeCompare(b.location);
+        return courtNumber(a.court) - courtNumber(b.court);
       });
-      
+    }
+
+    // Create plot for schedule visualization
+    function createPlot(day, forCopy = false) {
+      if (!day) return;
+
+      const plotContainer = document.getElementById('plot-container');
+      const legendContainer = document.getElementById('location-legend');
+      const canvas = document.getElementById('schedule-plot');
+      const ctx = canvas.getContext('2d');
+
+      // Clear any existing content
+      legendContainer.innerHTML = '';
+
+      const sortedCourts = buildCourtRows(day);
+
       // Generate color map for locations
       const locations = [...new Set(sortedCourts.map(c => c.location))];
       const colorPalette = [
@@ -1993,24 +1930,8 @@ async function fetchAndRenderTable() {
         ctx.textAlign = 'right';
         
         // Abbreviate court label for mobile or non-copy version
-        let displayLabel = court.label;
-        if (isMobile || !forCopy) {
-          displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
-          displayLabel = displayLabel.replace('Washington Park', 'Wash');
-          displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
-          displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
-          displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
-          displayLabel = displayLabel.replace('Serra Park', 'Serra');
-          displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
-          displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
-          displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
-          displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
-          displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
-          displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
-          displayLabel = displayLabel.replace('Mango Park', 'Mango');
-          displayLabel = displayLabel.replace('Location Mange', 'Mango');
-        }
-        
+        const displayLabel = (isMobile || !forCopy) ? abbreviateLocation(court.label) : court.label;
+
         ctx.fillText(displayLabel, padding.left - 5, y + 4);
         
         // Draw horizontal line for this court
@@ -2070,9 +1991,10 @@ async function fetchAndRenderTable() {
       Array.from(tabs.children).find(btn => btn.textContent === day).classList.add('active');
       currentTab = day;
       
-      // Update the button text with abbreviation
-      document.querySelector('.tab-buttons').setAttribute('data-day', day.substring(0, 3));
-      
+      // Update the button text with abbreviation and collapse the day menu
+      tabs.setAttribute('data-day', day.substring(0, 3));
+      tabs.classList.remove('expanded');
+
       // Check if we're in plot view
       const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
       
@@ -2087,8 +2009,6 @@ async function fetchAndRenderTable() {
         document.getElementById('plot-container').style.display = "none";
         document.getElementById('copy-plot-button').style.display = "none";
       }
-      
-      originalTable.style.display = "none";
     }
 
     // Improved copy function for better formatting
@@ -2099,64 +2019,13 @@ async function fetchAndRenderTable() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      // Helper function to simplify location names
-      function simplifyLocation(location) {
-        return location
-          .replace('Fremont High School', 'Fremont')
-          .replace('Washington Park', 'Wash')
-          .replace('Ponderosa Park', 'Pond')
-          .replace('Sunnyvale Middle School', 'SMS')
-          .replace('Lakewood Park', 'Lakewood')
-          .replace('Serra Park', 'Serra')
-          .replace('Fairwood Park', 'Fairwood')
-          .replace('Ortega Park', 'Ortega')
-          .replace('Raynor Park', 'Raynor')
-          .replace('De Anza Park', 'DeAnza')
-          .replace('Sunnyvale Community Center', 'SCC')
-          .replace('Sunnyvale Tennis Center', 'STC')
-          .replace('Mango Park', 'Mango')
-          .replace('Location Mange', 'Mango');
-      }
-      
-      // Helper function to normalize date format
-      function normalizeDate(dateStr) {
-        const parts = dateStr.split('/');
-        const month = parseInt(parts[0]);
-        const day = parseInt(parts[1]);
-        const year = parts[2] ? parseInt(parts[2]) : new Date().getFullYear();
-        return `${month}/${day}/${year}`;
-      }
-      
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === currentTab;
-      });
-      
-      // Group by normalized date
+      // Group by date (already normalized to M/D/YYYY) then location
       const dateGroups = {};
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        const date = normalizeDate(cells[1].textContent.trim());
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
-        
-        // Skip entries with no time data
-        if (!time || time.trim() === '') {
-          return;
-        }
-        
-        if (!dateGroups[date]) {
-          dateGroups[date] = {};
-        }
-        if (!dateGroups[date][location]) {
-          dateGroups[date][location] = [];
-        }
+      getDayRows(currentTab).forEach(row => {
+        const { Date: date, Location: location, Court: court, Time: time } = row;
+        if (!time) return;
+        if (!dateGroups[date]) dateGroups[date] = {};
+        if (!dateGroups[date][location]) dateGroups[date][location] = [];
         dateGroups[date][location].push({ court, time });
       });
       
@@ -2216,7 +2085,7 @@ async function fetchAndRenderTable() {
             return;
           }
           
-          const simpleLocation = simplifyLocation(location);
+          const simpleLocation = abbreviateLocation(location);
           
           if (timeEntries.length === 1) {
             const [time, courts] = timeEntries[0];
@@ -2245,11 +2114,22 @@ async function fetchAndRenderTable() {
       
       const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}${announcementText}`;
       
+      const copyToast = document.getElementById("copy-toast");
       navigator.clipboard.writeText(text).then(() => {
-        document.getElementById("copy-toast").style.opacity = 1;
-        setTimeout(() => { document.getElementById("copy-toast").style.opacity = 0; }, 1500);
+        copyToast.textContent = "Copied Text ✅";
+        showToast(copyToast, 1500);
+      }).catch(err => {
+        console.error("Text copy failed:", err);
+        copyToast.textContent = "Copy failed ❌";
+        showToast(copyToast, 2000);
       });
     });
+
+    function showToast(el, ms) {
+      el.style.opacity = 1;
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(() => { el.style.opacity = 0; }, ms);
+    }
     
     // Direct copy plot to clipboard
     document.getElementById("copy-plot-button").addEventListener("click", copyPlotToClipboard);
@@ -2258,76 +2138,13 @@ async function fetchAndRenderTable() {
 
     
     // Create a mobile-friendly version of the plot optimized for narrow screens
-    function createMobileFriendlyPlot(day) {
-      if (!day) return;
-      
-      const plotContainer = document.getElementById('plot-container');
-      const legendContainer = document.getElementById('location-legend');
-      const canvas = document.getElementById('schedule-plot');
+    // Renders into the given (offscreen) canvas; used for copy-to-clipboard and download.
+    function createMobileFriendlyPlot(day, canvas) {
+      if (!day || !canvas) return;
+
       const ctx = canvas.getContext('2d');
-      
-      // Clear any existing content
-      legendContainer.innerHTML = '';
-      
-      // Get the original data from the hidden table
-      const originalTable = document.getElementById('original-table');
-      const rows = Array.from(originalTable.querySelectorAll('tbody tr'));
-      
-      // Filter rows for current day
-      const dayData = rows.filter(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        return cells[0]?.textContent.trim() === day;
-      });
-      
-      // Group by location and court
-      const courts = new Map();
-      
-      dayData.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length < 5) return;
-        
-        const location = cells[4].textContent.trim();
-        const court = cells[3].textContent.trim();
-        const time = cells[2].textContent.trim();
-        
-        // Skip entries with no time data
-        if (!time || time.trim() === '') {
-          return;
-        }
-        
-        const courtId = `${location}-${court}`;
-        
-        if (!courts.has(courtId)) {
-          courts.set(courtId, {
-            id: courtId,
-            location: location,
-            court: court,
-            label: `${location} - ${court}`,
-            timeRanges: []
-          });
-        }
-        
-        const timeRanges = extractTimeRanges(time);
-        timeRanges.forEach(range => {
-          courts.get(courtId).timeRanges.push({
-            startTime: range.start,
-            endTime: range.end
-          });
-        });
-      });
-      
-      // Convert to array and sort
-      const sortedCourts = Array.from(courts.values()).sort((a, b) => {
-        if (a.location !== b.location) {
-          return a.location.localeCompare(b.location);
-        }
-        const aMatch = a.court.match(/(\d+)/);
-        const bMatch = b.court.match(/(\d+)/);
-        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
-        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
-        return aNum - bNum;
-      });
-      
+      const sortedCourts = buildCourtRows(day);
+
       // Generate modern color map for locations with gradient-like colors
       const locations = [...new Set(sortedCourts.map(c => c.location))];
       const colorPalette = [
@@ -2426,23 +2243,8 @@ async function fetchAndRenderTable() {
         ctx.font = '500 11px system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'right';
         
-        let displayLabel = court.label;
-        // More aggressive abbreviations for mobile
-        displayLabel = displayLabel.replace('Fremont High School', 'Fremont');
-        displayLabel = displayLabel.replace('Washington Park', 'Wash');
-        displayLabel = displayLabel.replace('Ponderosa Park', 'Pond');
-        displayLabel = displayLabel.replace('Sunnyvale Middle School', 'SMS');
-        displayLabel = displayLabel.replace('Lakewood Park', 'Lakewood');
-        displayLabel = displayLabel.replace('Serra Park', 'Serra');
-        displayLabel = displayLabel.replace('Fairwood Park', 'Fairwood');
-        displayLabel = displayLabel.replace('Ortega Park', 'Ortega');
-        displayLabel = displayLabel.replace('Raynor Park', 'Raynor');
-        displayLabel = displayLabel.replace('De Anza Park', 'DeAnza');
-        displayLabel = displayLabel.replace('Sunnyvale Community Center', 'SCC');
-        displayLabel = displayLabel.replace('Sunnyvale Tennis Center', 'STC');
-        displayLabel = displayLabel.replace('Mango Park', 'Mango');
-        displayLabel = displayLabel.replace('Location Mange', 'Mango');
-        
+        const displayLabel = abbreviateLocation(court.label);
+
         ctx.fillText(displayLabel, padding.left - 5, y + 3);
         
         // Draw subtle horizontal separator line
@@ -2508,16 +2310,8 @@ async function fetchAndRenderTable() {
       let legendX = padding.left;
       locations.forEach((location, index) => {
         // Abbreviate location names for legend
-        let shortLocation = location
-          .replace('Fremont High School', 'Fremont')
-          .replace('Washington Park', 'Wash')
-          .replace('Ponderosa Park', 'Pond')
-          .replace('Sunnyvale Middle School', 'SMS')
-          .replace('Lakewood Park', 'Lakewood')
-          .replace('Sunnyvale Community Center', 'SCC')
-          .replace('Sunnyvale Tennis Center', 'STC')
-          .replace('Mango Park', 'Mango');
-        
+        const shortLocation = abbreviateLocation(location);
+
         // Draw modern color indicator with rounded corners
         ctx.fillStyle = colorMap[location];
         ctx.beginPath();
@@ -2537,159 +2331,64 @@ async function fetchAndRenderTable() {
       });
     }
     
+    // Render the export-quality plot into an offscreen canvas so the on-screen plot is untouched
+    function renderExportPlotBlob(day) {
+      const exportCanvas = document.createElement('canvas');
+      createMobileFriendlyPlot(day, exportCanvas);
+      return new Promise((resolve, reject) => {
+        exportCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/png');
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     async function copyPlotToClipboard() {
       if (!currentTab) {
         alert("Please select a day and switch to plot view first");
         return;
       }
-      
+
       const plotToast = document.getElementById("plot-toast");
-      plotToast.textContent = "Copying to clipboard...";
-      plotToast.style.opacity = 1;
-      
+      plotToast.textContent = "Copying plot...";
+      showToast(plotToast, 10000);
+
+      const blobPromise = renderExportPlotBlob(currentTab);
+      const filename = `SNV_LT_${currentTab}_${new Date().toISOString().slice(0, 10)}.png`;
+
+      // Safari requires the ClipboardItem to be created synchronously inside the user
+      // gesture, with the blob supplied as a promise. Chrome/Edge accept this form too.
+      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+          plotToast.textContent = "Plot copied to clipboard ✅";
+          showToast(plotToast, 1500);
+          return;
+        } catch (err) {
+          console.warn('Clipboard image write failed, falling back to download:', err);
+        }
+      }
+
+      // Fallback: download the PNG (also the only option on Firefox and some Android browsers)
       try {
-        const canvas = document.getElementById('schedule-plot');
-        
-        // Create mobile-optimized version for clipboard
-        createMobileFriendlyPlot(currentTab);
-        
-        setTimeout(async () => {
-          try {
-            // Try clipboard API for all browsers including Safari
-            const hasClipboardAPI = navigator.clipboard && navigator.clipboard.write;
-            
-            if (hasClipboardAPI) {
-              // Try clipboard API first for all browsers
-              canvas.toBlob(async (blob) => {
-                if (blob) {
-                  try {
-                    // This should work in Safari 13.1+ with proper user interaction
-                    await navigator.clipboard.write([
-                      new ClipboardItem({
-                        'image/png': blob
-                      })
-                    ]);
-                    
-                    plotToast.textContent = "Plot copied to clipboard ✅";
-                    setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                    
-                    // Restore display version
-                    createPlot(currentTab, false);
-                  } catch (clipboardError) {
-                    console.error('Clipboard API failed:', clipboardError);
-                    // Try alternative Safari method
-                    safariClipboardMethod(canvas, plotToast);
-                  }
-                } else {
-                  plotToast.textContent = "Failed to create image ❌";
-                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  createPlot(currentTab, false);
-                }
-              }, 'image/png', 1.0);
-            } else {
-              // Very old browsers
-              safariClipboardMethod(canvas, plotToast);
-            }
-          } catch (error) {
-            console.error('Error in copy process:', error);
-            safariClipboardMethod(canvas, plotToast);
-          }
-        }, 100);
+        downloadBlob(await blobPromise, filename);
+        plotToast.textContent = "Clipboard unavailable, plot downloaded 📥";
+        showToast(plotToast, 2500);
       } catch (err) {
-        console.error('Error copying plot:', err);
+        console.error('Plot export failed:', err);
         plotToast.textContent = "Copy failed ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
+        showToast(plotToast, 2000);
       }
     }
-    
-    // Safari-specific clipboard method
-    async function safariClipboardMethod(canvas, plotToast) {
-      try {
-        // Method 1: Try using ClipboardItem with different approach for Safari
-        if (navigator.clipboard && window.ClipboardItem) {
-          try {
-            canvas.toBlob(async (blob) => {
-              if (blob) {
-                try {
-                  // Create ClipboardItem with proper MIME type for Safari
-                  const clipboardItem = new ClipboardItem({
-                    [blob.type]: blob
-                  });
-                  
-                  await navigator.clipboard.write([clipboardItem]);
-                  plotToast.textContent = "Plot copied to clipboard ✅";
-                  setTimeout(() => { plotToast.style.opacity = 0; }, 1500);
-                  
-                  // Restore display version
-                  createPlot(currentTab, false);
-                } catch (clipboardError) {
-                  console.error('Safari ClipboardItem failed:', clipboardError);
-                  // Try method 2
-                  tryDataURLMethod(canvas, plotToast);
-                }
-              } else {
-                tryDataURLMethod(canvas, plotToast);
-              }
-            }, 'image/png', 1.0);
-          } catch (error) {
-            console.error('Safari blob method failed:', error);
-            tryDataURLMethod(canvas, plotToast);
-          }
-        } else {
-          tryDataURLMethod(canvas, plotToast);
-        }
-      } catch (error) {
-        console.error('Safari method failed:', error);
-        tryDataURLMethod(canvas, plotToast);
-      }
-    }
-    
-    // Try copying as data URL for older Safari versions
-    async function tryDataURLMethod(canvas, plotToast) {
-      try {
-        const dataURL = canvas.toDataURL('image/png');
-        
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(dataURL);
-          plotToast.textContent = "Plot copied as data (older Safari) ✅";
-          setTimeout(() => { plotToast.style.opacity = 0; }, 2000);
-        } else {
-          // Final fallback - show data URL for manual copy
-          showDataURLForManualCopy(dataURL, plotToast);
-        }
-        
-        // Restore display version
-        createPlot(currentTab, false);
-      } catch (error) {
-        console.error('Data URL method failed:', error);
-        plotToast.textContent = "Copy not supported in this browser ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-        createPlot(currentTab, false);
-      }
-    }
-    
-    // Show data URL for manual copy (last resort)
-    function showDataURLForManualCopy(dataURL, plotToast) {
-      // Create a temporary text area for manual copy
-      const textArea = document.createElement('textarea');
-      textArea.value = dataURL;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      document.body.appendChild(textArea);
-      
-      try {
-        textArea.select();
-        document.execCommand('copy');
-        plotToast.textContent = "Plot data copied - paste as image ✅";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-      } catch (copyError) {
-        plotToast.textContent = "Please allow clipboard access ❌";
-        setTimeout(() => { plotToast.style.opacity = 0; }, 2500);
-      } finally {
-        document.body.removeChild(textArea);
-      }
-    }
-    
+
 
     
     // Toggle between table and plot views
@@ -2747,75 +2446,83 @@ fetchAndRenderTable();
 
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelector('.tab-buttons');
-    
-    // Add click handler for the expand/collapse button
+
+    // Clicking the round day badge itself (not a day button) toggles the menu
     tabButtons.addEventListener('click', function(e) {
-        if (e.target === this || e.target === this.firstElementChild) {
+        if (e.target === this) {
             this.classList.toggle('expanded');
         }
     });
-    
+
     // Close the menu when clicking outside
     document.addEventListener('click', function(e) {
         if (!tabButtons.contains(e.target)) {
             tabButtons.classList.remove('expanded');
         }
     });
+
+    // Announcements: load once so the copy button includes them even if the modal was never opened
+    loadAnnouncements();
+    setupDaySelector();
+
+    // Close the announcement modal with Escape or by clicking the backdrop
+    const modal = document.getElementById('announcement-modal');
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) toggleAnnouncementModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display !== 'none') toggleAnnouncementModal();
+    });
 });
 
 // Enhanced Announcement functionality
+const ANNOUNCEMENTS_KEY = 'scheduleAnnouncements';
 let announcements = [];
 let editingIndex = -1;
 
 function toggleAnnouncementModal() {
     const modal = document.getElementById('announcement-modal');
     const isVisible = modal.style.display !== 'none';
-    
+
     if (isVisible) {
         modal.style.display = 'none';
+        clearForm();
     } else {
         modal.style.display = 'flex';
-        loadAnnouncements();
-        setupDaySelector();
+        renderAnnouncements();
     }
 }
 
 function loadAnnouncements() {
-    const saved = localStorage.getItem('scheduleAnnouncements');
-    announcements = saved ? JSON.parse(saved) : [];
-    
-    // Add default announcement if none exist
-    if (announcements.length === 0) {
-        announcements = [{
-            id: Date.now(),
-            text: 'Mango 每周三 3:30-5:30pm 学校活动 until 12/17',
-            days: ['Wed'],
-            createdAt: new Date().toISOString()
-        }];
-        saveAnnouncements();
+    const saved = localStorage.getItem(ANNOUNCEMENTS_KEY);
+    try {
+        announcements = saved ? JSON.parse(saved) : [];
+    } catch (err) {
+        console.warn('Could not parse saved announcements, starting fresh:', err);
+        announcements = [];
     }
-    
+    if (!Array.isArray(announcements)) announcements = [];
     renderAnnouncements();
 }
 
 function saveAnnouncements() {
-    localStorage.setItem('scheduleAnnouncements', JSON.stringify(announcements));
+    localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
 }
 
 function renderAnnouncements() {
     const list = document.getElementById('announcement-list');
-    
+
     if (announcements.length === 0) {
         list.innerHTML = '<div class="empty-state">No announcements yet. Add one below!</div>';
         return;
     }
-    
+
     list.innerHTML = announcements.map((announcement, index) => `
         <div class="announcement-item">
-            <div class="announcement-text">${announcement.text}</div>
+            <div class="announcement-text">${escapeHtml(announcement.text)}</div>
             <div class="announcement-days">
-                ${announcement.days.map(day => 
-                    `<span class="day-tag ${day === 'All' ? 'all-days' : ''}">${day}</span>`
+                ${announcement.days.map(day =>
+                    `<span class="day-tag ${day === 'All' ? 'all-days' : ''}">${escapeHtml(day)}</span>`
                 ).join('')}
             </div>
             <div class="announcement-actions">
@@ -2968,9 +2675,11 @@ function clearForm() {
     addButton.textContent = 'Add Announcement';
 }
 
+// `day` may be a full weekday name ("Wednesday"); stored days are 3-letter ("Wed") or "All"
 function getAnnouncementsForDay(day) {
-    return announcements.filter(announcement => 
-        announcement.days.includes('All') || announcement.days.includes(day)
+    const short = String(day).substring(0, 3);
+    return announcements.filter(announcement =>
+        announcement.days.includes('All') || announcement.days.includes(short)
     );
 }
 
