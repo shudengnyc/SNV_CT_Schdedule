@@ -7,7 +7,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1022" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-title" content="SNV Courts">
 <style>
     * { box-sizing: border-box; }
@@ -411,68 +413,6 @@
         margin-bottom: 1rem;
       }
     }
-    .location-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin: 0 auto 15px;
-      justify-content: center;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      max-width: 90%;
-      border: 1px solid #e2e8f0;
-    }
-    .location-legend:empty { display: none; }
-    @media (max-width: 768px) {
-      .location-legend {
-        padding: 8px;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    @media (max-width: 768px) {
-      .legend-item {
-        font-size: 0.8rem;
-        padding: 3px 6px;
-      }
-    }
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      margin-right: 6px;
-    }
-    @media (max-width: 768px) {
-      .legend-color {
-        width: 10px;
-        height: 10px;
-        margin-right: 4px;
-      }
-    }
-    .axis-title {
-      font-weight: 600;
-      font-size: 1rem;
-      text-align: center;
-      color: #4f46e5;
-      margin: 5px 0;
-    }
-    @media (max-width: 768px) {
-      .axis-title {
-        font-size: 0.9rem;
-        margin: 3px 0;
-      }
-    }
     .status-message {
       background: rgba(255, 255, 255, 0.8);
       border: 1px solid #e2e8f0;
@@ -512,6 +452,42 @@
         background: rgba(0, 0, 0, 0.05);
       }
     }
+
+    /* Dark mode: follows the system setting */
+    @media (prefers-color-scheme: dark) {
+      body { background: linear-gradient(135deg, #0f1022, #161a33); color: #e2e8f0; }
+      h1 { color: #e0e7ff; }
+      .view-toggle { background: rgba(30, 32, 58, 0.7); border-color: #3730a3; }
+      .view-toggle button { color: #a5b4fc; }
+      .view-toggle button.active { background: #4338ca; color: #fff; }
+      .day-bar { background: rgba(15, 16, 34, 0.85); }
+      .day-tabs { background: rgba(30, 32, 58, 0.9); border-color: #312e81; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+      .day-tabs button { color: #cbd5e1; }
+      .day-tabs button:hover { background: #2a2d52; }
+      .day-tabs button.active { background: #6366f1; color: #fff; }
+      .date-title { color: #a5b4fc; border-left-color: #818cf8; }
+      .today-chip { color: #86efac; background: rgba(34, 197, 94, 0.18); }
+      .week-group { background: rgba(26, 27, 46, 0.75); border-color: #2a2d4a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+      .week-group > summary { color: #a5b4fc; }
+      .week-group > summary:hover { background: rgba(129, 140, 248, 0.08); }
+      .week-count { color: #cbd5e1; background: #2a2d52; }
+      .week-this { background: linear-gradient(135deg, #1e2040, #252a55); border-color: #3730a3; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); }
+      table { background: #1a1b2e; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+      th { background: #4338ca; }
+      td:nth-child(1) { color: #e0e7ff; }
+      td:nth-child(2) { color: #a5b4fc; }
+      tr:nth-child(even) td { background-color: #212340; }
+      .action-button { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5); }
+      .action-button.secondary { background: #1e2040; color: #c7d2fe; border-color: #3730a3; }
+      .action-button.secondary:hover { background: #2a2d52; }
+      .source-link a { color: #a5b4fc; border-color: #3730a3; background: rgba(30, 32, 58, 0.6); }
+      .source-link a:hover { background: #1e2040; }
+      .plot-container { background: #1a1b2e; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); }
+      #schedule-plot { box-shadow: none; }
+      .status-message { background: rgba(26, 27, 46, 0.85); border-color: #2a2d4a; color: #cbd5e1; }
+      .status-message.warning { background: #2b2410; border-color: #a16207; color: #fcd34d; }
+      .copy-toast { background: rgba(224, 231, 255, 0.95); color: #1e1b4b; }
+    }
   </style>
   <script data-goatcounter="https://shushu.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -531,7 +507,6 @@
 
   <div id="table-container"><div class="status-message">Loading schedule…</div></div>
   <div id="plot-container" class="plot-container" style="display:none;">
-    <div id="location-legend" class="location-legend"></div>
     <canvas id="schedule-plot"></canvas>
   </div>
 
@@ -1508,233 +1483,201 @@ async function fetchAndRenderTable() {
       });
     }
 
-    // Create plot for schedule visualization
-    function createPlot(day, forCopy = false) {
-      if (!day) return;
+    const plotPalette = [
+      '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
+      '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
+    ];
+    const plotThemes = {
+      light: {
+        background: '#ffffff', text: '#374151', grid: 'rgba(148, 163, 184, 0.25)',
+        accentGrid: 'rgba(99, 102, 241, 0.35)', rowLine: 'rgba(226, 232, 240, 0.8)',
+        axis: 'rgba(100, 116, 139, 0.4)', barShadow: 'rgba(0, 0, 0, 0.12)'
+      },
+      dark: {
+        background: '#1a1b2e', text: '#cbd5e1', grid: 'rgba(148, 163, 184, 0.14)',
+        accentGrid: 'rgba(129, 140, 248, 0.45)', rowLine: 'rgba(255, 255, 255, 0.06)',
+        axis: 'rgba(148, 163, 184, 0.35)', barShadow: 'rgba(0, 0, 0, 0.4)'
+      }
+    };
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-      const plotContainer = document.getElementById('plot-container');
-      const legendContainer = document.getElementById('location-legend');
-      const canvas = document.getElementById('schedule-plot');
+    // Single renderer for both the on-screen plot and the exported PNG.
+    // width: CSS px; fitHeight: shrink rows toward this height (on-screen only);
+    // compact: phone-sized fonts/padding; theme: 'light' | 'dark'.
+    function drawSchedulePlot(canvas, day, { width, fitHeight = null, compact = false, pixelRatio = 1, theme = 'light' }) {
+      if (!day || !canvas) return;
       const ctx = canvas.getContext('2d');
+      const colors = plotThemes[theme] || plotThemes.light;
+      const courts = buildCourtRows(day);
 
-      // Clear any existing content
-      legendContainer.innerHTML = '';
-
-      const sortedCourts = buildCourtRows(day);
-
-      // Generate color map for locations
-      const locations = [...new Set(sortedCourts.map(c => c.location))];
-      const colorPalette = [
-        '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', 
-        '#0284c7', '#9333ea', '#0891b2', '#ca8a04', '#be185d',
-        '#4338ca', '#15803d', '#b91c1c', '#4f46e5', '#0f766e'
-      ];
-      
+      const locations = [...new Set(courts.map(c => c.location))];
       const colorMap = {};
-      locations.forEach((loc, i) => {
-        colorMap[loc] = colorPalette[i % colorPalette.length];
-      });
-      
-      // Create legend only for copy version
-      if (forCopy) {
-        const legendTitle = document.createElement('div');
-        legendTitle.className = 'axis-title';
-        legendTitle.textContent = 'Court Locations';
-        legendContainer.appendChild(legendTitle);
-        
-        locations.forEach(location => {
-          const legendItem = document.createElement('div');
-          legendItem.className = 'legend-item';
-          
-          const colorBox = document.createElement('div');
-          colorBox.className = 'legend-color';
-          colorBox.style.backgroundColor = colorMap[location];
-          
-          const label = document.createElement('span');
-          label.textContent = location;
-          
-          legendItem.appendChild(colorBox);
-          legendItem.appendChild(label);
-          legendContainer.appendChild(legendItem);
-        });
-      }
-      
-      // Set canvas size based on whether it's for copy or display
-      let padding, canvasWidth, canvasHeight, rowHeight, pixelRatio;
-      const isMobile = window.innerWidth <= 768;
-      
-      if (forCopy) {
-        // High resolution version for downloading
-        padding = { top: 50, right: 30, bottom: 40, left: 200 };
-        canvasWidth = Math.max(1400, plotContainer.clientWidth * 2);
-        rowHeight = 45;
-        
-        if (isMobile) {
-          padding.left = 120;
-          padding.right = 20;
-          padding.top = 35;
-          padding.bottom = 25;
-          rowHeight = 35;
-        }
-        
-        const calculatedHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom;
-        canvasHeight = Math.max(calculatedHeight, 800);
-        pixelRatio = 2; // High resolution for export
-      } else {
-        // Interactive display version - fit to container
-        const containerRect = plotContainer.getBoundingClientRect();
-        const availableWidth = containerRect.width - 30;
-        const availableHeight = containerRect.height - 100; // Leave space for legend and controls
-        
-        padding = { top: 40, right: 20, bottom: 30, left: 180 };
-        canvasWidth = availableWidth;
-        
-        // Calculate optimal row height based on available space
-        const maxRowHeight = isMobile ? 30 : 40;
-        const minRowHeight = isMobile ? 20 : 25;
-        rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, (availableHeight - padding.top - padding.bottom) / sortedCourts.length));
-        
-        if (isMobile) {
-          padding.left = 100;
-          padding.right = 15;
-          padding.top = 25;
-          padding.bottom = 20;
-        }
-        
-        canvasHeight = Math.min(availableHeight, sortedCourts.length * rowHeight + padding.top + padding.bottom);
-        pixelRatio = window.devicePixelRatio || 1;
-      }
-      
-      canvas.width = canvasWidth * pixelRatio;
-      canvas.height = canvasHeight * pixelRatio;
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-      ctx.scale(pixelRatio, pixelRatio);
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Draw time axis
-      const startHour = 6; // 6 AM
-      const endHour = 23; // 11 PM
-      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
-      
-      // Draw time labels
-      ctx.fillStyle = '#333';
-      ctx.font = isMobile ? 'bold 10px Arial' : (forCopy ? 'bold 14px Arial' : 'bold 12px Arial');
-      ctx.textAlign = 'center';
-      
-      // Label every 1, 2 or 3 hours depending on how much room each hour gets,
-      // and use short labels ("6a", "12p") on phones so they don't overlap
-      const labelStep = hourWidth >= 44 ? 1 : hourWidth >= 24 ? 2 : 3;
+      locations.forEach((loc, i) => { colorMap[loc] = plotPalette[i % plotPalette.length]; });
 
-      // Draw both top and bottom time axes
-      const drawTimeAxis = (yPosition, isTop) => {
-        for (let hour = startHour; hour <= endHour; hour++) {
-          const x = padding.left + (hour - startHour) * hourWidth;
+      const family = 'system-ui, -apple-system, sans-serif';
+      const axisFont = `600 ${compact ? 10 : 12}px ${family}`;
+      const labelFont = `500 ${compact ? 9 : 11}px ${family}`;
+      const legendFont = `500 ${compact ? 10 : 11}px ${family}`;
+      const padding = compact
+        ? { top: 26, right: 12, bottom: 26, left: 100 }
+        : { top: 36, right: 25, bottom: 34, left: 180 };
+      const plotRight = width - padding.right;
+
+      // Lay out the legend first (wrapping onto new lines) so we know the canvas height
+      ctx.font = legendFont;
+      const legendRowHeight = 18;
+      const legendLeft = 12;
+      const legendItems = [];
+      let lx = legendLeft, lrow = 0;
+      locations.forEach(loc => {
+        const label = abbreviateLocation(loc);
+        const itemWidth = 15 + ctx.measureText(label).width + 18;
+        if (lx + itemWidth > width - 12 && lx > legendLeft) { lx = legendLeft; lrow++; }
+        legendItems.push({ loc, label, x: lx, row: lrow });
+        lx += itemWidth;
+      });
+      const legendHeight = locations.length ? (lrow + 1) * legendRowHeight + 8 : 0;
+
+      const maxRowHeight = compact ? 30 : 35;
+      const minRowHeight = compact ? 20 : 25;
+      let rowHeight = maxRowHeight;
+      if (fitHeight && courts.length) {
+        const fit = (fitHeight - padding.top - padding.bottom - legendHeight) / courts.length;
+        rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, fit));
+      }
+      const plotBottom = padding.top + courts.length * rowHeight;
+      const height = plotBottom + padding.bottom + legendHeight;
+
+      // Resizing the canvas resets the context state
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(pixelRatio, pixelRatio);
+      ctx.fillStyle = colors.background;
+      ctx.fillRect(0, 0, width, height);
+
+      const startHour = 6;  // 6 AM
+      const endHour = 23;   // 11 PM
+      const hourWidth = (plotRight - padding.left) / (endHour - startHour);
+      const xFor = hour => padding.left + (hour - startHour) * hourWidth;
+
+      // Label every 1, 2 or 3 hours depending on room; short labels ("6a") when compact
+      const labelStep = hourWidth >= 44 ? 1 : hourWidth >= 24 ? 2 : 3;
+      ctx.font = axisFont;
+      ctx.textAlign = 'center';
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const x = xFor(hour);
+        if ((hour - startHour) % labelStep === 0) {
           const displayHour = hour <= 12 ? hour : hour - 12;
           const ampm = hour < 12 ? 'AM' : 'PM';
-
-          if ((hour - startHour) % labelStep === 0) {
-            const label = isMobile ? `${displayHour}${ampm[0].toLowerCase()}` : `${displayHour} ${ampm}`;
-            ctx.fillText(label, x, yPosition);
-          }
-          
-          // Draw vertical grid line, dotted at 4 PM and 8 PM
-          ctx.beginPath();
-          if (hour === 16 || hour === 20) {
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-          }
-          
-          ctx.moveTo(x, padding.top);
-          ctx.lineTo(x, canvasHeight - padding.bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
+          const label = compact ? `${displayHour}${ampm[0].toLowerCase()}` : `${displayHour} ${ampm}`;
+          ctx.fillStyle = colors.text;
+          ctx.fillText(label, x, padding.top - 12);
+          ctx.fillText(label, x, plotBottom + 20);
         }
-        
-        // Draw horizontal axis line
+        // Vertical grid line, dotted at 4 PM and 8 PM
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.lineWidth = 1;
-        const lineOffset = isTop ? 15 : -15;
-        ctx.moveTo(padding.left, yPosition + lineOffset);
-        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
+        const accent = hour === 16 || hour === 20;
+        ctx.setLineDash(accent ? [2, 4] : []);
+        ctx.strokeStyle = accent ? colors.accentGrid : colors.grid;
+        ctx.lineWidth = accent ? 1.5 : 1;
+        ctx.moveTo(x, padding.top);
+        ctx.lineTo(x, plotBottom);
         ctx.stroke();
-        ctx.lineWidth = 1;
-      };
-      
-      drawTimeAxis(canvasHeight - 10, false);
-      drawTimeAxis(padding.top / 2, true);
-      
-      // Draw court names and time bars
-      sortedCourts.forEach((court, index) => {
-        const y = padding.top + index * rowHeight + rowHeight / 2;
-        
-        // Draw court label
-        ctx.fillStyle = '#333';
-        ctx.font = isMobile ? '9px Arial' : (forCopy ? '14px Arial' : '11px Arial');
-        ctx.textAlign = 'right';
-        
-        // Abbreviate court label for mobile or non-copy version
-        const displayLabel = (isMobile || !forCopy) ? abbreviateLocation(court.label) : court.label;
+      }
+      ctx.setLineDash([]);
 
-        ctx.fillText(displayLabel, padding.left - 5, y + 4);
-        
-        // Draw horizontal line for this court
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+      // Top and bottom axis lines
+      ctx.strokeStyle = colors.axis;
+      ctx.lineWidth = 1.5;
+      [padding.top, plotBottom].forEach(y => {
         ctx.beginPath();
-        ctx.moveTo(padding.left, y + rowHeight / 2);
-        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2);
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(plotRight, y);
         ctx.stroke();
-        
-        // Draw time ranges for this court
-        court.timeRanges.forEach(range => {
-          const startX = padding.left + (range.startTime - startHour) * hourWidth;
-          const endX = padding.left + (range.endTime - startHour) * hourWidth;
-          const width = endX - startX;
-          
-          // Draw time bar
-          ctx.fillStyle = colorMap[court.location];
-          const barHeight = rowHeight - (forCopy ? 14 : 8);
-          
-          // Draw rounded rectangle
-          const radius = barHeight / 2;
-          const effectiveRadius = Math.min(radius, width / 2);
-          
+      });
+
+      // Court labels, row separators and time bars
+      const barHeight = Math.max(8, rowHeight - (compact ? 10 : 14));
+      courts.forEach((court, index) => {
+        const y = padding.top + index * rowHeight + rowHeight / 2;
+
+        ctx.fillStyle = colors.text;
+        ctx.font = labelFont;
+        ctx.textAlign = 'right';
+        ctx.fillText(abbreviateLocation(court.label), padding.left - 6, y + 3);
+
+        if (index < courts.length - 1) {
+          ctx.strokeStyle = colors.rowLine;
+          ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
-          ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
-          ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
-          ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
-          ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
-          ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
-          ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
-          ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
-          ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
-          
-          ctx.closePath();
+          ctx.moveTo(padding.left, y + rowHeight / 2);
+          ctx.lineTo(plotRight, y + rowHeight / 2);
+          ctx.stroke();
+        }
+
+        court.timeRanges.forEach(range => {
+          // Clip to the visible window so early/late slots don't spill over the labels
+          const start = Math.max(range.startTime, startHour);
+          const end = Math.min(range.endTime, endHour);
+          if (end <= start) return;
+          const startX = xFor(start);
+          const barWidth = xFor(end) - startX;
+
+          ctx.shadowColor = colors.barShadow;
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 2;
+          ctx.fillStyle = colorMap[court.location];
+          ctx.beginPath();
+          ctx.roundRect(startX, y - barHeight / 2, barWidth, barHeight, Math.min(6, barHeight / 2, barWidth / 2));
           ctx.fill();
-          
-          // Draw border
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.lineWidth = 1;
           ctx.stroke();
         });
       });
-      
-      // Only add time axis title for copy version
-      if (forCopy) {
-        const timeAxisTitle = document.createElement('div');
-        timeAxisTitle.className = 'axis-title';
-        timeAxisTitle.textContent = '';
-        legendContainer.appendChild(timeAxisTitle);
-      }
+
+      // Legend
+      ctx.font = legendFont;
+      ctx.textAlign = 'left';
+      const legendTop = plotBottom + padding.bottom + 4;
+      legendItems.forEach(({ loc, label, x, row }) => {
+        const y = legendTop + row * legendRowHeight;
+        ctx.fillStyle = colorMap[loc];
+        ctx.beginPath();
+        ctx.roundRect(x, y, 10, 10, 2);
+        ctx.fill();
+        ctx.fillStyle = colors.text;
+        ctx.fillText(label, x + 15, y + 9);
+      });
     }
+
+    // On-screen plot: fit the container and follow the page's light/dark theme
+    function createPlot(day) {
+      if (!day) return;
+      const plotContainer = document.getElementById('plot-container');
+      const compact = window.innerWidth <= 768;
+      const inset = compact ? 16 : 30; // matches .plot-container padding
+      const rect = plotContainer.getBoundingClientRect();
+      drawSchedulePlot(document.getElementById('schedule-plot'), day, {
+        width: rect.width - inset,
+        fitHeight: rect.height - inset,
+        compact,
+        pixelRatio: window.devicePixelRatio || 1,
+        theme: prefersDark.matches ? 'dark' : 'light'
+      });
+    }
+
+    // Redraw when the system switches between light and dark
+    prefersDark.addEventListener('change', () => {
+      const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
+      if (isPlotView && currentTab) createPlot(currentTab);
+    });
 
     function switchTab(day) {
       document.querySelectorAll('.day-section').forEach(sec => sec.classList.remove('active'));
@@ -1750,7 +1693,7 @@ async function fetchAndRenderTable() {
         container.style.display = "none";
         document.getElementById('plot-container').style.display = "block";
         document.getElementById('copy-plot-button').style.display = "flex";
-        createPlot(day, false); // Display version without legend
+        createPlot(day);
       } else {
         container.style.display = "block";
         document.getElementById('plot-container').style.display = "none";
@@ -1881,204 +1824,10 @@ async function fetchAndRenderTable() {
 
 
     
-    // Create a mobile-friendly version of the plot optimized for narrow screens
-    // Renders into the given (offscreen) canvas; used for copy-to-clipboard and download.
-    function createMobileFriendlyPlot(day, canvas) {
-      if (!day || !canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      const sortedCourts = buildCourtRows(day);
-
-      // Generate modern color map for locations with gradient-like colors
-      const locations = [...new Set(sortedCourts.map(c => c.location))];
-      const colorPalette = [
-        '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
-        '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
-        '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
-      ];
-      
-      const colorMap = {};
-      locations.forEach((loc, i) => {
-        colorMap[loc] = colorPalette[i % colorPalette.length];
-      });
-      
-      // Mobile-optimized dimensions - compact and efficient
-      const padding = { top: 40, right: 25, bottom: 60, left: 180 }; // Reduced padding
-      const canvasWidth = 800; // Wider for better readability
-      const rowHeight = 35; // Compact row height for efficiency
-      const canvasHeight = sortedCourts.length * rowHeight + padding.top + padding.bottom + 40; // Compact spacing
-      const pixelRatio = 2; // High resolution
-      
-      canvas.width = canvasWidth * pixelRatio;
-      canvas.height = canvasHeight * pixelRatio;
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-      ctx.scale(pixelRatio, pixelRatio);
-      
-      // Clear canvas with modern gradient background
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Create subtle gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-      gradient.addColorStop(0, '#fafafa');
-      gradient.addColorStop(1, '#f8fafc');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Draw time axis - use same range as display version
-      const startHour = 6; // Same as display version
-      const endHour = 23; // Same as display version
-      const hourWidth = (canvasWidth - padding.left - padding.right) / (endHour - startHour);
-      
-      // Draw time labels with modern styling
-      ctx.fillStyle = '#374151';
-      ctx.font = '600 12px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      
-      const drawTimeAxis = (yPosition, isTop) => {
-        for (let hour = startHour; hour <= endHour; hour++) {
-          const x = padding.left + (hour - startHour) * hourWidth;
-          const displayHour = hour <= 12 ? hour : hour - 12;
-          const ampm = hour < 12 ? 'AM' : 'PM';
-          
-          // Show fewer time labels for mobile
-          const showLabel = hour % 2 === 0 || hour === startHour || hour === endHour;
-          if (showLabel) {
-            ctx.fillText(`${displayHour}${ampm}`, x, yPosition);
-          }
-          
-          // Draw modern vertical grid lines
-          ctx.beginPath();
-          if (hour === 16 || hour === 20) {
-            ctx.setLineDash([2, 4]);
-            ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
-            ctx.lineWidth = 1.5;
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
-            ctx.lineWidth = 1;
-          }
-          
-          ctx.moveTo(x, padding.top);
-          ctx.lineTo(x, canvasHeight - padding.bottom - 10);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-        
-        // Draw modern horizontal axis line
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
-        ctx.lineWidth = 2;
-        const lineOffset = isTop ? 12 : -12;
-        ctx.moveTo(padding.left, yPosition + lineOffset);
-        ctx.lineTo(canvasWidth - padding.right, yPosition + lineOffset);
-        ctx.stroke();
-      };
-      
-      drawTimeAxis(canvasHeight - 45, false); // Adjusted for compact layout
-      drawTimeAxis(padding.top / 2, true);
-      
-      // Draw court names and time bars
-      sortedCourts.forEach((court, index) => {
-        const y = padding.top + index * rowHeight + rowHeight / 2;
-        
-        // Draw court label with modern styling
-        ctx.fillStyle = '#374151';
-        ctx.font = '500 11px system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'right';
-        
-        const displayLabel = abbreviateLocation(court.label);
-
-        ctx.fillText(displayLabel, padding.left - 5, y + 3);
-        
-        // Draw subtle horizontal separator line
-        ctx.strokeStyle = 'rgba(226, 232, 240, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y + rowHeight / 2 - 3); // Adjusted for compact rows
-        ctx.lineTo(canvasWidth - padding.right, y + rowHeight / 2 - 3);
-        ctx.stroke();
-        
-        // Draw time ranges for this court
-        court.timeRanges.forEach(range => {
-          // Draw all ranges that overlap with our time window
-          if (range.endTime > startHour && range.startTime < endHour) {
-            const startX = padding.left + (range.startTime - startHour) * hourWidth;
-            const endX = padding.left + (range.endTime - startHour) * hourWidth;
-            const width = endX - startX;
-            
-            // Draw modern time bar with shadow
-            const barHeight = rowHeight - 15; // Adjusted for compact rows
-            const radius = Math.min(barHeight / 2, 6);
-            const effectiveRadius = Math.min(radius, width / 2);
-            
-            // Add subtle shadow first
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetY = 2;
-            
-            // Draw rounded rectangle with modern styling
-            ctx.fillStyle = colorMap[court.location];
-            ctx.beginPath();
-            ctx.moveTo(startX + effectiveRadius, y - barHeight / 2);
-            ctx.lineTo(endX - effectiveRadius, y - barHeight / 2);
-            ctx.arcTo(endX, y - barHeight / 2, endX, y - barHeight / 2 + effectiveRadius, effectiveRadius);
-            ctx.lineTo(endX, y + barHeight / 2 - effectiveRadius);
-            ctx.arcTo(endX, y + barHeight / 2, endX - effectiveRadius, y + barHeight / 2, effectiveRadius);
-            ctx.lineTo(startX + effectiveRadius, y + barHeight / 2);
-            ctx.arcTo(startX, y + barHeight / 2, startX, y + barHeight / 2 - effectiveRadius, effectiveRadius);
-            ctx.lineTo(startX, y - barHeight / 2 + effectiveRadius);
-            ctx.arcTo(startX, y - barHeight / 2, startX + effectiveRadius, y - barHeight / 2, effectiveRadius);
-            
-            ctx.closePath();
-            ctx.fill();
-            
-            // Reset shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
-            
-            // Draw subtle border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        });
-      });
-      
-      // Add modern legend at the bottom with proper spacing
-      const legendY = canvasHeight - 20;
-      ctx.font = '500 10px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'left';
-      
-      let legendX = padding.left;
-      locations.forEach((location, index) => {
-        // Abbreviate location names for legend
-        const shortLocation = abbreviateLocation(location);
-
-        // Draw modern color indicator with rounded corners
-        ctx.fillStyle = colorMap[location];
-        ctx.beginPath();
-        ctx.roundRect(legendX, legendY - 10, 10, 10, 2);
-        ctx.fill();
-        
-        // Draw text with modern color
-        ctx.fillStyle = '#374151';
-        ctx.fillText(shortLocation, legendX + 15, legendY - 2);
-        
-        // Move to next position (wrap if needed)
-        legendX += ctx.measureText(shortLocation).width + 30;
-        if (legendX > canvasWidth - 100 && index < locations.length - 1) {
-          legendX = padding.left;
-          // For simplicity, just continue on same line for mobile
-        }
-      });
-    }
-    
     // Render the export-quality plot into an offscreen canvas so the on-screen plot is untouched
     function renderExportPlotBlob(day) {
       const exportCanvas = document.createElement('canvas');
-      createMobileFriendlyPlot(day, exportCanvas);
+      drawSchedulePlot(exportCanvas, day, { width: 800, pixelRatio: 2, theme: 'light' });
       return new Promise((resolve, reject) => {
         exportCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/png');
       });
@@ -2152,7 +1901,7 @@ async function fetchAndRenderTable() {
       document.getElementById('copy-plot-button').style.display = 'flex';
       
       if (currentTab) {
-        createPlot(currentTab, false); // Display version without legend
+        createPlot(currentTab);
       }
     });
     
@@ -2165,7 +1914,7 @@ async function fetchAndRenderTable() {
         // Only recreate plot if we're currently viewing it
         const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
         if (isPlotView && currentTab) {
-          createPlot(currentTab, false);
+          createPlot(currentTab);
         }
       }, 250);
     });
