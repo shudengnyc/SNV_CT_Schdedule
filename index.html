@@ -488,6 +488,38 @@
       .status-message.warning { background: #2b2410; border-color: #a16207; color: #fcd34d; }
       .copy-toast { background: rgba(224, 231, 255, 0.95); color: #1e1b4b; }
     }
+
+    /* Pull to refresh (installed PWA only; browsers have their own) */
+    .ptr-indicator {
+      position: fixed;
+      top: calc(env(safe-area-inset-top) - 44px);
+      left: 50%;
+      width: 36px;
+      height: 36px;
+      margin-left: -18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #fff;
+      color: #4f46e5;
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+      z-index: 120;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .ptr-indicator.ready { background: #4f46e5; color: #fff; }
+    .ptr-indicator.refreshing span { animation: ptrSpin 0.8s linear infinite; }
+    @keyframes ptrSpin { to { transform: rotate(360deg); } }
+    @media (display-mode: standalone) {
+      body { overscroll-behavior-y: contain; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .ptr-indicator { background: #1e2040; color: #a5b4fc; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+      .ptr-indicator.ready { background: #6366f1; color: #fff; }
+    }
   </style>
   <script data-goatcounter="https://shushu.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -1936,5 +1968,53 @@ fetchAndRenderTable();
 </script>
 <div id="copy-toast" class="copy-toast">Copied Text ✅</div>
 <div id="plot-toast" class="copy-toast">Copied Plot ✅</div>
+<div id="ptr-indicator" class="ptr-indicator" aria-hidden="true"><span>↻</span></div>
+<script>
+// Pull to refresh: only when running as an installed app, which has no reload button
+(function () {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (!standalone) return;
+
+  const indicator = document.getElementById('ptr-indicator');
+  const threshold = 70;   // px of pull needed to trigger
+  const maxPull = 110;
+  let startY = null, pull = 0, refreshing = false;
+
+  const render = (distance, animate) => {
+    indicator.style.transition = animate ? 'transform 0.2s ease, opacity 0.2s ease' : 'none';
+    indicator.style.transform = `translateY(${distance}px) rotate(${distance * 3}deg)`;
+    indicator.style.opacity = Math.min(1, distance / threshold);
+    indicator.classList.toggle('ready', distance >= threshold);
+  };
+
+  window.addEventListener('touchstart', e => {
+    if (refreshing || window.scrollY > 0 || e.touches.length !== 1) { startY = null; return; }
+    startY = e.touches[0].clientY;
+    pull = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', e => {
+    if (startY === null) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || window.scrollY > 0) { pull = 0; render(0, false); return; }
+    pull = Math.min(maxPull, dy * 0.5); // resistance
+    render(pull, false);
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    if (startY === null) return;
+    startY = null;
+    if (pull >= threshold) {
+      refreshing = true;
+      indicator.classList.add('refreshing');
+      render(threshold, true);
+      setTimeout(() => location.reload(), 150);
+    } else {
+      render(0, true);
+    }
+    pull = 0;
+  });
+})();
+</script>
 </body>
 </html>
