@@ -520,6 +520,147 @@
       .ptr-indicator { background: #1e2040; color: #a5b4fc; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
       .ptr-indicator.ready { background: #6366f1; color: #fff; }
     }
+
+    /* View toggle + park filter row */
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .controls .view-toggle { margin: 0; }
+    .filter-toggle {
+      padding: 0 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #4f46e5;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .filter-toggle.filtered { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+    .filter-panel {
+      max-width: 640px;
+      margin: 10px auto 0;
+      padding: 10px 12px 12px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #e0e7ff;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.1);
+    }
+    .filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    .filter-actions span { margin-right: auto; }
+    .filter-actions button {
+      padding: 4px 10px;
+      background: none;
+      border: none;
+      border-radius: 999px;
+      font: inherit;
+      color: #4f46e5;
+      cursor: pointer;
+    }
+    .filter-actions button:hover { background: #eef2ff; }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: #fff;
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1e1b4b;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .filter-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
+    .filter-chip[aria-pressed="false"] { background: transparent; border-style: dashed; color: #94a3b8; }
+    .filter-chip[aria-pressed="false"] .dot { opacity: 0.3; }
+    .update-status {
+      display: block;
+      margin: 6px auto 0;
+      padding: 4px 10px;
+      background: none;
+      border: none;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.78rem;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .update-status[hidden] { display: none; }
+    .update-status:disabled { cursor: default; }
+    .update-status.offline { color: #b45309; }
+
+    /* Date stepper above the plot */
+    .date-nav {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .date-nav button {
+      width: 36px;
+      height: 36px;
+      background: #fff;
+      border: 1px solid #c7d2fe;
+      border-radius: 50%;
+      font: inherit;
+      font-size: 1.3rem;
+      line-height: 1;
+      color: #4f46e5;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .date-nav button:disabled { opacity: 0.35; cursor: default; }
+    .date-nav-label {
+      min-width: 140px;
+      text-align: center;
+      font-weight: 700;
+      color: #1e1b4b;
+    }
+    .date-nav-label small {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+    @media (prefers-color-scheme: dark) {
+      .filter-toggle { background: rgba(30, 32, 58, 0.7); border-color: #3730a3; color: #a5b4fc; }
+      .filter-toggle.filtered { background: #6366f1; border-color: #6366f1; color: #fff; }
+      .filter-panel { background: rgba(26, 27, 46, 0.92); border-color: #2a2d4a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+      .filter-actions { color: #94a3b8; }
+      .filter-actions button { color: #a5b4fc; }
+      .filter-actions button:hover { background: #2a2d52; }
+      .filter-chip { background: #1e2040; border-color: #3730a3; color: #e0e7ff; }
+      .filter-chip[aria-pressed="false"] { background: transparent; color: #64748b; }
+      .update-status { color: #94a3b8; }
+      .update-status.offline { color: #fbbf24; }
+      .date-nav button { background: #1e2040; border-color: #3730a3; color: #a5b4fc; }
+      .date-nav-label { color: #e0e7ff; }
+      .date-nav-label small { color: #94a3b8; }
+    }
   </style>
   <script data-goatcounter="https://shushu.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -528,10 +669,22 @@
 <div class="page">
   <h1>SNV Lifetime Courts Schedule</h1>
 
-  <div class="view-toggle">
-    <button id="table-view-btn" class="active">Table</button>
-    <button id="plot-view-btn">Plot</button>
+  <div class="controls">
+    <div class="view-toggle">
+      <button id="table-view-btn" class="active" aria-pressed="true">Table</button>
+      <button id="plot-view-btn" aria-pressed="false">Plot</button>
+    </div>
+    <button id="filter-toggle" class="filter-toggle" aria-expanded="false" aria-controls="filter-panel">Parks: All</button>
   </div>
+  <div id="filter-panel" class="filter-panel" hidden>
+    <div class="filter-actions">
+      <span>Show parks</span>
+      <button id="filter-all" type="button">All</button>
+      <button id="filter-none" type="button">None</button>
+    </div>
+    <div id="filter-chips" class="filter-chips"></div>
+  </div>
+  <button id="update-status" class="update-status" type="button" title="Refresh schedule" hidden></button>
 
   <div class="day-bar">
     <nav id="tab-buttons" class="day-tabs" aria-label="Choose a day"></nav>
@@ -539,6 +692,11 @@
 
   <div id="table-container"><div class="status-message">Loading schedule…</div></div>
   <div id="plot-container" class="plot-container" style="display:none;">
+    <div id="date-nav" class="date-nav">
+      <button id="date-prev" type="button" aria-label="Previous date">‹</button>
+      <div id="date-label" class="date-nav-label" aria-live="polite"></div>
+      <button id="date-next" type="button" aria-label="Next date">›</button>
+    </div>
     <canvas id="schedule-plot"></canvas>
   </div>
 
@@ -548,7 +706,7 @@
 </div>
   <div class="buttons-container">
     <button id="copy-plot-button" class="action-button secondary" title="Copy plot image" style="display:none;"><span aria-hidden="true">🖼️</span>Copy image</button>
-    <button id="copy-button" class="action-button" title="Copy schedule text"><span aria-hidden="true">📋</span>Copy text</button>
+    <button id="copy-button" class="action-button" title="Copy schedule text"><span aria-hidden="true">📋</span><span id="copy-label">Copy text</span></button>
   </div>
 <script>
 const spreadsheetId = "1zpnq9KvS73oZ8SK1JbUaBuK9u9nv_3NArXW1Hy7Pkzs";
@@ -1185,785 +1343,986 @@ function fetchSheetRowsViaGviz(sheetName) {
   });
 }
 
-async function fetchAndRenderTable() {
-  const expectedDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const weekdayOrder = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5,"Saturday":6,"Sunday":7};
+const expectedDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const weekdayOrder = {"Monday":1,"Tuesday":2,"Wednesday":3,"Thursday":4,"Friday":5,"Saturday":6,"Sunday":7};
+const allLocationNames = courtSheetTabs.map(normalizeLocationName);
+const CACHE_KEY = "snv-schedule-cache-v1";
+const HIDDEN_KEY = "snv-hidden-locations-v1";
 
-  const tabs = document.getElementById("tab-buttons");
-  const container = document.getElementById("table-container");
-  try {
-    let rawData = [];
-    const failedSheets = [];
-    // Fetch all sheets in parallel for much faster load (order is restored by sorting later)
-    const sheetResults = await Promise.allSettled(
-      courtSheetTabs.map(sheetName => fetchSheetRowsViaGviz(sheetName))
-    );
+// localStorage can throw (private mode, blocked storage); the app works without it
+function storageGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+}
+function storageSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* not critical */ }
+}
 
-    courtSheetTabs.forEach((sheetName, sheetIndex) => {
-      const result = sheetResults[sheetIndex];
-      if (result.status !== "fulfilled") {
-        console.warn(`Failed to fetch sheet "${sheetName}" via GViz:`, result.reason);
-        failedSheets.push(normalizeLocationName(sheetName));
-        return;
-      }
-      const rows = result.value;
-      if (!Array.isArray(rows) || rows.length === 0) return;
+const state = {
+  rows: [],             // every parsed row, before the park filter
+  signature: "",        // detects whether a refresh actually changed anything
+  failedSheets: [],     // locations that failed to load and have no saved data
+  staleLocations: [],   // locations that failed to refresh but still show saved data
+  updatedAt: null,
+  loading: false,
+  offline: false,
+  fatalError: "",
+  day: "",
+  view: "table",
+  selectedDates: {},    // day -> "M/D/YYYY" used by the plot and copy buttons
+  hidden: new Set(storageGet(HIDDEN_KEY) || []),
+  renderedFor: 0        // midnight of the day the page was last rendered for
+};
 
-      const location = normalizeLocationName(sheetName);
-      let lastDay = "";
-      let lastDate = null;
+function parseDateStr(dateStr) {
+  const [month, day, year] = dateStr.split("/").map(Number);
+  return new Date(year, month - 1, day);
+}
 
-      rows.forEach(row => {
-        if (!row || !Array.isArray(row.c)) return;
-        const cells = row.c;
+const shortDate = dateStr => dateStr.replace(/\/\d{4}$/, "");
 
-        const dayCandidate = cells[0]?.v ?? cells[0]?.f ?? "";
-        const dateCandidate = cells[1]?.v ?? cells[1]?.f ?? null;
-        const timeCandidate = cells[2]?.v ?? cells[2]?.f ?? "";
-        const courtCandidate = cells[3]?.f ?? cells[3]?.v ?? "";
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
-        const dayCell = (dayCandidate || "").toString().trim();
-        const day = normalizeDay(dayCell || lastDay);
-        if (dayCell) lastDay = dayCell;
-        if (!day || !expectedDays.includes(day)) return;
+// Classify a date into a week bucket relative to the current week (weeks start Sunday)
+function weekBucket(dateObj) {
+  const weekStart = startOfToday();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const diffDays = Math.round((dateObj - weekStart) / 86400000);
+  if (diffDays >= 0 && diffDays <= 6)   return { key: "this",    label: "This Week", order: 0 };
+  if (diffDays >= 7 && diffDays <= 13)  return { key: "next",    label: "Next Week", order: 1 };
+  if (diffDays >= 14)                   return { key: "later",   label: "Upcoming",  order: 2 };
+  if (diffDays >= -7 && diffDays <= -1) return { key: "last",    label: "Last Week", order: 3 };
+  return                                       { key: "earlier", label: "Earlier",   order: 4 };
+}
 
-        const dateCell = (dateCandidate !== null && dateCandidate !== "") ? dateCandidate : lastDate;
-        if (dateCandidate !== null && dateCandidate !== "") lastDate = dateCandidate;
-        const normalizedDate = normalizeDateCell(dateCell);
-        if (!normalizedDate) return;
+function locationColor(location) {
+  const index = allLocationNames.indexOf(location);
+  return plotPalette[Math.max(0, index) % plotPalette.length];
+}
 
-        const rawTime = normalizeRawTimeValue(timeCandidate);
-        if (!rawTime) return;
-        if (/^\d{4,}(\.\d+)?$/.test(rawTime)) return;
+const visibleRows = () => state.rows.filter(row => !state.hidden.has(row.Location));
+const shownLocationCount = () => allLocationNames.filter(loc => !state.hidden.has(loc)).length;
 
-        let rawCourt = courtCandidate;
-        if (rawCourt === "" || rawCourt === null || rawCourt === undefined) {
-          rawCourt = "N/A";
-        }
+function sortTimes(timeStr) {
+  return timeStr.split(/,\s*/).filter(Boolean)
+    .sort((a, b) => (parseTimeToHours(a) ?? 0) - (parseTimeToHours(b) ?? 0))
+    .join(", ");
+}
 
-        const normalizedTime = processTime(rawTime);
-        if (!normalizedTime) return;
+// ---------- Loading ----------
 
-        const courtNumbers = processCourt(rawCourt);
-        courtNumbers.forEach(court => {
-          rawData.push({
-            Day: day,
-            Date: normalizedDate.dateStr,
-            DateObj: normalizedDate.dateObj,
-            RawTime: rawTime,
-            Time: normalizedTime,
-            RawCourt: (rawCourt ?? "").toString(),
-            Court: court,
-            Location: location
-          });
-        });
+// Turn one sheet's GViz rows into schedule rows (one per court)
+function parseSheetRows(sheetName, rows) {
+  const out = [];
+  if (!Array.isArray(rows)) return out;
+  const location = normalizeLocationName(sheetName);
+  let lastDay = "";
+  let lastDate = null;
+
+  rows.forEach(row => {
+    if (!row || !Array.isArray(row.c)) return;
+    const cells = row.c;
+
+    const dayCandidate = cells[0]?.v ?? cells[0]?.f ?? "";
+    const dateCandidate = cells[1]?.v ?? cells[1]?.f ?? null;
+    const timeCandidate = cells[2]?.v ?? cells[2]?.f ?? "";
+    const courtCandidate = cells[3]?.f ?? cells[3]?.v ?? "";
+
+    const dayCell = (dayCandidate || "").toString().trim();
+    const day = normalizeDay(dayCell || lastDay);
+    if (dayCell) lastDay = dayCell;
+    if (!day || !expectedDays.includes(day)) return;
+
+    const dateCell = (dateCandidate !== null && dateCandidate !== "") ? dateCandidate : lastDate;
+    if (dateCandidate !== null && dateCandidate !== "") lastDate = dateCandidate;
+    const normalizedDate = normalizeDateCell(dateCell);
+    if (!normalizedDate) return;
+
+    const rawTime = normalizeRawTimeValue(timeCandidate);
+    if (!rawTime) return;
+    if (/^\d{4,}(\.\d+)?$/.test(rawTime)) return;
+
+    let rawCourt = courtCandidate;
+    if (rawCourt === "" || rawCourt === null || rawCourt === undefined) {
+      rawCourt = "N/A";
+    }
+
+    const normalizedTime = processTime(rawTime);
+    if (!normalizedTime) return;
+
+    processCourt(rawCourt).forEach(court => {
+      out.push({
+        Day: day,
+        Date: normalizedDate.dateStr,
+        RawTime: rawTime,
+        Time: normalizedTime,
+        RawCourt: (rawCourt ?? "").toString(),
+        Court: court,
+        Location: location
       });
     });
+  });
+  return out;
+}
 
-    // Second pass: drop exact duplicates (same day/date/location/court/time)
-    const seen = new Set();
-    const cleaned = rawData.filter(item => {
-      const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+function sortRows(rows) {
+  return rows.sort((a, b) => {
+    if (weekdayOrder[a.Day] !== weekdayOrder[b.Day])
+      return weekdayOrder[a.Day] - weekdayOrder[b.Day];
+    const byDate = parseDateStr(b.Date) - parseDateStr(a.Date);
+    if (byDate !== 0) return byDate;
+    if (a.Location !== b.Location)
+      return a.Location.localeCompare(b.Location);
+    return courtNumber(a.Court) - courtNumber(b.Court);
+  });
+}
 
-    // Sort by day, date, location, court
-    cleaned.sort((a, b) => {
-      if (weekdayOrder[a.Day] !== weekdayOrder[b.Day])
-        return weekdayOrder[a.Day] - weekdayOrder[b.Day];
-      if (b.DateObj - a.DateObj !== 0)
-        return b.DateObj - a.DateObj;
-      if (a.Location !== b.Location)
-        return a.Location.localeCompare(b.Location);
-      return courtNumber(a.Court) - courtNumber(b.Court);
-    });
+async function fetchSchedule() {
+  // Fetch all sheets in parallel; order is restored by sorting later
+  const results = await Promise.allSettled(
+    courtSheetTabs.map(sheetName => fetchSheetRowsViaGviz(sheetName))
+  );
+  const rows = [];
+  const failed = [];
+  let firstError = "";
+  results.forEach((result, i) => {
+    const sheetName = courtSheetTabs[i];
+    if (result.status !== "fulfilled") {
+      console.warn(`Failed to fetch sheet "${sheetName}" via GViz:`, result.reason);
+      failed.push(normalizeLocationName(sheetName));
+      if (!firstError) firstError = result.reason?.message || "";
+      return;
+    }
+    rows.push(...parseSheetRows(sheetName, result.value));
+  });
 
-    // Rows for one weekday, used by the plot and the copy-text builder
-    const getDayRows = (day) => cleaned.filter(row => row.Day === day);
+  // Drop exact duplicates (same day/date/location/court/time)
+  const seen = new Set();
+  const unique = rows.filter(item => {
+    const key = `${item.Day}|${item.Date}|${item.Location}|${item.Court}|${item.Time}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return { rows: unique, failed, firstError };
+}
 
-    if (cleaned.length === 0) {
-      let msg;
-      if (failedSheets.length === courtSheetTabs.length) {
-        const firstError = sheetResults.find(r => r.status === "rejected")?.reason?.message || "";
-        msg = "Could not load any schedule data from Google Sheets. ";
-        msg += location.protocol === "file:"
+async function refresh() {
+  if (state.loading) return;
+  state.loading = true;
+  renderStatus();
+  try {
+    const { rows, failed, firstError } = await fetchSchedule();
+
+    if (failed.length === courtSheetTabs.length) {
+      state.offline = true;
+      if (!state.rows.length) {
+        let msg = "Could not load any schedule data from Google Sheets. ";
+        msg += window.location.protocol === "file:"
           ? "This page was opened as a local file; some browsers block remote scripts in that mode. Try the deployed site or serve it over http."
           : "Check your network connection, ad/content blockers, or the spreadsheet sharing settings.";
         if (firstError) msg += ` (${firstError})`;
-      } else {
-        msg = "No schedule entries were found in the spreadsheet.";
+        state.fatalError = msg;
+        renderSchedule();
       }
-      container.innerHTML = `<div class="status-message warning">${escapeHtml(msg)}<br><br><button class="primary-button" onclick="location.reload()">Retry</button></div>`;
       return;
     }
 
-    // Group for display
-    const grouped = {};
-    cleaned.forEach(row => {
-      if (!grouped[row.Day]) grouped[row.Day] = {};
-      if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
-      grouped[row.Day][row.Date].push(row);
+    // Keep the previous rows for any location that failed this time
+    const failedSet = new Set(failed);
+    const carried = state.rows.filter(row => failedSet.has(row.Location));
+    const carriedLocations = new Set(carried.map(row => row.Location));
+    const merged = sortRows(rows.concat(carried));
+    const signature = JSON.stringify(merged) + "#" + failed.join(",");
+
+    state.offline = false;
+    state.updatedAt = Date.now();
+    state.staleLocations = failed.filter(loc => carriedLocations.has(loc));
+    state.failedSheets = failed.filter(loc => !carriedLocations.has(loc));
+    state.fatalError = merged.length ? "" : "No schedule entries were found in the spreadsheet.";
+    // Only save a complete download, so saved data never looks fresher than it is
+    if (failed.length === 0 && merged.length) storageSet(CACHE_KEY, { savedAt: state.updatedAt, rows: merged });
+
+    if (signature !== state.signature || !merged.length) {
+      state.rows = merged;
+      state.signature = signature;
+      renderSchedule();
+    }
+  } catch (error) {
+    console.error("Failed to fetch or render schedule data:", error);
+    state.offline = true;
+    if (!state.rows.length) {
+      state.fatalError = "Could not load schedule. Please check network or spreadsheet access.";
+      renderSchedule();
+    }
+  } finally {
+    state.loading = false;
+    renderStatus();
+  }
+}
+
+// ---------- Table view ----------
+
+function buildDateTable(rows) {
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  ["Location", "Courts", "Time"].forEach(header => {
+    const th = document.createElement("th");
+    th.textContent = header;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  // Group by location and time, keeping courts from the same sheet row together
+  const locationTimeGroups = {};
+  rows.slice().sort((a, b) => {
+    if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
+    return courtNumber(a.Court) - courtNumber(b.Court);
+  }).forEach(row => {
+    const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
+    if (!locationTimeGroups[key]) {
+      locationTimeGroups[key] = { location: row.Location, time: row.Time, courts: [row.Court] };
+    } else if (!locationTimeGroups[key].courts.includes(row.Court)) {
+      locationTimeGroups[key].courts.push(row.Court);
+    }
+  });
+
+  const tbody = document.createElement("tbody");
+  Object.values(locationTimeGroups)
+    .sort((a, b) => a.location.localeCompare(b.location))
+    .forEach(group => {
+      const tr = document.createElement("tr");
+      const sortedCourts = group.courts.sort((a, b) => courtNumber(a) - courtNumber(b));
+      [group.location, compactCourtsDisplay(sortedCourts)].forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cell;
+        tr.appendChild(td);
+      });
+
+      // One time range per line, earliest first
+      const timeTd = document.createElement("td");
+      sortTimes(group.time).split(", ").forEach(range => {
+        const span = document.createElement("span");
+        span.className = "time-range";
+        span.textContent = range;
+        timeTd.appendChild(span);
+      });
+      tr.appendChild(timeTd);
+      tbody.appendChild(tr);
+    });
+  table.appendChild(tbody);
+  return table;
+}
+
+function renderSchedule() {
+  const tabs = document.getElementById("tab-buttons");
+  const container = document.getElementById("table-container");
+  state.renderedFor = startOfToday().getTime();
+  renderFilter();
+
+  if (!state.rows.length) {
+    tabs.innerHTML = "";
+    container.innerHTML = state.fatalError
+      ? `<div class="status-message warning">${escapeHtml(state.fatalError)}<br><br><button class="primary-button" id="retry-button">Retry</button></div>`
+      : `<div class="status-message">Loading schedule…</div>`;
+    document.getElementById("retry-button")?.addEventListener("click", refresh);
+    return;
+  }
+
+  // Remember which week groups are open so a background refresh doesn't collapse them
+  const openState = new Map();
+  container.querySelectorAll("details.week-group").forEach(d => openState.set(d.dataset.key, d.open));
+  container.innerHTML = "";
+  tabs.innerHTML = "";
+
+  if (state.failedSheets.length > 0) {
+    const warn = document.createElement("div");
+    warn.className = "status-message warning";
+    warn.textContent = `Could not load ${state.failedSheets.length} location(s): ${state.failedSheets.join(", ")}. Their schedules are not shown.`;
+    container.appendChild(warn);
+  }
+  if (state.staleLocations.length > 0) {
+    const warn = document.createElement("div");
+    warn.className = "status-message warning";
+    warn.textContent = `Could not refresh ${state.staleLocations.join(", ")}; showing the last saved schedule for ${state.staleLocations.length === 1 ? "it" : "them"}.`;
+    container.appendChild(warn);
+  }
+
+  // Group the visible rows for display
+  const grouped = {};
+  visibleRows().forEach(row => {
+    if (!grouped[row.Day]) grouped[row.Day] = {};
+    if (!grouped[row.Day][row.Date]) grouped[row.Day][row.Date] = [];
+    grouped[row.Day][row.Date].push(row);
+  });
+
+  const today = startOfToday();
+  const todayName = expectedDays[today.getDay()];
+  // Tabs come from all rows so hiding parks never removes a day
+  const days = expectedDays.filter(day => state.rows.some(row => row.Day === day));
+
+  for (const day of days) {
+    const btn = document.createElement("button");
+    btn.textContent = day.substring(0, 3);
+    btn.title = day;
+    btn.dataset.day = day;
+    if (day === todayName) btn.classList.add("today");
+    tabs.appendChild(btn);
+
+    const section = document.createElement("div");
+    section.id = `section-${day}`;
+    section.className = "day-section";
+    container.appendChild(section);
+
+    const dates = grouped[day] ? Object.keys(grouped[day]) : [];
+    if (!dates.length) {
+      section.innerHTML = `<div class="status-message">No bookings at the selected parks on ${day}s.</div>`;
+      continue;
+    }
+
+    const buckets = new Map();
+    dates.forEach(date => {
+      const info = weekBucket(parseDateStr(date));
+      if (!buckets.has(info.key)) buckets.set(info.key, { info, dates: [] });
+      buckets.get(info.key).dates.push(date);
     });
 
-    container.innerHTML = "";
-    tabs.innerHTML = "";
+    [...buckets.values()]
+      .sort((a, b) => a.info.order - b.info.order)
+      .forEach(({ info, dates: bucketDates }, index) => {
+        // Future weeks read soonest first; past weeks most recent first
+        bucketDates.sort((a, b) => info.order <= 2
+          ? parseDateStr(a) - parseDateStr(b)
+          : parseDateStr(b) - parseDateStr(a));
 
-    if (failedSheets.length > 0) {
-      const warn = document.createElement("div");
-      warn.className = "status-message warning";
-      warn.textContent = `Could not load ${failedSheets.length} location(s): ${failedSheets.join(", ")}. Their schedules are not shown.`;
-      container.appendChild(warn);
-    }
+        const details = document.createElement("details");
+        details.className = `week-group week-${info.key}`;
+        details.dataset.key = `${day}|${info.key}`;
+        // Open This Week by default, or the first group when there's nothing this week
+        const defaultOpen = info.key === "this" || (index === 0 && !buckets.has("this"));
+        details.open = openState.has(details.dataset.key) ? openState.get(details.dataset.key) : defaultOpen;
 
-    // Compute the start of the current week (Sunday, local midnight) for week bucketing
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const summary = document.createElement("summary");
+        summary.innerHTML = `<span class="week-label">${info.label}</span><span class="week-count">${bucketDates.length === 1 ? "1 day" : `${bucketDates.length} days`}</span>`;
+        details.appendChild(summary);
 
-    // Classify a date into a week bucket relative to the current week
-    function getWeekBucket(dateObj) {
-      const d = new Date(dateObj);
-      d.setHours(0, 0, 0, 0);
-      const diffDays = Math.round((d - weekStart) / 86400000);
-      if (diffDays >= 0 && diffDays <= 6)   return { key: "this",    label: "This Week",  order: 0, open: true };
-      if (diffDays >= 7 && diffDays <= 13)  return { key: "next",    label: "Next Week",  order: 1, open: false };
-      if (diffDays >= 14)                   return { key: "later",   label: "Upcoming",   order: 2, open: false };
-      if (diffDays >= -7 && diffDays <= -1) return { key: "last",    label: "Last Week",  order: 3, open: false };
-      return                                       { key: "earlier", label: "Earlier",    order: 4, open: false };
-    }
-
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    const todayName = expectedDays[todayMidnight.getDay()];
-
-    for (const day of expectedDays) {
-      if (grouped[day]) {
-        const btn = document.createElement("button");
-        btn.textContent = day.substring(0, 3);
-        btn.title = day;
-        btn.dataset.day = day;
-        if (day === todayName) btn.classList.add("today");
-        btn.onclick = () => {
-          switchTab(day);
-          // If scrolled down, jump back so the new day's schedule starts just under the day bar
-          const barTop = document.querySelector(".view-toggle").getBoundingClientRect().bottom + window.scrollY;
-          if (window.scrollY > barTop) window.scrollTo({ top: barTop });
-        };
-        tabs.appendChild(btn);
-
-        const section = document.createElement("div");
-        section.id = `section-${day}`;
-        section.className = "day-section";
-
-        // Build collapsible week groups; This Week is rendered first and expanded
-        const bucketEls = {};
-        const ensureBucket = (info) => {
-          if (bucketEls[info.key]) return bucketEls[info.key];
-          const details = document.createElement("details");
-          details.className = `week-group week-${info.key}`;
-          if (info.open) details.open = true;
-          const summary = document.createElement("summary");
-          summary.innerHTML = `<span class="week-label">${info.label}</span><span class="week-count"></span>`;
-          details.appendChild(summary);
-          details._order = info.order;
-          details._count = 0;
-          bucketEls[info.key] = details;
-          return details;
-        };
-
-        for (const date of Object.keys(grouped[day]).sort((a, b) => new Date(b) - new Date(a))) {
-          const bucketInfo = getWeekBucket(new Date(date));
-          const bucket = ensureBucket(bucketInfo);
-          bucket._count += 1;
-
+        bucketDates.forEach(date => {
           const dateTitle = document.createElement("div");
           dateTitle.className = "date-title";
           dateTitle.textContent = date;
-          if (new Date(date).setHours(0, 0, 0, 0) === todayMidnight.getTime()) {
+          if (parseDateStr(date).getTime() === today.getTime()) {
             const chip = document.createElement("span");
             chip.className = "today-chip";
             chip.textContent = "Today";
             dateTitle.appendChild(chip);
           }
-          bucket.appendChild(dateTitle);
-
-          const table = document.createElement("table");
-          const thead = document.createElement("thead");
-          const headRow = document.createElement("tr");
-
-          ["Location", "Courts", "Time"].forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            headRow.appendChild(th);
-          });
-
-          thead.appendChild(headRow);
-          table.appendChild(thead);
-
-          const tbody = document.createElement("tbody");
-          
-          // Group by location and time
-          const locationTimeGroups = {};
-          
-          // Sort entries by location and court number
-          grouped[day][date].sort((a, b) => {
-            if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
-            return courtNumber(a.Court) - courtNumber(b.Court);
-          }).forEach(row => {
-            // Use the original row data to preserve court groupings from the same row
-            const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
-            
-            
-            if (!locationTimeGroups[key]) {
-              locationTimeGroups[key] = {
-                location: row.Location,
-                time: row.Time,
-                courts: [row.Court],
-                rawCourt: row.RawCourt
-              };
-            } else {
-              // Add court if not already included
-              if (!locationTimeGroups[key].courts.includes(row.Court)) {
-                locationTimeGroups[key].courts.push(row.Court);
-              }
-            }
-          });
-          
-          
-          // Sort by location
-          Object.values(locationTimeGroups)
-            .sort((a, b) => a.location.localeCompare(b.location))
-            .forEach(group => {
-              const tr = document.createElement("tr");
-              
-              // Sort and format the courts for display
-              const sortedCourts = group.courts.sort((a, b) => courtNumber(a) - courtNumber(b));
-              
-              // Format courts compactly when possible
-              const formattedCourts = compactCourtsDisplay(sortedCourts);
-              
-              [group.location, formattedCourts].forEach(cell => {
-                const td = document.createElement("td");
-                td.textContent = cell;
-                tr.appendChild(td);
-              });
-
-              // One time range per line, earliest first
-              const timeTd = document.createElement("td");
-              group.time.split(/,\s*/).filter(Boolean)
-                .sort((a, b) => (parseTimeToHours(a) ?? 0) - (parseTimeToHours(b) ?? 0))
-                .forEach(range => {
-                  const span = document.createElement("span");
-                  span.className = "time-range";
-                  span.textContent = range;
-                  timeTd.appendChild(span);
-                });
-              tr.appendChild(timeTd);
-              
-              tbody.appendChild(tr);
-              
-            });
-          
-          table.appendChild(tbody);
-          bucket.appendChild(table);
-        }
-
-        // Append week groups in order (This Week first), filling in the count badges
-        Object.values(bucketEls)
-          .sort((a, b) => a._order - b._order)
-          .forEach(details => {
-            const countEl = details.querySelector(".week-count");
-            if (countEl) countEl.textContent = details._count === 1 ? "1 day" : `${details._count} days`;
-            section.appendChild(details);
-          });
-
-        container.appendChild(section);
-      }
-    }
-
-    let currentTab = "";
-
-    // Build the per-court time-range list used by both plot renderers
-    function buildCourtRows(day) {
-      const courts = new Map();
-      getDayRows(day).forEach(row => {
-        const { Location: location, Court: court, Time: time } = row;
-        if (!time) return;
-        const courtId = `${location}-${court}`;
-        if (!courts.has(courtId)) {
-          courts.set(courtId, {
-            id: courtId,
-            location,
-            court,
-            label: `${location} - ${court}`,
-            timeRanges: []
-          });
-        }
-        const timeRanges = extractTimeRanges(time);
-        if (timeRanges.length === 0) {
-          console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
-        }
-        timeRanges.forEach(range => {
-          courts.get(courtId).timeRanges.push({ startTime: range.start, endTime: range.end });
+          details.appendChild(dateTitle);
+          details.appendChild(buildDateTable(grouped[day][date]));
         });
+        section.appendChild(details);
       });
-      return Array.from(courts.values()).sort((a, b) => {
-        if (a.location !== b.location) return a.location.localeCompare(b.location);
-        return courtNumber(a.court) - courtNumber(b.court);
-      });
+  }
+
+  if (!days.includes(state.day)) state.day = days.includes(todayName) ? todayName : days[0];
+  showDay(state.day);
+}
+
+function showDay(day) {
+  state.day = day;
+  document.querySelectorAll(".day-section").forEach(sec => sec.classList.toggle("active", sec.id === `section-${day}`));
+  document.querySelectorAll("#tab-buttons button").forEach(btn => btn.classList.toggle("active", btn.dataset.day === day));
+  updateCopyLabel();
+  if (state.view === "plot") createPlot();
+}
+
+function setView(view) {
+  state.view = view;
+  const isPlot = view === "plot";
+  document.getElementById("table-container").style.display = isPlot ? "none" : "block";
+  document.getElementById("plot-container").style.display = isPlot ? "flex" : "none";
+  document.getElementById("copy-plot-button").style.display = isPlot ? "flex" : "none";
+  document.getElementById("table-view-btn").classList.toggle("active", !isPlot);
+  document.getElementById("plot-view-btn").classList.toggle("active", isPlot);
+  document.getElementById("table-view-btn").setAttribute("aria-pressed", String(!isPlot));
+  document.getElementById("plot-view-btn").setAttribute("aria-pressed", String(isPlot));
+  if (isPlot) createPlot();
+}
+
+// ---------- Selected date (plot + copy) ----------
+
+function datesForDay(day) {
+  return [...new Set(state.rows.filter(row => row.Day === day).map(row => row.Date))]
+    .sort((a, b) => parseDateStr(a) - parseDateStr(b));
+}
+
+function selectedDate(day) {
+  const dates = datesForDay(day);
+  if (!dates.length) return "";
+  let date = state.selectedDates[day];
+  if (!dates.includes(date)) {
+    // Default to today or the next upcoming date; fall back to the most recent one
+    const today = startOfToday();
+    date = dates.find(d => parseDateStr(d) >= today) || dates[dates.length - 1];
+    state.selectedDates[day] = date;
+  }
+  return date;
+}
+
+function stepDate(delta) {
+  const dates = datesForDay(state.day);
+  const next = dates[dates.indexOf(selectedDate(state.day)) + delta];
+  if (!next) return;
+  state.selectedDates[state.day] = next;
+  updateCopyLabel();
+  createPlot();
+}
+
+function updateCopyLabel() {
+  const date = state.day ? selectedDate(state.day) : "";
+  document.getElementById("copy-label").textContent = date ? `Copy text ${shortDate(date)}` : "Copy text";
+}
+
+function renderDateNav(day, date) {
+  const dates = datesForDay(day);
+  const index = dates.indexOf(date);
+  document.getElementById("date-prev").disabled = index <= 0;
+  document.getElementById("date-next").disabled = index < 0 || index >= dates.length - 1;
+  const dateObj = parseDateStr(date);
+  const note = dateObj.getTime() === startOfToday().getTime() ? "Today" : weekBucket(dateObj).label;
+  document.getElementById("date-label").innerHTML = `${escapeHtml(day)} ${escapeHtml(shortDate(date))}<small>${note}</small>`;
+}
+
+// ---------- Plot ----------
+
+// Per-court time ranges for one date, used by the on-screen plot and the export
+function buildCourtRows(day, date) {
+  const courts = new Map();
+  visibleRows().filter(row => row.Day === day && row.Date === date).forEach(row => {
+    const { Location: location, Court: court, Time: time } = row;
+    if (!time) return;
+    const courtId = `${location}-${court}`;
+    if (!courts.has(courtId)) {
+      courts.set(courtId, { id: courtId, location, court, label: `${location} - ${court}`, timeRanges: [] });
     }
-
-    const plotPalette = [
-      '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
-      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
-      '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
-    ];
-    const plotThemes = {
-      light: {
-        background: '#ffffff', text: '#374151', grid: 'rgba(148, 163, 184, 0.25)',
-        accentGrid: 'rgba(99, 102, 241, 0.35)', rowLine: 'rgba(226, 232, 240, 0.8)',
-        axis: 'rgba(100, 116, 139, 0.4)', barShadow: 'rgba(0, 0, 0, 0.12)'
-      },
-      dark: {
-        background: '#1a1b2e', text: '#cbd5e1', grid: 'rgba(148, 163, 184, 0.14)',
-        accentGrid: 'rgba(129, 140, 248, 0.45)', rowLine: 'rgba(255, 255, 255, 0.06)',
-        axis: 'rgba(148, 163, 184, 0.35)', barShadow: 'rgba(0, 0, 0, 0.4)'
-      }
-    };
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-
-    // Single renderer for both the on-screen plot and the exported PNG.
-    // width: CSS px; fitHeight: shrink rows toward this height (on-screen only);
-    // compact: phone-sized fonts/padding; theme: 'light' | 'dark'.
-    function drawSchedulePlot(canvas, day, { width, fitHeight = null, compact = false, pixelRatio = 1, theme = 'light' }) {
-      if (!day || !canvas) return;
-      const ctx = canvas.getContext('2d');
-      const colors = plotThemes[theme] || plotThemes.light;
-      const courts = buildCourtRows(day);
-
-      const locations = [...new Set(courts.map(c => c.location))];
-      const colorMap = {};
-      locations.forEach((loc, i) => { colorMap[loc] = plotPalette[i % plotPalette.length]; });
-
-      const family = 'system-ui, -apple-system, sans-serif';
-      const axisFont = `600 ${compact ? 10 : 12}px ${family}`;
-      const labelFont = `500 ${compact ? 9 : 11}px ${family}`;
-      const legendFont = `500 ${compact ? 10 : 11}px ${family}`;
-      const padding = compact
-        ? { top: 26, right: 12, bottom: 26, left: 100 }
-        : { top: 36, right: 25, bottom: 34, left: 180 };
-      const plotRight = width - padding.right;
-
-      // Lay out the legend first (wrapping onto new lines) so we know the canvas height
-      ctx.font = legendFont;
-      const legendRowHeight = 18;
-      const legendLeft = 12;
-      const legendItems = [];
-      let lx = legendLeft, lrow = 0;
-      locations.forEach(loc => {
-        const label = abbreviateLocation(loc);
-        const itemWidth = 15 + ctx.measureText(label).width + 18;
-        if (lx + itemWidth > width - 12 && lx > legendLeft) { lx = legendLeft; lrow++; }
-        legendItems.push({ loc, label, x: lx, row: lrow });
-        lx += itemWidth;
-      });
-      const legendHeight = locations.length ? (lrow + 1) * legendRowHeight + 8 : 0;
-
-      const maxRowHeight = compact ? 30 : 35;
-      const minRowHeight = compact ? 20 : 25;
-      let rowHeight = maxRowHeight;
-      if (fitHeight && courts.length) {
-        const fit = (fitHeight - padding.top - padding.bottom - legendHeight) / courts.length;
-        rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, fit));
-      }
-      const plotBottom = padding.top + courts.length * rowHeight;
-      const height = plotBottom + padding.bottom + legendHeight;
-
-      // Resizing the canvas resets the context state
-      canvas.width = Math.round(width * pixelRatio);
-      canvas.height = Math.round(height * pixelRatio);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.scale(pixelRatio, pixelRatio);
-      ctx.fillStyle = colors.background;
-      ctx.fillRect(0, 0, width, height);
-
-      const startHour = 6;  // 6 AM
-      const endHour = 23;   // 11 PM
-      const hourWidth = (plotRight - padding.left) / (endHour - startHour);
-      const xFor = hour => padding.left + (hour - startHour) * hourWidth;
-
-      // Label every 1, 2 or 3 hours depending on room; short labels ("6a") when compact
-      const labelStep = hourWidth >= 44 ? 1 : hourWidth >= 24 ? 2 : 3;
-      ctx.font = axisFont;
-      ctx.textAlign = 'center';
-      for (let hour = startHour; hour <= endHour; hour++) {
-        const x = xFor(hour);
-        if ((hour - startHour) % labelStep === 0) {
-          const displayHour = hour <= 12 ? hour : hour - 12;
-          const ampm = hour < 12 ? 'AM' : 'PM';
-          const label = compact ? `${displayHour}${ampm[0].toLowerCase()}` : `${displayHour} ${ampm}`;
-          ctx.fillStyle = colors.text;
-          ctx.fillText(label, x, padding.top - 12);
-          ctx.fillText(label, x, plotBottom + 20);
-        }
-        // Vertical grid line, dotted at 4 PM and 8 PM
-        ctx.beginPath();
-        const accent = hour === 16 || hour === 20;
-        ctx.setLineDash(accent ? [2, 4] : []);
-        ctx.strokeStyle = accent ? colors.accentGrid : colors.grid;
-        ctx.lineWidth = accent ? 1.5 : 1;
-        ctx.moveTo(x, padding.top);
-        ctx.lineTo(x, plotBottom);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-
-      // Top and bottom axis lines
-      ctx.strokeStyle = colors.axis;
-      ctx.lineWidth = 1.5;
-      [padding.top, plotBottom].forEach(y => {
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(plotRight, y);
-        ctx.stroke();
-      });
-
-      // Court labels, row separators and time bars
-      const barHeight = Math.max(8, rowHeight - (compact ? 10 : 14));
-      courts.forEach((court, index) => {
-        const y = padding.top + index * rowHeight + rowHeight / 2;
-
-        ctx.fillStyle = colors.text;
-        ctx.font = labelFont;
-        ctx.textAlign = 'right';
-        ctx.fillText(abbreviateLocation(court.label), padding.left - 6, y + 3);
-
-        if (index < courts.length - 1) {
-          ctx.strokeStyle = colors.rowLine;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(padding.left, y + rowHeight / 2);
-          ctx.lineTo(plotRight, y + rowHeight / 2);
-          ctx.stroke();
-        }
-
-        court.timeRanges.forEach(range => {
-          // Clip to the visible window so early/late slots don't spill over the labels
-          const start = Math.max(range.startTime, startHour);
-          const end = Math.min(range.endTime, endHour);
-          if (end <= start) return;
-          const startX = xFor(start);
-          const barWidth = xFor(end) - startX;
-
-          ctx.shadowColor = colors.barShadow;
-          ctx.shadowBlur = 4;
-          ctx.shadowOffsetY = 2;
-          ctx.fillStyle = colorMap[court.location];
-          ctx.beginPath();
-          ctx.roundRect(startX, y - barHeight / 2, barWidth, barHeight, Math.min(6, barHeight / 2, barWidth / 2));
-          ctx.fill();
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        });
-      });
-
-      // Legend
-      ctx.font = legendFont;
-      ctx.textAlign = 'left';
-      const legendTop = plotBottom + padding.bottom + 4;
-      legendItems.forEach(({ loc, label, x, row }) => {
-        const y = legendTop + row * legendRowHeight;
-        ctx.fillStyle = colorMap[loc];
-        ctx.beginPath();
-        ctx.roundRect(x, y, 10, 10, 2);
-        ctx.fill();
-        ctx.fillStyle = colors.text;
-        ctx.fillText(label, x + 15, y + 9);
-      });
+    const timeRanges = extractTimeRanges(time);
+    if (timeRanges.length === 0) {
+      console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
     }
-
-    // On-screen plot: fit the container and follow the page's light/dark theme
-    function createPlot(day) {
-      if (!day) return;
-      const plotContainer = document.getElementById('plot-container');
-      const compact = window.innerWidth <= 768;
-      const inset = compact ? 16 : 30; // matches .plot-container padding
-      const rect = plotContainer.getBoundingClientRect();
-      drawSchedulePlot(document.getElementById('schedule-plot'), day, {
-        width: rect.width - inset,
-        fitHeight: rect.height - inset,
-        compact,
-        pixelRatio: window.devicePixelRatio || 1,
-        theme: prefersDark.matches ? 'dark' : 'light'
-      });
-    }
-
-    // Redraw when the system switches between light and dark
-    prefersDark.addEventListener('change', () => {
-      const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
-      if (isPlotView && currentTab) createPlot(currentTab);
+    timeRanges.forEach(range => {
+      courts.get(courtId).timeRanges.push({ startTime: range.start, endTime: range.end });
     });
+  });
+  return Array.from(courts.values()).sort((a, b) => {
+    if (a.location !== b.location) return a.location.localeCompare(b.location);
+    return courtNumber(a.court) - courtNumber(b.court);
+  });
+}
 
-    function switchTab(day) {
-      document.querySelectorAll('.day-section').forEach(sec => sec.classList.remove('active'));
-      Array.from(tabs.children).forEach(btn => btn.classList.toggle('active', btn.dataset.day === day));
-      document.getElementById(`section-${day}`).classList.add('active');
-      currentTab = day;
+const plotPalette = [
+  '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
+  '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6',
+  '#3b82f6', '#fbbf24', '#22c55e', '#f87171', '#a855f7'
+];
+const plotThemes = {
+  light: {
+    background: '#ffffff', text: '#374151', muted: '#94a3b8', grid: 'rgba(148, 163, 184, 0.25)',
+    accentGrid: 'rgba(99, 102, 241, 0.35)', rowLine: 'rgba(226, 232, 240, 0.8)',
+    axis: 'rgba(100, 116, 139, 0.4)', barShadow: 'rgba(0, 0, 0, 0.12)'
+  },
+  dark: {
+    background: '#1a1b2e', text: '#cbd5e1', muted: '#64748b', grid: 'rgba(148, 163, 184, 0.14)',
+    accentGrid: 'rgba(129, 140, 248, 0.45)', rowLine: 'rgba(255, 255, 255, 0.06)',
+    axis: 'rgba(148, 163, 184, 0.35)', barShadow: 'rgba(0, 0, 0, 0.4)'
+  }
+};
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-      // Check if we're in plot view
-      const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
-      
-      // Set display based on current view
-      if (isPlotView) {
-        container.style.display = "none";
-        document.getElementById('plot-container').style.display = "block";
-        document.getElementById('copy-plot-button').style.display = "flex";
-        createPlot(day);
-      } else {
-        container.style.display = "block";
-        document.getElementById('plot-container').style.display = "none";
-        document.getElementById('copy-plot-button').style.display = "none";
-      }
+// Single renderer for both the on-screen plot and the exported PNG.
+// width: CSS px; fitHeight: shrink rows toward this height (on-screen only);
+// compact: phone-sized fonts/padding; title: heading drawn at the top (export);
+// nowHour: decimal hour for the "now" line, or null.
+function drawSchedulePlot(canvas, courts, { width, fitHeight = null, compact = false, pixelRatio = 1, theme = 'light', title = '', nowHour = null }) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const colors = plotThemes[theme] || plotThemes.light;
+  const family = 'system-ui, -apple-system, sans-serif';
+
+  if (!courts.length) {
+    const height = 120;
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(pixelRatio, pixelRatio);
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = colors.muted;
+    ctx.font = `600 14px ${family}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(state.hidden.size ? 'No bookings at the selected parks' : 'No bookings on this date', width / 2, height / 2 + 5);
+    return;
+  }
+
+  const locations = [...new Set(courts.map(c => c.location))];
+  const axisFont = `600 ${compact ? 10 : 12}px ${family}`;
+  const labelFont = `500 ${compact ? 9 : 11}px ${family}`;
+  const legendFont = `500 ${compact ? 10 : 11}px ${family}`;
+  const titleHeight = title ? 34 : 0;
+  const padding = compact
+    ? { top: 26 + titleHeight, right: 12, bottom: 26, left: 100 }
+    : { top: 36 + titleHeight, right: 25, bottom: 34, left: 180 };
+  const plotRight = width - padding.right;
+
+  // Lay out the legend first (wrapping onto new lines) so we know the canvas height
+  ctx.font = legendFont;
+  const legendRowHeight = 18;
+  const legendLeft = 12;
+  const legendItems = [];
+  let lx = legendLeft, lrow = 0;
+  locations.forEach(loc => {
+    const label = abbreviateLocation(loc);
+    const itemWidth = 15 + ctx.measureText(label).width + 18;
+    if (lx + itemWidth > width - 12 && lx > legendLeft) { lx = legendLeft; lrow++; }
+    legendItems.push({ loc, label, x: lx, row: lrow });
+    lx += itemWidth;
+  });
+  const legendHeight = (lrow + 1) * legendRowHeight + 8;
+
+  const maxRowHeight = compact ? 30 : 35;
+  const minRowHeight = compact ? 20 : 25;
+  let rowHeight = maxRowHeight;
+  if (fitHeight) {
+    const fit = (fitHeight - padding.top - padding.bottom - legendHeight) / courts.length;
+    rowHeight = Math.max(minRowHeight, Math.min(maxRowHeight, fit));
+  }
+  const plotBottom = padding.top + courts.length * rowHeight;
+  const height = plotBottom + padding.bottom + legendHeight;
+
+  // Resizing the canvas resets the context state
+  canvas.width = Math.round(width * pixelRatio);
+  canvas.height = Math.round(height * pixelRatio);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  ctx.scale(pixelRatio, pixelRatio);
+  ctx.fillStyle = colors.background;
+  ctx.fillRect(0, 0, width, height);
+
+  if (title) {
+    ctx.fillStyle = colors.text;
+    ctx.font = `700 15px ${family}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(title, legendLeft, 24);
+  }
+
+  const startHour = 6;  // 6 AM
+  const endHour = 23;   // 11 PM
+  const hourWidth = (plotRight - padding.left) / (endHour - startHour);
+  const xFor = hour => padding.left + (hour - startHour) * hourWidth;
+
+  // Label every 1, 2 or 3 hours depending on room; short labels ("6a") when compact
+  const labelStep = hourWidth >= 44 ? 1 : hourWidth >= 24 ? 2 : 3;
+  ctx.font = axisFont;
+  ctx.textAlign = 'center';
+  for (let hour = startHour; hour <= endHour; hour++) {
+    const x = xFor(hour);
+    if ((hour - startHour) % labelStep === 0) {
+      const displayHour = hour <= 12 ? hour : hour - 12;
+      const ampm = hour < 12 ? 'AM' : 'PM';
+      const label = compact ? `${displayHour}${ampm[0].toLowerCase()}` : `${displayHour} ${ampm}`;
+      ctx.fillStyle = colors.text;
+      ctx.fillText(label, x, padding.top - 12);
+      ctx.fillText(label, x, plotBottom + 20);
+    }
+    // Vertical grid line, dotted at 4 PM and 8 PM
+    ctx.beginPath();
+    const accent = hour === 16 || hour === 20;
+    ctx.setLineDash(accent ? [2, 4] : []);
+    ctx.strokeStyle = accent ? colors.accentGrid : colors.grid;
+    ctx.lineWidth = accent ? 1.5 : 1;
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, plotBottom);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Top and bottom axis lines
+  ctx.strokeStyle = colors.axis;
+  ctx.lineWidth = 1.5;
+  [padding.top, plotBottom].forEach(y => {
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(plotRight, y);
+    ctx.stroke();
+  });
+
+  // Court labels, row separators and time bars
+  const barHeight = Math.max(8, rowHeight - (compact ? 10 : 14));
+  courts.forEach((court, index) => {
+    const y = padding.top + index * rowHeight + rowHeight / 2;
+
+    ctx.fillStyle = colors.text;
+    ctx.font = labelFont;
+    ctx.textAlign = 'right';
+    ctx.fillText(abbreviateLocation(court.label), padding.left - 6, y + 3);
+
+    if (index < courts.length - 1) {
+      ctx.strokeStyle = colors.rowLine;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y + rowHeight / 2);
+      ctx.lineTo(plotRight, y + rowHeight / 2);
+      ctx.stroke();
     }
 
-    // Improved copy function for better formatting
-    document.getElementById("copy-button").addEventListener("click", () => {
-      if (!currentTab) return;
-      
-      // Get today's date for comparison
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // Group by date (already normalized to M/D/YYYY) then location
-      const dateGroups = {};
-      getDayRows(currentTab).forEach(row => {
-        const { Date: date, Location: location, Court: court, Time: time } = row;
-        if (!time) return;
-        if (!dateGroups[date]) dateGroups[date] = {};
-        if (!dateGroups[date][location]) dateGroups[date][location] = [];
-        dateGroups[date][location].push({ court, time });
-      });
-      
-      let todayData = '';
-      let otherData = '';
-      let todayDateDisplay = '';
-      
-      // Process each date group
-      Object.entries(dateGroups).forEach(([date, locations]) => {
-        // Parse date
-        const dateParts = date.split('/');
-        const month = parseInt(dateParts[0]);
-        const day = parseInt(dateParts[1]);
-        const year = parseInt(dateParts[2]);
-        
-        const dateObj = new Date(year, month - 1, day);
-        dateObj.setHours(0, 0, 0, 0);
-        
-        // Format date for display
-        const dateDisplay = `${month}/${day}`;
-        
-        // Add date with parentheses if not today
-        const isToday = dateObj.getTime() === today.getTime();
-        const datePrefix = isToday ? '' : `(${dateDisplay})`;
-        
-        if (isToday) {
-          todayDateDisplay = dateDisplay;
-        }
-        
-        // Process each location
-        const sortedLocations = Object.keys(locations).sort();
-        let sectionText = '';
-        
-        sortedLocations.forEach((location, index) => {
-          const locationData = locations[location];
-          
-          // Mango Park is now available - process normally
-          // (removed special unavailable handling)
-          
-          // Group by time and filter out empty times
-          const timeGroups = {};
-          locationData.forEach(item => {
-            // Skip items with no valid time
-            if (!item.time || item.time.trim() === '') {
-              return;
-            }
-            if (!timeGroups[item.time]) {
-              timeGroups[item.time] = [];
-            }
-            timeGroups[item.time].push(item.court);
-          });
-          
-          const timeEntries = Object.entries(timeGroups);
-          
-          // Skip locations with no valid time entries
-          if (timeEntries.length === 0) {
-            return;
-          }
-          
-          const simpleLocation = abbreviateLocation(location);
-          
-          if (timeEntries.length === 1) {
-            const [time, courts] = timeEntries[0];
-            sectionText += `${simpleLocation}${datePrefix}: ${courts.join(', ')}: ${time}\n`;
-          } else {
-            sectionText += `${simpleLocation}${datePrefix}:\n`;
-            timeEntries.forEach(([time, courts]) => {
-              sectionText += `  ${courts.join(', ')}: ${time}\n`;
-            });
-          }
-          
-          if (index < sortedLocations.length - 1) {
-            sectionText += '\n';
-          }
-        });
-        
-        if (isToday) {
-          todayData = sectionText;
-        } else {
-          otherData += sectionText;
-        }
-      });
-      
-      const text = `SNV LT 教练占场信息 ${currentTab} ${todayDateDisplay}\n${todayData}${otherData}`;
-      
-      const copyToast = document.getElementById("copy-toast");
-      navigator.clipboard.writeText(text).then(() => {
-        copyToast.textContent = "Copied Text ✅";
-        showToast(copyToast, 1500);
-      }).catch(err => {
-        console.error("Text copy failed:", err);
-        copyToast.textContent = "Copy failed ❌";
-        showToast(copyToast, 2000);
-      });
+    court.timeRanges.forEach(range => {
+      // Clip to the visible window so early/late slots don't spill over the labels
+      const start = Math.max(range.startTime, startHour);
+      const end = Math.min(range.endTime, endHour);
+      if (end <= start) return;
+      const startX = xFor(start);
+      const barWidth = xFor(end) - startX;
+
+      ctx.shadowColor = colors.barShadow;
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = locationColor(court.location);
+      ctx.beginPath();
+      ctx.roundRect(startX, y - barHeight / 2, barWidth, barHeight, Math.min(6, barHeight / 2, barWidth / 2));
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     });
+  });
 
-    function showToast(el, ms) {
-      el.style.opacity = 1;
-      clearTimeout(el._hideTimer);
-      el._hideTimer = setTimeout(() => { el.style.opacity = 0; }, ms);
-    }
-    
-    // Direct copy plot to clipboard
-    document.getElementById("copy-plot-button").addEventListener("click", copyPlotToClipboard);
-    
+  // "Now" line
+  if (nowHour !== null && nowHour >= startHour && nowHour <= endHour) {
+    const x = xFor(nowHour);
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, plotBottom);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, padding.top, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
+  // Legend
+  ctx.font = legendFont;
+  ctx.textAlign = 'left';
+  const legendTop = plotBottom + padding.bottom + 4;
+  legendItems.forEach(({ loc, label, x, row }) => {
+    const y = legendTop + row * legendRowHeight;
+    ctx.fillStyle = locationColor(loc);
+    ctx.beginPath();
+    ctx.roundRect(x, y, 10, 10, 2);
+    ctx.fill();
+    ctx.fillStyle = colors.text;
+    ctx.fillText(label, x + 15, y + 9);
+  });
+}
 
-    
-    // Render the export-quality plot into an offscreen canvas so the on-screen plot is untouched
-    function renderExportPlotBlob(day) {
-      const exportCanvas = document.createElement('canvas');
-      drawSchedulePlot(exportCanvas, day, { width: 800, pixelRatio: 2, theme: 'light' });
-      return new Promise((resolve, reject) => {
-        exportCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/png');
-      });
-    }
+// On-screen plot: fit the container and follow the page's light/dark theme
+function createPlot() {
+  const day = state.day;
+  if (!day) return;
+  const date = selectedDate(day);
+  if (!date) return;
+  renderDateNav(day, date);
 
-    function downloadBlob(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+  const plotContainer = document.getElementById('plot-container');
+  const compact = window.innerWidth <= 768;
+  const inset = compact ? 16 : 30; // matches .plot-container padding
+  const rect = plotContainer.getBoundingClientRect();
+  const navHeight = document.getElementById('date-nav').offsetHeight + 10;
+  const now = new Date();
+  const isToday = parseDateStr(date).getTime() === startOfToday().getTime();
+  drawSchedulePlot(document.getElementById('schedule-plot'), buildCourtRows(day, date), {
+    width: rect.width - inset,
+    fitHeight: rect.height - inset - navHeight,
+    compact,
+    pixelRatio: window.devicePixelRatio || 1,
+    theme: prefersDark.matches ? 'dark' : 'light',
+    nowHour: isToday ? now.getHours() + now.getMinutes() / 60 : null
+  });
+}
 
-    async function copyPlotToClipboard() {
-      if (!currentTab) {
-        alert("Please select a day and switch to plot view first");
-        return;
-      }
+// ---------- Park filter ----------
 
-      const plotToast = document.getElementById("plot-toast");
-      plotToast.textContent = "Copying plot...";
-      showToast(plotToast, 10000);
-
-      const blobPromise = renderExportPlotBlob(currentTab);
-      const filename = `SNV_LT_${currentTab}_${new Date().toISOString().slice(0, 10)}.png`;
-
-      // Safari requires the ClipboardItem to be created synchronously inside the user
-      // gesture, with the blob supplied as a promise. Chrome/Edge accept this form too.
-      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
-        try {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
-          plotToast.textContent = "Plot copied to clipboard ✅";
-          showToast(plotToast, 1500);
-          return;
-        } catch (err) {
-          console.warn('Clipboard image write failed, falling back to download:', err);
-        }
-      }
-
-      // Fallback: download the PNG (also the only option on Firefox and some Android browsers)
-      try {
-        downloadBlob(await blobPromise, filename);
-        plotToast.textContent = "Clipboard unavailable, plot downloaded 📥";
-        showToast(plotToast, 2500);
-      } catch (err) {
-        console.error('Plot export failed:', err);
-        plotToast.textContent = "Copy failed ❌";
-        showToast(plotToast, 2000);
-      }
-    }
-
-
-    
-    // Toggle between table and plot views
-    document.getElementById('table-view-btn').addEventListener('click', () => {
-      document.getElementById('table-container').style.display = 'block';
-      document.getElementById('plot-container').style.display = 'none';
-      document.getElementById('table-view-btn').classList.add('active');
-      document.getElementById('plot-view-btn').classList.remove('active');
-      document.getElementById('copy-plot-button').style.display = 'none';
+function renderFilter() {
+  const chips = document.getElementById("filter-chips");
+  chips.innerHTML = "";
+  [...allLocationNames].sort((a, b) => a.localeCompare(b)).forEach(loc => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "filter-chip";
+    btn.setAttribute("aria-pressed", String(!state.hidden.has(loc)));
+    btn.style.setProperty("--dot", locationColor(loc));
+    btn.innerHTML = `<span class="dot"></span>${escapeHtml(abbreviateLocation(loc))}`;
+    btn.addEventListener("click", () => {
+      if (state.hidden.has(loc)) state.hidden.delete(loc); else state.hidden.add(loc);
+      applyFilterChange();
     });
-    
-    document.getElementById('plot-view-btn').addEventListener('click', () => {
-      document.getElementById('table-container').style.display = 'none';
-      document.getElementById('plot-container').style.display = 'block';
-      document.getElementById('table-view-btn').classList.remove('active');
-      document.getElementById('plot-view-btn').classList.add('active');
-      document.getElementById('copy-plot-button').style.display = 'flex';
-      
-      if (currentTab) {
-        createPlot(currentTab);
-      }
-    });
-    
-    // Add window resize handler for responsive plot
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      // Debounce resize events
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        // Only recreate plot if we're currently viewing it
-        const isPlotView = document.getElementById('plot-view-btn').classList.contains('active');
-        if (isPlotView && currentTab) {
-          createPlot(currentTab);
-        }
-      }, 250);
-    });
+    chips.appendChild(btn);
+  });
 
-    const today = new Date();
-    const todayDay = expectedDays[today.getDay()];
-    const defaultDay = grouped[todayDay] ? todayDay : expectedDays.find(day => grouped[day]);
-    if (defaultDay) switchTab(defaultDay);
+  const shown = shownLocationCount();
+  const toggle = document.getElementById("filter-toggle");
+  toggle.textContent = shown === allLocationNames.length ? "Parks: All" : `Parks: ${shown} of ${allLocationNames.length}`;
+  toggle.classList.toggle("filtered", shown !== allLocationNames.length);
+}
 
-  } catch (error) {
-    console.error("Failed to fetch or render schedule data:", error);
-    document.getElementById("table-container").innerHTML = '<div class="status-message warning">Could not load schedule. Please check network or spreadsheet access.</div>';
+function applyFilterChange() {
+  storageSet(HIDDEN_KEY, [...state.hidden]);
+  renderSchedule();
+}
+
+// ---------- Copy ----------
+
+function buildCopyText(day, date) {
+  const byLocation = {};
+  visibleRows().filter(row => row.Day === day && row.Date === date).forEach(row => {
+    if (!row.Time) return;
+    if (!byLocation[row.Location]) byLocation[row.Location] = {};
+    if (!byLocation[row.Location][row.Time]) byLocation[row.Location][row.Time] = [];
+    byLocation[row.Location][row.Time].push(row.Court);
+  });
+
+  const sections = Object.keys(byLocation).sort().map(location => {
+    const entries = Object.entries(byLocation[location])
+      .map(([time, courts]) => [
+        sortTimes(time),
+        compactCourtsDisplay([...new Set(courts)].sort((a, b) => courtNumber(a) - courtNumber(b)))
+      ])
+      .sort((a, b) => (parseTimeToHours(a[0]) ?? 0) - (parseTimeToHours(b[0]) ?? 0));
+    const name = abbreviateLocation(location);
+    if (entries.length === 1) return `${name}: ${entries[0][1]}: ${entries[0][0]}`;
+    return `${name}:\n` + entries.map(([time, courts]) => `  ${courts}: ${time}`).join("\n");
+  });
+  if (!sections.length) return "";
+  return `SNV LT 教练占场信息 ${day} ${shortDate(date)}\n${sections.join("\n\n")}\n`;
+}
+
+// Clipboard API first; fall back to a hidden textarea for in-app browsers (e.g. WeChat)
+async function writeClipboardText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.warn("Clipboard API failed, trying fallback:", err);
+    }
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-1000px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+  textarea.remove();
+  return ok;
+}
+
+function showToast(el, ms) {
+  el.style.opacity = 1;
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => { el.style.opacity = 0; }, ms);
+}
+
+function filterNote() {
+  const shown = shownLocationCount();
+  return shown === allLocationNames.length ? "" : ` (${shown} of ${allLocationNames.length} parks)`;
+}
+
+async function copyScheduleText() {
+  const copyToast = document.getElementById("copy-toast");
+  const date = state.day ? selectedDate(state.day) : "";
+  const text = date ? buildCopyText(state.day, date) : "";
+  if (!text) {
+    copyToast.textContent = "Nothing to copy for this date";
+    showToast(copyToast, 2000);
+    return;
+  }
+  if (await writeClipboardText(text)) {
+    copyToast.textContent = `Copied ${shortDate(date)}${filterNote()} ✅`;
+    showToast(copyToast, 1800);
+  } else {
+    copyToast.textContent = "Copy failed ❌";
+    showToast(copyToast, 2000);
   }
 }
 
+// Render the export-quality plot into an offscreen canvas so the on-screen plot is untouched
+function renderExportPlotBlob(day, date) {
+  const exportCanvas = document.createElement('canvas');
+  drawSchedulePlot(exportCanvas, buildCourtRows(day, date), {
+    width: 800, pixelRatio: 2, theme: 'light', title: `SNV LT · ${day} ${date}`
+  });
+  return new Promise((resolve, reject) => {
+    exportCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/png');
+  });
+}
 
-fetchAndRenderTable();
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function copyPlotToClipboard() {
+  const day = state.day;
+  const date = day ? selectedDate(day) : "";
+  if (!date) return;
+
+  const plotToast = document.getElementById("plot-toast");
+  plotToast.textContent = "Copying plot...";
+  showToast(plotToast, 10000);
+
+  const blobPromise = renderExportPlotBlob(day, date);
+  const d = parseDateStr(date);
+  const filename = `SNV_LT_${day}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.png`;
+
+  // Safari requires the ClipboardItem to be created synchronously inside the user
+  // gesture, with the blob supplied as a promise. Chrome/Edge accept this form too.
+  if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+      plotToast.textContent = `Plot ${shortDate(date)} copied ✅`;
+      showToast(plotToast, 1500);
+      return;
+    } catch (err) {
+      console.warn('Clipboard image write failed, falling back to download:', err);
+    }
+  }
+
+  // Fallback: download the PNG (also the only option on Firefox and some Android browsers)
+  try {
+    downloadBlob(await blobPromise, filename);
+    plotToast.textContent = "Clipboard unavailable, plot downloaded 📥";
+    showToast(plotToast, 2500);
+  } catch (err) {
+    console.error('Plot export failed:', err);
+    plotToast.textContent = "Copy failed ❌";
+    showToast(plotToast, 2000);
+  }
+}
+
+// ---------- Status line ----------
+
+function formatAgo(timestamp) {
+  const mins = Math.floor((Date.now() - timestamp) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return `${Math.floor(hours / 24)} d ago`;
+}
+
+function renderStatus() {
+  const el = document.getElementById("update-status");
+  el.hidden = !state.rows.length || !state.updatedAt;
+  el.disabled = state.loading;
+  el.classList.toggle("offline", state.offline && !state.loading);
+  if (el.hidden) return;
+  if (state.loading) el.textContent = "Updating…";
+  else if (state.offline) el.textContent = `Offline · data from ${formatAgo(state.updatedAt)} · Retry`;
+  else el.textContent = `Updated ${formatAgo(state.updatedAt)} ↻`;
+}
+
+// ---------- Wiring (runs once) ----------
+
+document.getElementById("tab-buttons").addEventListener("click", event => {
+  const btn = event.target.closest("button[data-day]");
+  if (!btn) return;
+  showDay(btn.dataset.day);
+  // If scrolled down, jump back so the new day's schedule starts just under the day bar
+  const barTop = document.getElementById("update-status").getBoundingClientRect().bottom + window.scrollY;
+  if (window.scrollY > barTop) window.scrollTo({ top: barTop });
+});
+
+document.getElementById("table-view-btn").addEventListener("click", () => setView("table"));
+document.getElementById("plot-view-btn").addEventListener("click", () => setView("plot"));
+document.getElementById("date-prev").addEventListener("click", () => stepDate(-1));
+document.getElementById("date-next").addEventListener("click", () => stepDate(1));
+document.getElementById("copy-button").addEventListener("click", copyScheduleText);
+document.getElementById("copy-plot-button").addEventListener("click", copyPlotToClipboard);
+document.getElementById("update-status").addEventListener("click", refresh);
+
+document.getElementById("filter-toggle").addEventListener("click", () => {
+  const panel = document.getElementById("filter-panel");
+  panel.hidden = !panel.hidden;
+  document.getElementById("filter-toggle").setAttribute("aria-expanded", String(!panel.hidden));
+});
+document.getElementById("filter-all").addEventListener("click", () => {
+  state.hidden.clear();
+  applyFilterChange();
+});
+document.getElementById("filter-none").addEventListener("click", () => {
+  allLocationNames.forEach(loc => state.hidden.add(loc));
+  applyFilterChange();
+});
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    if (state.view === "plot") createPlot();
+  }, 250);
+});
+
+// Redraw when the system switches between light and dark
+prefersDark.addEventListener('change', () => {
+  if (state.view === "plot") createPlot();
+});
+
+// Coming back to the app (e.g. reopening the home-screen PWA) refreshes stale data
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.updatedAt && Date.now() - state.updatedAt > 5 * 60000) {
+    refresh();
+  }
+});
+
+// Every minute: roll over at midnight, move the "now" line, and age the status text
+setInterval(() => {
+  if (state.rows.length && startOfToday().getTime() !== state.renderedFor) renderSchedule();
+  else if (state.view === "plot") createPlot();
+  renderStatus();
+}, 60000);
+
+// Show the saved schedule instantly, then fetch fresh data in the background
+(function init() {
+  const cached = storageGet(CACHE_KEY);
+  if (cached && Array.isArray(cached.rows) && cached.rows.length && cached.savedAt) {
+    state.rows = cached.rows;
+    state.updatedAt = cached.savedAt;
+    state.signature = JSON.stringify(cached.rows) + "#";
+    renderSchedule();
+  } else {
+    renderFilter();
+  }
+  renderStatus();
+  refresh();
+})();
 
 </script>
 <div id="copy-toast" class="copy-toast">Copied Text ✅</div>
