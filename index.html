@@ -1015,6 +1015,27 @@ function processTimeRange(timeRange, contextPeriod = null) {
     
     // Only adjust if the range is clearly invalid (> 12 hours)
     if (rangeLength > 12) {
+      // FIX (shared with 找场, 2026-10-09): before giving up and truncating, reconsider a *guessed*
+      // start period. "8:30-11:30am" guesses 8:30PM (8 is usually an evening lesson, which is right
+      // on its own) and then reads as a 15-hour range, so the end used to be thrown away. The start
+      // deliberately does not inherit the end's period — that is what keeps "11-12pm" at 11AM-12PM —
+      // so instead: only when the start was a guess (no AM/PM of its own, none from context) and the
+      // range is impossible, try the other period and keep it if that makes the range sane. An
+      // explicit or inherited start period is never second-guessed, and when flipping does not help
+      // the original truncation still applies.
+      if (!hasStartExplicitPeriod && !startContextPeriod) {
+        const flipped = startTimePeriod === 'PM' ? 'AM' : 'PM';
+        let flippedHour24 = parseInt(startHour);
+        if (flipped === 'PM' && flippedHour24 !== 12) flippedHour24 += 12;
+        if (flipped === 'AM' && flippedHour24 === 12) flippedHour24 = 0;
+
+        const flippedLength = endHour24 - flippedHour24;
+        if (flippedLength > 0 && flippedLength <= 12) {
+          const flippedStart = `${startHour}:${startMinutes}${flipped}`;
+          return { result: `${flippedStart}-${endTime}`, period: flipped };
+        }
+      }
+
       // Calculate new end time (2 hours after start for reasonable default)
       let newEndHour24 = startHour24 + 2;
       if (newEndHour24 >= 24) newEndHour24 -= 24;
