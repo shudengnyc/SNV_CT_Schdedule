@@ -2345,6 +2345,22 @@ setInterval(() => {
   refresh();
 })();
 
+// Holding the title opens the private stats page
+(() => {
+  const title = document.querySelector("h1");
+  let timer = null;
+  const cancel = () => clearTimeout(timer);
+  title.addEventListener("pointerdown", () => {
+    cancel();
+    timer = setTimeout(() => { location.href = "st.html"; }, 1500);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => title.addEventListener(ev, cancel));
+  title.addEventListener("contextmenu", e => e.preventDefault());
+  title.style.webkitUserSelect = "none";
+  title.style.userSelect = "none";
+  title.style.webkitTouchCallout = "none";
+})();
+
 </script>
 <div id="copy-toast" class="copy-toast">Copied Text ✅</div>
 <div id="plot-toast" class="copy-toast">Copied Plot ✅</div>
