@@ -103,6 +103,7 @@ fs.mkdirSync(DATA, { recursive: true });
 const ledger = readCsv(`${DATA}/bookings.csv`);
 const firstRun = ledger.length === 0;
 const open = new Map(ledger.filter(b => !b.removed_at).map(b => [keyOf(b), b]));
+const sheetDates = new Set([...current.values()].map(b => b.date));
 const changes = [];
 const daysAhead = (date) => Math.round((Date.parse(date) - Date.parse(now.date)) / 86400000);
 const event = (change, b) => changes.push({ snapshot_at: now.stamp, change, date: b.date, location: b.location,
@@ -116,8 +117,9 @@ for (const [k, b] of current) {
 }
 for (const [k, b] of open) {
   if (current.has(k)) continue;
-  // Past dates roll off the sheet; only a future/today booking vanishing is a cancellation
-  if (b.date < now.date) continue;
+  // Dates roll off the sheet as each weekday row moves to next week. A booking only
+  // counts as cancelled if its date is still on the sheet (and not already past).
+  if (b.date < now.date || !sheetDates.has(b.date)) continue;
   b.removed_at = now.stamp;
   event("removed", b);
 }
