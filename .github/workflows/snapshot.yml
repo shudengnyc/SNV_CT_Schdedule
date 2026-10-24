@@ -1,0 +1,32 @@
+name: Schedule snapshot
+
+# 6am, 12pm, 4pm Pacific. Cron is UTC, so each slot is listed for both
+# PDT and PST; the script skips whichever run isn't on the slot hour.
+on:
+  schedule:
+    - cron: "5 13,14,19,20,23,0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: snapshot
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/snapshot.mjs
+      - name: Commit if anything changed
+        run: |
+          git add data
+          git diff --cached --quiet && exit 0
+          git config user.name "schedule-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Snapshot $(TZ=America/Los_Angeles date '+%Y-%m-%d %H:%M')"
+          git push
