@@ -65,7 +65,10 @@
 <body>
 <div class="page">
   <div id="lock" class="lock" hidden>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Code">
+    <form id="pin-form">
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Code">
+      <button type="submit" style="margin-top:.75rem;width:100%">Enter</button>
+    </form>
     <div id="pin-err" class="err"></div>
   </div>
 
@@ -210,8 +213,8 @@ async function showApp() {
   const pin = document.getElementById("pin");
   lock.hidden = false;
   pin.focus();
-  pin.addEventListener("keydown", async e => {
-    if (e.key !== "Enter") return;
+  document.getElementById("pin-form").addEventListener("submit", async e => {
+    e.preventDefault();
     if (await sha256(pin.value.trim()) === CODE_HASH) {
       storageSet(UNLOCK_KEY, CODE_HASH);
       showApp();
