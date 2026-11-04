@@ -233,3 +233,41 @@ snapshot_at,change,date,location,court,start,end,hours,same_day,days_ahead
 2026-11-03 16:34,added,2026-11-07,Mango,Ct2,09:00,11:00,2.00,,4
 2026-11-03 16:34,added,2026-10-27,Serra Park,Ct2,15:45,16:45,1.00,,-7
 2026-11-03 16:34,removed,2026-11-07,Mango,Ct2,09:30,13:00,3.50,,4
+2026-11-04 12:23,added,2026-11-02,Fremont High School,Ct1,18:00,20:00,2.00,,-2
+2026-11-04 12:23,added,2026-11-03,Fremont High School,Ct1,18:00,20:00,2.00,,-1
+2026-11-04 12:23,added,2026-11-04,Fremont High School,Ct7,18:00,20:00,2.00,Y,0
+2026-11-04 12:23,added,2026-11-04,Fremont High School,Ct1,18:45,19:45,1.00,Y,0
+2026-11-04 12:23,added,2026-11-05,Fremont High School,Ct7,18:30,19:30,1.00,,1
+2026-11-04 12:23,added,2026-11-06,Fremont High School,Ct7,18:15,21:15,3.00,,2
+2026-11-04 12:23,added,2026-11-07,Fremont High School,Ct1,12:00,14:00,2.00,,3
+2026-11-04 12:23,added,2026-11-07,Fremont High School,Ct2,12:00,14:00,2.00,,3
+2026-11-04 12:23,added,2026-11-07,Fremont High School,Ct3,12:00,14:00,2.00,,3
+2026-11-04 12:23,added,2026-11-07,Fremont High School,Ct7,12:30,14:30,2.00,,3
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct1,12:00,14:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct2,12:00,14:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct3,12:00,14:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct1,16:00,18:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct2,16:00,18:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Fremont High School,Ct3,16:00,18:00,2.00,,4
+2026-11-04 12:23,added,2026-11-11,Fremont High School,Ct3,18:00,19:00,1.00,,7
+2026-11-04 12:23,added,2026-11-13,Fremont High School,Ct7,18:15,21:15,3.00,,9
+2026-11-04 12:23,added,2026-11-13,Fremont High School,Ct1,16:00,18:00,2.00,,9
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct6,12:00,14:00,2.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct7,12:00,14:00,2.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct1,12:00,14:00,2.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct2,12:00,14:00,2.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct3,12:00,14:00,2.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct1,15:30,18:30,3.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct2,15:30,18:30,3.00,,11
+2026-11-04 12:23,added,2026-11-15,Fremont High School,Ct3,15:30,18:30,3.00,,11
+2026-11-04 12:23,added,2026-11-03,Serra Park,Ct2,18:00,19:00,1.00,,-1
+2026-11-04 12:23,added,2026-11-07,Serra Park,Ct2,09:00,10:00,1.00,,3
+2026-11-04 12:23,added,2026-11-07,Serra Park,Ct4,13:00,19:00,6.00,,3
+2026-11-04 12:23,added,2026-11-07,Serra Park,Ct3,09:30,11:30,2.00,,3
+2026-11-04 12:23,added,2026-11-07,Serra Park,Ct1,09:30,11:30,2.00,,3
+2026-11-04 12:23,added,2026-11-08,Serra Park,Ct3,15:00,17:00,2.00,,4
+2026-11-04 12:23,added,2026-11-08,Serra Park,Ct1,11:00,14:30,3.50,,4
+2026-11-04 12:23,added,2026-11-04,Washington Park,Ct2,15:45,19:45,4.00,Y,0
+2026-11-04 12:23,removed,2026-11-04,Mango,Ct2,18:30,19:30,1.00,Y,0
+2026-11-04 12:23,removed,2026-11-04,Serra Park,Ct3,11:45,12:45,1.00,Y,0
+2026-11-04 12:23,removed,2026-11-04,Washington Park,Ct2,17:00,20:00,3.00,Y,0
