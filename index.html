@@ -45,6 +45,7 @@
     }
 
     #city-switch { margin-bottom: 0.75rem; }
+    #city-switch button { padding-inline: clamp(9px, 3vw, 22px); }
     #schedule-note { text-align: center; font-size: 0.85rem; margin: 0.5rem 0; }
     .mountain-view-table th:nth-child(1) { width: 28%; }
     .mountain-view-table th:nth-child(2) { width: 34%; }
@@ -677,6 +678,7 @@
   <div id="city-switch" class="view-toggle" role="group" aria-label="City">
     <button type="button" data-city="sunnyvale" class="active" aria-pressed="true">Sunnyvale</button>
     <button type="button" data-city="mountainView" aria-pressed="false">Mountain View</button>
+    <button type="button" data-city="paloAlto" aria-pressed="false">Palo Alto</button>
   </div>
 
   <div class="controls">
@@ -700,7 +702,7 @@
     <nav id="tab-buttons" class="day-tabs" aria-label="Choose a day"></nav>
   </div>
 
-  <p id="schedule-note" hidden>Published reservations only · Pacific time</p>
+  <p id="schedule-note" hidden></p>
   <div id="schedule-warning" role="status" hidden></div>
   <div id="table-container"><div class="status-message">Loading schedule…</div></div>
   <div id="plot-container" class="plot-container" style="display:none;">
@@ -1404,11 +1406,30 @@ const cities = {
     locations: Object.keys(mountainViewParks),
     cacheKey: "mtv-schedule-cache-v1",
     hiddenKey: "mtv-hidden-locations-v1",
+    note: "Published reservations only · Pacific time",
+    emptyMessage: "No reservations listed for the selected parks.",
     load: fetchMountainViewSchedule
+  },
+  paloAlto: {
+    title: "Palo Alto Tennis Schedule",
+    exportName: "Palo Alto",
+    sourceName: "Palo Alto CivicRec",
+    sourceUrl: "https://www.paloalto.gov/Departments/Community-Services/Facility-Rentals/Field-and-Tennis-Court-Reservations",
+    locations: ["Cubberley", "Mitchell", "Rinconada"],
+    cacheKey: "palo-alto-schedule-cache-v1",
+    hiddenKey: "palo-alto-hidden-locations-v1",
+    note: "Unavailable times from the city calendar · 8 AM–10 PM Pacific",
+    emptyMessage: "No unavailable times listed for the selected parks.",
+    load: fetchPaloAltoSchedule
   }
 };
 const CITY_KEY = "tennis-schedule-city";
 const isMountainView = () => city === cities.mountainView;
+const isPaloAlto = () => city === cities.paloAlto;
+const paloAltoStatuses = {
+  "unavailable": { label: "Unavailable", color: "#b45309" },
+  "partially available": { label: "Partially available", color: "#64748b" },
+};
 const locationNames = () => city.locations;
 const pacificClock = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles", year: "numeric", month: "numeric", day: "numeric",
@@ -1488,9 +1509,12 @@ function locationColor(location) {
 }
 
 const visibleRows = () => state.rows.filter(row => !state.hidden.has(row.Location));
-const bookingRows = rows => isMountainView() ? rows.filter(row => row.Status === "Reserved") : rows;
+function bookingRows(rows) {
+  if (isMountainView()) return rows.filter(row => row.Status === "Reserved");
+  if (isPaloAlto()) return rows.filter(row => row.Time);
+  return rows;
+}
 const visibleRowsForDate = (day, date) => visibleRows().filter(row => row.Day === day && row.Date === date);
-const noReservations = "No reservations listed for the selected parks.";
 const shownLocationCount = () => locationNames().filter(loc => !state.hidden.has(loc)).length;
 
 function sortTimes(timeStr) {
@@ -1651,6 +1675,35 @@ async function fetchMountainViewSchedule() {
   };
 }
 
+async function fetchPaloAltoSchedule() {
+  const url = "https://raw.githubusercontent.com/shudengnyc/SNV_CT_Schdedule/palo-alto-data/palo-alto.json";
+  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const { fetchedAt, days } = await response.json();
+  const updatedAt = Date.parse(fetchedAt);
+  if (!Number.isFinite(updatedAt) || !Array.isArray(days) || days.length !== 7) {
+    throw new Error("Incomplete city calendar snapshot");
+  }
+  const locations = cities.paloAlto.locations;
+  const rows = days.flatMap(({ date, courts }) => {
+    const [year, month, day] = date.split("-").map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    if (dateObj < startOfToday()) return [];
+    return courts.flatMap(({ name, blocks }) => {
+      const match = name.match(/^(.*) #(\d+)$/);
+      if (!match || !locations.includes(match[1])) throw new Error("Unrecognized court in city calendar");
+      const row = { Day: expectedDays[dateObj.getDay()], Date: `${month}/${day}/${year}`, Court: `Court ${match[2]}`, Location: match[1] };
+      if (!blocks.length) return [{ ...row, Time: "" }];
+      return blocks.map(({ start, end, status }) => {
+        if (!Object.hasOwn(paloAltoStatuses, status)) throw new Error("Unrecognized city calendar status");
+        return { ...row, Time: `${recTime(start)}-${recTime(end)}`, Status: status };
+      });
+    });
+  });
+  if (!rows.length) throw new Error("No current dates in the city calendar snapshot");
+  return { rows, failed: [], updatedAt };
+}
+
 async function refresh() {
   const target = state;
   const config = city;
@@ -1658,7 +1711,7 @@ async function refresh() {
   target.loading = true;
   renderStatus();
   try {
-    const { rows, failed, firstError } = await config.load();
+    const { rows, failed, firstError, updatedAt } = await config.load();
 
     if (failed.length === config.locations.length) {
       target.offline = true;
@@ -1679,7 +1732,7 @@ async function refresh() {
     const signature = JSON.stringify(merged) + "#" + failed.join(",");
 
     target.offline = false;
-    target.updatedAt = Date.now();
+    target.updatedAt = updatedAt ?? Date.now();
     target.staleLocations = failed.filter(loc => carriedLocations.has(loc));
     target.failedSheets = failed.filter(loc => !carriedLocations.has(loc));
     target.fatalError = merged.length ? "" : `No schedule entries were found in ${config.sourceName}.`;
@@ -1706,7 +1759,7 @@ async function refresh() {
 // ---------- Table view ----------
 
 function displayCourts(courts) {
-  if (!isMountainView()) return compactCourtsDisplay(courts);
+  if (!city.emptyMessage) return compactCourtsDisplay(courts);
   const labels = courts.map(court => court.replace(/^(Tennis|Court) (\d+)( \(has Pickleball Courts\))?$/, (_, prefix, number, shared) =>
     number + (shared ? " (shared)" : "")
   ));
@@ -1719,14 +1772,14 @@ function buildDateTable(rows) {
   if (!bookings.length) {
     const message = document.createElement("p");
     message.className = "status-message";
-    message.textContent = noReservations;
+    message.textContent = city.emptyMessage;
     return message;
   }
   const table = document.createElement("table");
-  if (isMountainView()) table.className = "mountain-view-table";
+  if (city.emptyMessage) table.className = "mountain-view-table";
   const thead = document.createElement("thead");
   const headRow = document.createElement("tr");
-  const headers = ["Location", "Courts", isMountainView() ? "Reserved time" : "Time"];
+  const headers = ["Location", "Courts", isPaloAlto() ? "Unavailable time" : isMountainView() ? "Reserved time" : "Time"];
   headers.forEach(header => {
     const th = document.createElement("th");
     th.textContent = header;
@@ -1741,9 +1794,9 @@ function buildDateTable(rows) {
     if (a.Location !== b.Location) return a.Location.localeCompare(b.Location);
     return courtNumber(a.Court) - courtNumber(b.Court);
   }).forEach(row => {
-    const key = `${row.Location}|${row.Time}|${row.RawCourt}`;
+    const key = `${row.Location}|${row.Time}|${row.RawCourt}|${row.Status}`;
     if (!locationTimeGroups[key]) {
-      locationTimeGroups[key] = { location: row.Location, time: row.Time, courts: [row.Court] };
+      locationTimeGroups[key] = { location: row.Location, time: row.Time, status: row.Status, courts: [row.Court] };
     } else if (!locationTimeGroups[key].courts.includes(row.Court)) {
       locationTimeGroups[key].courts.push(row.Court);
     }
@@ -1752,7 +1805,7 @@ function buildDateTable(rows) {
   const tbody = document.createElement("tbody");
   Object.values(locationTimeGroups)
     .sort((a, b) => a.location.localeCompare(b.location) ||
-      (isMountainView() ? parseTimeToHours(a.time) - parseTimeToHours(b.time) : 0))
+      (city.emptyMessage ? parseTimeToHours(a.time) - parseTimeToHours(b.time) : 0))
     .forEach(group => {
       const tr = document.createElement("tr");
       const sortedCourts = group.courts.sort((a, b) => courtNumber(a) - courtNumber(b));
@@ -1767,7 +1820,7 @@ function buildDateTable(rows) {
       sortTimes(group.time).split(", ").forEach(range => {
         const span = document.createElement("span");
         span.className = "time-range";
-        span.textContent = range;
+        span.textContent = group.status === "partially available" ? `${range} (partial)` : range;
         timeTd.appendChild(span);
       });
       tr.appendChild(timeTd);
@@ -1781,6 +1834,7 @@ function renderSchedule() {
   const tabs = document.getElementById("tab-buttons");
   const container = document.getElementById("table-container");
   state.renderedFor = startOfToday().getTime();
+  if (isPaloAlto()) state.rows = state.rows.filter(row => parseDateStr(row.Date).getTime() >= state.renderedFor);
   renderFilter();
   const warning = document.getElementById("schedule-warning");
   const warnings = [];
@@ -1836,7 +1890,7 @@ function renderSchedule() {
 
     const dates = grouped[day] ? Object.keys(grouped[day]) : [];
     if (!dates.length) {
-      section.innerHTML = `<div class="status-message">${isMountainView() ? "No schedules" : "No bookings"} at the selected parks on ${day}s.</div>`;
+      section.innerHTML = `<div class="status-message">${city.emptyMessage ? "No schedules" : "No bookings"} at the selected parks on ${day}s.</div>`;
       continue;
     }
 
@@ -1959,11 +2013,11 @@ function renderDateNav(day, date) {
 function buildCourtRows(day, date) {
   const courts = new Map();
   bookingRows(visibleRowsForDate(day, date)).forEach(row => {
-    const { Location: location, Court: court, Time: time } = row;
+    const { Location: location, Court: court, Time: time, Status: status } = row;
     if (!time) return;
     const courtId = `${location}-${court}`;
     if (!courts.has(courtId)) {
-      const label = isMountainView()
+      const label = city.emptyMessage
         ? `${location.replace(/ Park$/, "")} · Ct ${courtNumber(court)}${court.includes("Pickleball") ? "*" : ""}`
         : `${location} - ${court}`;
       courts.set(courtId, { id: courtId, location, court, label, timeRanges: [] });
@@ -1973,7 +2027,7 @@ function buildCourtRows(day, date) {
       console.warn(`Failed to parse time ranges for court ${court} at ${location}: "${time}"`);
     }
     timeRanges.forEach(range => {
-      courts.get(courtId).timeRanges.push({ startTime: range.start, endTime: range.end });
+      courts.get(courtId).timeRanges.push({ startTime: range.start, endTime: range.end, status });
     });
   });
   return Array.from(courts.values()).sort((a, b) => {
@@ -2027,7 +2081,7 @@ function drawSchedulePlot(canvas, courts, { width, fitHeight = null, compact = f
     return;
   }
 
-  const legend = isMountainView()
+  const legend = isPaloAlto() ? Object.values(paloAltoStatuses) : isMountainView()
     ? [recStatuses.RESERVATION, ...(courts.some(court => court.court.includes("Pickleball")) ? [{ label: "* Shared with pickleball" }] : [])]
     : [...new Set(courts.map(c => c.location))].map(location => ({
         label: abbreviateLocation(location), color: locationColor(location)
@@ -2152,7 +2206,8 @@ function drawSchedulePlot(canvas, courts, { width, fitHeight = null, compact = f
       ctx.shadowColor = colors.barShadow;
       ctx.shadowBlur = 4;
       ctx.shadowOffsetY = 2;
-      ctx.fillStyle = isMountainView() ? recStatuses.RESERVATION.color : locationColor(court.location);
+      ctx.fillStyle = isPaloAlto() ? paloAltoStatuses[range.status].color
+        : isMountainView() ? recStatuses.RESERVATION.color : locationColor(court.location);
       ctx.beginPath();
       ctx.roundRect(startX, y - barHeight / 2, barWidth, barHeight, Math.min(6, barHeight / 2, barWidth / 2));
       ctx.fill();
@@ -2219,7 +2274,7 @@ function createPlot() {
     pixelRatio: window.devicePixelRatio || 1,
     theme: prefersDark.matches ? 'dark' : 'light',
     nowHour: isToday ? hour : null,
-    emptyMessage: mountainViewPlotMessage(day, date)
+    emptyMessage: blockPlotMessage(day, date)
   });
 }
 
@@ -2261,8 +2316,9 @@ function buildCopyText(day, date) {
   bookingRows(rows).forEach(row => {
     if (!row.Time) return;
     if (!byLocation[row.Location]) byLocation[row.Location] = {};
-    if (!byLocation[row.Location][row.Time]) byLocation[row.Location][row.Time] = [];
-    byLocation[row.Location][row.Time].push(row.Court);
+    const time = row.Status === "partially available" ? `${row.Time} (partial)` : row.Time;
+    if (!byLocation[row.Location][time]) byLocation[row.Location][time] = [];
+    byLocation[row.Location][time].push(row.Court);
   });
 
   const sections = Object.keys(byLocation).sort().map(location => {
@@ -2278,10 +2334,11 @@ function buildCopyText(day, date) {
     return `${name}:\n` + entries.map(entry => `  ${line(entry)}`).join("\n");
   });
   if (!sections.length) {
-    if (!isMountainView() || !rows.length) return "";
-    sections.push(noReservations);
+    if (!city.emptyMessage || !rows.length) return "";
+    sections.push(city.emptyMessage);
   }
-  const title = isMountainView() ? "Mountain View tennis reservations (Pacific time)" : "SNV LT 教练占场信息";
+  const title = isPaloAlto() ? "Palo Alto tennis unavailable times (Pacific time)"
+    : isMountainView() ? "Mountain View tennis reservations (Pacific time)" : "SNV LT 教练占场信息";
   return `${title} ${day} ${shortDate(date)}\n${sections.join("\n\n")}\n`;
 }
 
@@ -2339,16 +2396,16 @@ async function copyScheduleText() {
 }
 
 // Render the export-quality plot into an offscreen canvas so the on-screen plot is untouched
-function mountainViewPlotMessage(day, date) {
-  if (!isMountainView()) return undefined;
-  return visibleRowsForDate(day, date).length ? noReservations : "No schedule data for the selected parks.";
+function blockPlotMessage(day, date) {
+  if (!city.emptyMessage) return undefined;
+  return visibleRowsForDate(day, date).length ? city.emptyMessage : "No schedule data for the selected parks.";
 }
 
 function renderExportPlotBlob(day, date) {
   const exportCanvas = document.createElement('canvas');
   drawSchedulePlot(exportCanvas, buildCourtRows(day, date), {
     width: 800, pixelRatio: 2, theme: 'light', title: `${city.exportName} · ${day} ${date}`,
-    emptyMessage: mountainViewPlotMessage(day, date)
+    emptyMessage: blockPlotMessage(day, date)
   });
   return new Promise((resolve, reject) => {
     exportCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/png');
@@ -2417,12 +2474,14 @@ function formatAgo(timestamp) {
 
 function renderStatus() {
   const el = document.getElementById("update-status");
+  const delayed = isPaloAlto() && Date.now() - state.updatedAt > 3 * 60 * 60000;
   el.hidden = !state.rows.length || !state.updatedAt;
   el.disabled = state.loading;
-  el.classList.toggle("offline", state.offline && !state.loading);
+  el.classList.toggle("offline", (state.offline || delayed) && !state.loading);
   if (el.hidden) return;
   if (state.loading) el.textContent = "Updating…";
   else if (state.offline) el.textContent = `Offline · data from ${formatAgo(state.updatedAt)} · Retry`;
+  else if (delayed) el.textContent = `Update delayed · data from ${formatAgo(state.updatedAt)} ↻`;
   else el.textContent = `Updated ${formatAgo(state.updatedAt)} ↻`;
 }
 
@@ -2483,7 +2542,7 @@ document.addEventListener('visibilitychange', () => {
 setInterval(() => {
   if (state.rows.length && startOfToday().getTime() !== state.renderedFor) {
     renderSchedule();
-    if (isMountainView()) refresh();
+    if (city.emptyMessage) refresh();
   } else if (view === "plot") createPlot();
   renderStatus();
 }, 60000);
@@ -2498,7 +2557,9 @@ function switchCity(key, forceRefresh = false) {
 
   document.getElementById("schedule-title").textContent = city.title;
   document.getElementById("schedule-source").href = city.sourceUrl;
-  document.getElementById("schedule-note").hidden = !isMountainView();
+  const note = document.getElementById("schedule-note");
+  note.hidden = !city.note;
+  note.textContent = city.note || "";
   document.getElementById("table-container").replaceChildren();
   document.querySelectorAll("#city-switch button").forEach(button => {
     const selected = button.dataset.city === key;
@@ -2516,7 +2577,7 @@ document.getElementById("city-switch").addEventListener("click", event => {
 });
 
 const preferredCity = storageGet(CITY_KEY);
-switchCity(preferredCity === "mountainView" ? "mountainView" : "sunnyvale", true);
+switchCity(Object.hasOwn(cities, preferredCity) ? preferredCity : "sunnyvale", true);
 
 // Holding the title opens the private stats page
 (() => {
