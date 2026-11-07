@@ -46,6 +46,9 @@
 
     #city-switch { margin-bottom: 0.75rem; }
     #city-switch button { padding-inline: clamp(9px, 3vw, 22px); }
+    @media (max-width: 440px) {
+      #city-switch { display: grid; grid-template-columns: repeat(2, 1fr); }
+    }
     #schedule-note { text-align: center; font-size: 0.85rem; margin: 0.5rem 0; }
     .mountain-view-table th:nth-child(1) { width: 28%; }
     .mountain-view-table th:nth-child(2) { width: 34%; }
@@ -679,6 +682,7 @@
     <button type="button" data-city="sunnyvale" class="active" aria-pressed="true">Sunnyvale</button>
     <button type="button" data-city="mountainView" aria-pressed="false">Mountain View</button>
     <button type="button" data-city="paloAlto" aria-pressed="false">Palo Alto</button>
+    <button type="button" data-city="belmont" aria-pressed="false">Belmont</button>
   </div>
 
   <div class="controls">
@@ -1387,6 +1391,10 @@ const mountainViewParks = {
   "Sylvan Park": ["e68dcacd-9f08-40ac-8a02-63b419610b76", 4],
   "Whisman Park": ["c37c5109-4f96-499f-b5d5-28de8adf20de", 4]
 };
+const belmontParks = {
+  "Alexander Park": ["99e7cd59-15cd-43aa-b0cc-9ed11f826840", 2],
+  "Hallmark Park": ["756355b6-f361-483e-af56-6321ce50d782", 2]
+};
 const cities = {
   sunnyvale: {
     title: "SNV Lifetime Courts Schedule",
@@ -1408,7 +1416,7 @@ const cities = {
     hiddenKey: "mtv-hidden-locations-v1",
     note: "Published reservations only · Pacific time",
     emptyMessage: "No reservations listed for the selected parks.",
-    load: fetchMountainViewSchedule
+    load: () => fetchRecSchedule(mountainViewParks)
   },
   paloAlto: {
     title: "Palo Alto Tennis Schedule",
@@ -1421,10 +1429,22 @@ const cities = {
     note: "Unavailable times from the city calendar · 8 AM–10 PM Pacific",
     emptyMessage: "No unavailable times listed for the selected parks.",
     load: fetchPaloAltoSchedule
+  },
+  belmont: {
+    title: "Belmont Tennis Schedule",
+    exportName: "Belmont",
+    sourceName: "Rec.us",
+    sourceUrl: "https://www.belmont.gov/departments/parks-and-recreation/tennis",
+    locations: Object.keys(belmontParks),
+    cacheKey: "belmont-schedule-cache-v1",
+    hiddenKey: "belmont-hidden-locations-v1",
+    note: "Published reservations only · Includes pickleball on shared courts · Pacific time",
+    emptyMessage: "No reservations listed for the selected parks.",
+    load: () => fetchRecSchedule(belmontParks, { shared: true })
   }
 };
 const CITY_KEY = "tennis-schedule-city";
-const isMountainView = () => city === cities.mountainView;
+const isRecCity = () => city.sourceName === "Rec.us";
 const isPaloAlto = () => city === cities.paloAlto;
 const paloAltoStatuses = {
   "unavailable": { label: "Unavailable", color: "#b45309" },
@@ -1510,7 +1530,7 @@ function locationColor(location) {
 
 const visibleRows = () => state.rows.filter(row => !state.hidden.has(row.Location));
 function bookingRows(rows) {
-  if (isMountainView()) return rows.filter(row => row.Status === "Reserved");
+  if (isRecCity()) return rows.filter(row => row.Status === "Reserved");
   if (isPaloAlto()) return rows.filter(row => row.Time);
   return rows;
 }
@@ -1627,7 +1647,7 @@ function recTime(value) {
   return `${hour}:${String(minutes).padStart(2, "0")}${period}`;
 }
 
-async function fetchMountainViewSchedule() {
+async function fetchRecSchedule(parkConfig, { shared = false } = {}) {
   const start = startOfToday();
   const days = Array.from({ length: 7 }, (_, offset) => {
     const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset);
@@ -1636,7 +1656,7 @@ async function fetchMountainViewSchedule() {
     return { iso, day: expectedDays[date.getDay()], display: `${m}/${d}/${y}` };
   });
   const query = new URLSearchParams({ startDate: days[0].iso, endDate: days.at(-1).iso });
-  const parks = Object.entries(mountainViewParks);
+  const parks = Object.entries(parkConfig);
   const results = await Promise.allSettled(parks.map(async ([location, [id, expectedCount]]) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -1652,16 +1672,29 @@ async function fetchMountainViewSchedule() {
         return courts.flatMap(court => {
           const blocks = Object.entries(court.schedule || {});
           if (!court.courtNumber || !blocks.length) throw new Error(`Missing court schedule for ${iso}`);
-          return blocks.map(([interval, block]) => {
+          const intervals = [];
+          for (const [interval, block] of blocks.sort(([a], [b]) => a.localeCompare(b))) {
             const match = interval.match(/^((?:[01]\d|2[0-3]):[0-5]\d),\s*((?:[01]\d|2[0-3]):[0-5]\d)$/);
             if (!match || match[1] >= match[2] || !block?.referenceType) {
               throw new Error(`Invalid court schedule for ${iso}`);
             }
-            return {
-              Day: day, Date: display, Time: `${recTime(match[1])}-${recTime(match[2])}`,
-              Court: court.courtNumber, Location: location, Status: recStatus(block.referenceType).label
-            };
-          });
+            const [, start, end] = match;
+            const kind = block.referenceType;
+            const previous = intervals.at(-1);
+            // The tennis entry already includes blocks from its overlapping pickleball court.
+            if (shared && kind === "RESERVATION" && previous?.kind === kind && start <= previous.end) {
+              if (end > previous.end) previous.end = end;
+            } else {
+              intervals.push({ start, end, kind });
+            }
+          }
+          const courtName = shared
+            ? court.courtNumber.replace(/^Tennis /, "") + " (has Pickleball Courts)"
+            : court.courtNumber;
+          return intervals.map(({ start, end, kind }) => ({
+            Day: day, Date: display, Time: `${recTime(start)}-${recTime(end)}`,
+            Court: courtName, Location: location, Status: recStatus(kind).label
+          }));
         });
       });
     } finally {
@@ -1779,7 +1812,7 @@ function buildDateTable(rows) {
   if (city.emptyMessage) table.className = "mountain-view-table";
   const thead = document.createElement("thead");
   const headRow = document.createElement("tr");
-  const headers = ["Location", "Courts", isPaloAlto() ? "Unavailable time" : isMountainView() ? "Reserved time" : "Time"];
+  const headers = ["Location", "Courts", isPaloAlto() ? "Unavailable time" : isRecCity() ? "Reserved time" : "Time"];
   headers.forEach(header => {
     const th = document.createElement("th");
     th.textContent = header;
@@ -2081,7 +2114,7 @@ function drawSchedulePlot(canvas, courts, { width, fitHeight = null, compact = f
     return;
   }
 
-  const legend = isPaloAlto() ? Object.values(paloAltoStatuses) : isMountainView()
+  const legend = isPaloAlto() ? Object.values(paloAltoStatuses) : isRecCity()
     ? [recStatuses.RESERVATION, ...(courts.some(court => court.court.includes("Pickleball")) ? [{ label: "* Shared with pickleball" }] : [])]
     : [...new Set(courts.map(c => c.location))].map(location => ({
         label: abbreviateLocation(location), color: locationColor(location)
@@ -2207,7 +2240,7 @@ function drawSchedulePlot(canvas, courts, { width, fitHeight = null, compact = f
       ctx.shadowBlur = 4;
       ctx.shadowOffsetY = 2;
       ctx.fillStyle = isPaloAlto() ? paloAltoStatuses[range.status].color
-        : isMountainView() ? recStatuses.RESERVATION.color : locationColor(court.location);
+        : isRecCity() ? recStatuses.RESERVATION.color : locationColor(court.location);
       ctx.beginPath();
       ctx.roundRect(startX, y - barHeight / 2, barWidth, barHeight, Math.min(6, barHeight / 2, barWidth / 2));
       ctx.fill();
@@ -2338,7 +2371,7 @@ function buildCopyText(day, date) {
     sections.push(city.emptyMessage);
   }
   const title = isPaloAlto() ? "Palo Alto tennis unavailable times (Pacific time)"
-    : isMountainView() ? "Mountain View tennis reservations (Pacific time)" : "SNV LT 教练占场信息";
+    : isRecCity() ? `${city.exportName} tennis reservations (Pacific time)` : "SNV LT 教练占场信息";
   return `${title} ${day} ${shortDate(date)}\n${sections.join("\n\n")}\n`;
 }
 
