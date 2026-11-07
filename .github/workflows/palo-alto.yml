@@ -1,0 +1,40 @@
+name: Refresh Palo Alto court availability
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/palo-alto.yml"
+      - "scripts/check_palo_alto.cjs"
+
+permissions:
+  contents: write
+
+concurrency: palo-alto-availability
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install --with-deps chromium
+      - name: Fetch and validate seven days
+        run: node scripts/check_palo_alto.cjs "$(TZ=America/Los_Angeles date +%F)" "$RUNNER_TEMP/palo-alto.json"
+      - name: Publish the validated snapshot
+        run: |
+          git fetch origin refs/heads/palo-alto-data:refs/remotes/origin/palo-alto-data
+          git worktree add --detach "$RUNNER_TEMP/palo-alto-data" origin/palo-alto-data
+          cd "$RUNNER_TEMP/palo-alto-data"
+          cp "$RUNNER_TEMP/palo-alto.json" palo-alto.json
+          git add palo-alto.json
+          git diff --cached --quiet && exit 0
+          git -c user.name="schedule-bot" -c user.email="actions@users.noreply.github.com" commit -m "Refresh Palo Alto court availability"
+          git push origin HEAD:refs/heads/palo-alto-data
