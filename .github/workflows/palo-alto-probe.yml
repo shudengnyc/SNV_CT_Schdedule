@@ -1,0 +1,22 @@
+name: Palo Alto calendar probe
+
+on:
+  push:
+    branches: [palo-alto-calendar-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install --with-deps chromium
+      - name: Validate seven days of public availability
+        run: node scripts/check_palo_alto.cjs
