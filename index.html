@@ -1224,7 +1224,7 @@ function normalizeLocationName(sheetName) {
   return normalized;
 }
 
-// Short labels for locations, used in the plot axis, legend and copied text
+// Short labels for locations, used in the plot axis, legend and park filters
 const locationAbbreviations = [
   ["Fremont High School", "Fremont"],
   ["Washington Park", "Wash"],
@@ -2343,36 +2343,65 @@ function applyFilterChange() {
 
 // ---------- Copy ----------
 
+function formatCopyTime(time) {
+  const range = time.match(/^(\d{1,2}):(\d{2})(AM|PM)(?:-(\d{1,2}):(\d{2})(AM|PM))?$/);
+  if (!range) return time;
+  const [, startHour, startMinute, startPeriod, endHour, endMinute, endPeriod] = range;
+  const clock = (hour, minute) => `${Number(hour)}${minute === "00" ? "" : ":" + minute}`;
+  const start = clock(startHour, startMinute);
+  if (!endHour) return `${start} ${startPeriod}`;
+  const end = clock(endHour, endMinute);
+  return `${start}${startPeriod === endPeriod ? "" : " " + startPeriod}–${end} ${endPeriod}`;
+}
+
+function formatCopyCourts(courts) {
+  const numbered = { standard: [], shared: [] };
+  const other = [];
+  for (const court of courts) {
+    const match = court.match(/^(?:Ct|Court |Tennis )(\d+)( \(has Pickleball Courts\))?$/);
+    if (match) numbered[match[2] ? "shared" : "standard"].push(`Ct${match[1]}`);
+    else other.push(court === "N/A" ? "Court unspecified" : court);
+  }
+  const labels = [];
+  for (const [kind, group] of Object.entries(numbered)) {
+    if (!group.length) continue;
+    const numbers = compactCourtsDisplay(group).replaceAll("Ct", "").replaceAll("-", "–");
+    labels.push(`${group.length === 1 ? "Court" : "Courts"} ${numbers}${kind === "shared" ? " (shared)" : ""}`);
+  }
+  return labels.concat(other).join(", ");
+}
+
 function buildCopyText(day, date) {
   const rows = visibleRowsForDate(day, date);
-  const byLocation = {};
-  bookingRows(rows).forEach(row => {
-    if (!row.Time) return;
-    if (!byLocation[row.Location]) byLocation[row.Location] = {};
-    const time = row.Status === "partially available" ? `${row.Time} (partial)` : row.Time;
-    if (!byLocation[row.Location][time]) byLocation[row.Location][time] = [];
-    byLocation[row.Location][time].push(row.Court);
-  });
+  const byLocation = new Map();
+  for (const row of bookingRows(rows)) {
+    if (!row.Time) continue;
+    if (!byLocation.has(row.Location)) byLocation.set(row.Location, new Map());
+    const times = byLocation.get(row.Location);
+    const partial = row.Status === "partially available";
+    for (const time of row.Time.split(/,\s*/).filter(Boolean)) {
+      const key = `${time}|${partial}`;
+      if (!times.has(key)) times.set(key, { time, partial, courts: new Set() });
+      times.get(key).courts.add(row.Court);
+    }
+  }
 
-  const sections = Object.keys(byLocation).sort().map(location => {
-    const entries = Object.entries(byLocation[location])
-      .map(([time, courts]) => [
-        sortTimes(time),
-        displayCourts([...new Set(courts)].sort((a, b) => courtNumber(a) - courtNumber(b)))
-      ])
-      .sort((a, b) => (parseTimeToHours(a[0]) ?? 0) - (parseTimeToHours(b[0]) ?? 0));
-    const name = abbreviateLocation(location);
-    const line = ([time, courts]) => `${courts}: ${time}`;
-    if (entries.length === 1) return `${name}: ${line(entries[0])}`;
-    return `${name}:\n` + entries.map(entry => `  ${line(entry)}`).join("\n");
+  const sections = [...byLocation.keys()].sort().map(location => {
+    const entries = [...byLocation.get(location).values()]
+      .sort((a, b) => (parseTimeToHours(a.time) ?? 0) - (parseTimeToHours(b.time) ?? 0));
+    const lines = entries.map(({ time, courts, partial }) =>
+      `• ${formatCopyTime(time)} — ${formatCopyCourts(courts)}${partial ? " (partially available)" : ""}`
+    );
+    return [location, ...lines].join("\n");
   });
   if (!sections.length) {
     if (!city.emptyMessage || !rows.length) return "";
     sections.push(city.emptyMessage);
   }
-  const title = isPaloAlto() ? "Palo Alto tennis unavailable times (Pacific time)"
-    : isRecCity() ? `${city.exportName} tennis reservations (Pacific time)` : "SNV LT 教练占场信息";
-  return `${title} ${day} ${shortDate(date)}\n${sections.join("\n\n")}\n`;
+  const title = isPaloAlto() ? "Palo Alto tennis unavailable times"
+    : isRecCity() ? `${city.exportName} tennis reservations` : "SNV LT 教练占场信息";
+  const label = `${day.slice(0, 3)} ${shortDate(date)} · PT`;
+  return `${title} · ${label}\n\n${sections.join("\n\n")}`;
 }
 
 // Clipboard API first; fall back to a hidden textarea for in-app browsers (e.g. WeChat)
