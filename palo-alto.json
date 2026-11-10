@@ -1,94 +1,11 @@
 {
-  "fetchedAt": "2026-11-10T01:34:13.899Z",
+  "fetchedAt": "2026-11-10T09:51:46.519Z",
   "timeZone": "America/Los_Angeles",
   "hours": {
     "start": "08:00",
     "end": "22:00"
   },
   "days": [
-    {
-      "date": "2026-11-09",
-      "courts": [
-        {
-          "name": "Cubberley #1",
-          "blocks": [
-            {
-              "start": "09:30",
-              "end": "11:30",
-              "status": "unavailable"
-            }
-          ]
-        },
-        {
-          "name": "Cubberley #2",
-          "blocks": [
-            {
-              "start": "09:30",
-              "end": "11:30",
-              "status": "unavailable"
-            }
-          ]
-        },
-        {
-          "name": "Cubberley #3",
-          "blocks": [
-            {
-              "start": "09:30",
-              "end": "11:30",
-              "status": "unavailable"
-            }
-          ]
-        },
-        {
-          "name": "Cubberley #4",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #5",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #6",
-          "blocks": []
-        },
-        {
-          "name": "Mitchell #3",
-          "blocks": []
-        },
-        {
-          "name": "Mitchell #4",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #1",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #2",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #3",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #4",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #7",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #8",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #9",
-          "blocks": []
-        }
-      ]
-    },
     {
       "date": "2026-11-10",
       "courts": [
@@ -669,6 +586,71 @@
               "status": "unavailable"
             }
           ]
+        }
+      ]
+    },
+    {
+      "date": "2026-11-16",
+      "courts": [
+        {
+          "name": "Cubberley #1",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #2",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #3",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #4",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #5",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #6",
+          "blocks": []
+        },
+        {
+          "name": "Mitchell #3",
+          "blocks": []
+        },
+        {
+          "name": "Mitchell #4",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #1",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #2",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #3",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #4",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #7",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #8",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #9",
+          "blocks": []
         }
       ]
     }
