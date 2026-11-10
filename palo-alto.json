@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-09T17:30:25.247Z",
+  "fetchedAt": "2026-11-10T01:34:13.899Z",
   "timeZone": "America/Los_Angeles",
   "hours": {
     "start": "08:00",
@@ -373,33 +373,15 @@
         },
         {
           "name": "Rinconada #1",
-          "blocks": [
-            {
-              "start": "18:30",
-              "end": "20:30",
-              "status": "unavailable"
-            }
-          ]
+          "blocks": []
         },
         {
           "name": "Rinconada #2",
-          "blocks": [
-            {
-              "start": "18:30",
-              "end": "20:30",
-              "status": "unavailable"
-            }
-          ]
+          "blocks": []
         },
         {
           "name": "Rinconada #3",
-          "blocks": [
-            {
-              "start": "18:30",
-              "end": "20:30",
-              "status": "unavailable"
-            }
-          ]
+          "blocks": []
         },
         {
           "name": "Rinconada #4",
@@ -492,7 +474,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "17:30",
+              "end": "21:30",
               "status": "unavailable"
             }
           ]
@@ -502,7 +484,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "17:30",
+              "end": "21:30",
               "status": "unavailable"
             }
           ]
@@ -512,7 +494,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "17:30",
+              "end": "21:30",
               "status": "unavailable"
             }
           ]
@@ -625,11 +607,6 @@
               "start": "09:00",
               "end": "14:30",
               "status": "unavailable"
-            },
-            {
-              "start": "15:00",
-              "end": "17:00",
-              "status": "unavailable"
             }
           ]
         },
@@ -640,11 +617,6 @@
               "start": "09:00",
               "end": "14:30",
               "status": "unavailable"
-            },
-            {
-              "start": "15:00",
-              "end": "17:00",
-              "status": "unavailable"
             }
           ]
         },
@@ -654,11 +626,6 @@
             {
               "start": "09:00",
               "end": "14:30",
-              "status": "unavailable"
-            },
-            {
-              "start": "15:00",
-              "end": "17:00",
               "status": "unavailable"
             }
           ]
