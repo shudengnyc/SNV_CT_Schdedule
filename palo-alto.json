@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-12T11:13:11.830Z",
+  "fetchedAt": "2026-11-12T18:57:29.697Z",
   "timeZone": "America/Los_Angeles",
   "hours": {
     "start": "08:00",
@@ -233,7 +233,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "15:30",
+              "end": "14:30",
               "status": "unavailable"
             },
             {
@@ -248,7 +248,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "15:30",
+              "end": "14:30",
               "status": "unavailable"
             },
             {
@@ -263,7 +263,7 @@
           "blocks": [
             {
               "start": "10:00",
-              "end": "15:30",
+              "end": "14:30",
               "status": "unavailable"
             },
             {
@@ -379,7 +379,7 @@
           "blocks": [
             {
               "start": "09:00",
-              "end": "14:30",
+              "end": "12:00",
               "status": "unavailable"
             }
           ]
@@ -389,7 +389,7 @@
           "blocks": [
             {
               "start": "09:00",
-              "end": "14:30",
+              "end": "12:00",
               "status": "unavailable"
             }
           ]
@@ -399,7 +399,7 @@
           "blocks": [
             {
               "start": "09:00",
-              "end": "14:30",
+              "end": "12:00",
               "status": "unavailable"
             }
           ]
