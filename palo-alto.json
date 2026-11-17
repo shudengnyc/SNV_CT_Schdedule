@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-17T14:25:47.003Z",
+  "fetchedAt": "2026-11-17T22:53:16.082Z",
   "timeZone": "America/Los_Angeles",
   "hours": {
     "start": "08:00",
@@ -268,13 +268,7 @@
         },
         {
           "name": "Rinconada #1",
-          "blocks": [
-            {
-              "start": "18:30",
-              "end": "20:30",
-              "status": "unavailable"
-            }
-          ]
+          "blocks": []
         },
         {
           "name": "Rinconada #2",
@@ -298,7 +292,13 @@
         },
         {
           "name": "Rinconada #4",
-          "blocks": []
+          "blocks": [
+            {
+              "start": "19:00",
+              "end": "21:00",
+              "status": "unavailable"
+            }
+          ]
         },
         {
           "name": "Rinconada #7",
