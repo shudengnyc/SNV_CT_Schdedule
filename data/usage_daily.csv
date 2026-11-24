@@ -1,4 +1,5 @@
 date,location,courts_used,bookings,court_hours
+1956-12-03,Braly Park,1,1,1.25
 2020-10-13,Columbia Park,1,1,2.00
 2026-09-28,Fremont High School,1,1,2.00
 2026-09-29,Fremont High School,1,1,2.00
@@ -236,7 +237,7 @@ date,location,courts_used,bookings,court_hours
 2026-11-19,Braly Park,1,1,1.25
 2026-11-19,Columbia Park,1,1,2.00
 2026-11-19,Encinal Park,1,1,5.00
-2026-11-19,Fairwood Park,1,1,1.00
+2026-11-19,Fairwood Park,1,3,3.00
 2026-11-19,Fremont High School,1,1,1.50
 2026-11-19,Mango,3,5,7.50
 2026-11-19,Ortega Park,1,2,2.00
@@ -254,28 +255,34 @@ date,location,courts_used,bookings,court_hours
 2026-11-21,Serra Park,3,6,22.66
 2026-11-22,Braly Park,1,2,10.75
 2026-11-22,Columbia Park,1,2,5.00
-2026-11-22,Fairwood Park,1,1,2.00
+2026-11-22,Fairwood Park,1,3,4.00
 2026-11-22,Fremont High School,3,6,12.00
-2026-11-22,Mango,4,5,13.50
+2026-11-22,Mango,4,6,17.50
 2026-11-22,Serra Park,2,2,4.50
+2026-11-23,Braly Park,1,2,6.00
 2026-11-23,Encinal Park,1,1,5.00
-2026-11-23,Mango,2,2,4.00
+2026-11-23,Fairwood Park,1,2,2.00
+2026-11-23,Mango,1,1,2.00
 2026-11-23,Ortega Park,1,1,3.00
-2026-11-23,Serra Park,3,5,11.33
+2026-11-23,Serra Park,4,6,16.50
 2026-11-23,Washington Park,1,3,3.00
+2026-11-24,Braly Park,1,2,3.25
 2026-11-24,Encinal Park,1,1,5.50
-2026-11-24,Mango,2,3,5.00
+2026-11-24,Mango,2,3,4.00
 2026-11-24,Serra Park,2,4,7.25
+2026-11-25,Braly Park,1,2,4.00
 2026-11-25,Encinal Park,1,1,4.00
 2026-11-25,Fremont High School,1,1,1.00
 2026-11-25,Mango,2,2,2.00
 2026-11-25,Ortega Park,1,2,2.00
 2026-11-25,Serra Park,4,7,7.25
 2026-11-25,Washington Park,2,2,5.00
+2026-11-26,Braly Park,1,2,3.25
 2026-11-26,Encinal Park,1,1,5.00
 2026-11-26,Fremont High School,1,1,2.50
 2026-11-26,Mango,3,5,9.50
 2026-11-26,Serra Park,3,3,7.50
+2026-11-27,Braly Park,1,1,1.00
 2026-11-27,Fremont High School,1,1,3.00
 2026-11-27,Mango,5,8,13.75
 2026-11-27,Ortega Park,1,2,2.00
@@ -284,13 +291,24 @@ date,location,courts_used,bookings,court_hours
 2026-11-28,Mango,6,11,26.00
 2026-11-28,Ortega Park,1,2,4.25
 2026-11-28,Serra Park,2,2,6.50
+2026-11-29,Braly Park,1,2,6.00
 2026-11-29,Fremont High School,5,8,19.00
 2026-11-29,Mango,5,12,29.00
 2026-11-29,Ortega Park,1,2,4.00
 2026-11-29,Serra Park,2,2,6.00
+2026-11-30,Braly Park,1,1,5.00
+2026-11-30,Encinal Park,1,1,5.00
 2026-11-30,Ortega Park,1,2,2.50
+2026-12-01,Braly Park,1,2,2.00
+2026-12-01,Encinal Park,1,1,4.50
+2026-12-02,Braly Park,1,1,2.00
+2026-12-02,Encinal Park,1,1,4.00
 2026-12-02,Ortega Park,1,1,4.50
+2026-12-03,Encinal Park,1,1,5.00
 2026-12-03,Ortega Park,1,2,2.00
+2026-12-04,Braly Park,1,2,5.25
 2026-12-04,Ortega Park,1,1,1.00
+2026-12-05,Braly Park,1,1,2.00
 2026-12-05,Ortega Park,1,1,3.00
+2026-12-06,Braly Park,1,2,10.75
 2026-12-06,Ortega Park,1,1,3.00
