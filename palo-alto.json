@@ -1,76 +1,11 @@
 {
-  "fetchedAt": "2026-11-24T06:04:42.558Z",
+  "fetchedAt": "2026-11-24T17:46:46.799Z",
   "timeZone": "America/Los_Angeles",
   "hours": {
     "start": "08:00",
     "end": "22:00"
   },
   "days": [
-    {
-      "date": "2026-11-23",
-      "courts": [
-        {
-          "name": "Cubberley #1",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #2",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #3",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #4",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #5",
-          "blocks": []
-        },
-        {
-          "name": "Cubberley #6",
-          "blocks": []
-        },
-        {
-          "name": "Mitchell #3",
-          "blocks": []
-        },
-        {
-          "name": "Mitchell #4",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #1",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #2",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #3",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #4",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #7",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #8",
-          "blocks": []
-        },
-        {
-          "name": "Rinconada #9",
-          "blocks": []
-        }
-      ]
-    },
     {
       "date": "2026-11-24",
       "courts": [
@@ -536,6 +471,71 @@
               "status": "unavailable"
             }
           ]
+        }
+      ]
+    },
+    {
+      "date": "2026-11-30",
+      "courts": [
+        {
+          "name": "Cubberley #1",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #2",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #3",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #4",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #5",
+          "blocks": []
+        },
+        {
+          "name": "Cubberley #6",
+          "blocks": []
+        },
+        {
+          "name": "Mitchell #3",
+          "blocks": []
+        },
+        {
+          "name": "Mitchell #4",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #1",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #2",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #3",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #4",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #7",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #8",
+          "blocks": []
+        },
+        {
+          "name": "Rinconada #9",
+          "blocks": []
         }
       ]
     }
